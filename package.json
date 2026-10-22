@@ -1,0 +1,15 @@
+{
+  "name": "delivez-partners-frontend",
+  "private": true,
+  "packageManager": "pnpm@9.15.9",
+  "devDependencies": {
+    "turbo": "^2.3.3",
+    "typescript": "^5.7.2"
+  },
+  "scripts": {
+    "dev": "turbo run dev --parallel --filter=@delivez/partners-web --filter=@delivez/admin-web",
+    "build": "turbo run build --filter=@delivez/partners-web --filter=@delivez/admin-web",
+    "typecheck": "turbo run typecheck",
+    "i18n:check": "node packages/i18n/check.js"
+  }
+}

@@ -1,0 +1,200 @@
+
+/*
+ * Delivez design tokens — matches the Delivez web reference (Luggage Go):
+ * Archivo (variable width), condensed 900 headlines, yellow header with red rule,
+ * red primary actions, warm grey ink/line palette.
+ */
+@theme {
+  /* Brand */
+  --color-dz-red: #d40511;
+  --color-dz-red-deep: #b3040e;
+  --color-dz-red-soft: #fdecee;
+  --color-dz-yellow: #ffcc00;
+  --color-dz-yellow-strong: #e6b800;
+  --color-dz-yellow-soft: #fff7d1;
+  --color-dz-black: #000000;
+
+  /* Ink & surfaces */
+  --color-ink: #000000;
+  --color-ink-2: #4a4a47;
+  --color-ink-3: #7c7c77;
+  --color-line: #e3e3de;
+  --color-soft: #f5f5f2;
+
+  /* Warm greys — every neutral-* utility in the app follows the reference palette */
+  --color-neutral-50: #f8f8f5;
+  --color-neutral-100: #f0f0ec;
+  --color-neutral-200: #e3e3de;
+  --color-neutral-300: #d2d2cc;
+  --color-neutral-400: #a5a59f;
+  --color-neutral-500: #7c7c77;
+  --color-neutral-600: #4a4a47;
+  --color-neutral-700: #383835;
+  --color-neutral-800: #222220;
+  --color-neutral-900: #111110;
+
+  /* Status */
+  --color-dz-green: #14803a;
+  --color-dz-green-soft: #e8f6ec;
+  --color-dz-blue: #1a56db;
+  --color-dz-blue-soft: #eaf1ff;
+
+  /* Order states (plan §16.1), ready uses the reference green */
+  --color-state-preparing: #facc15;
+  --color-state-almost: #fb923c;
+  --color-state-ready: #14803a;
+  --color-state-picked: #1a56db;
+  --color-state-delayed: #d40511;
+
+  --color-ai-accent: #5b3df5;
+  --color-ai-bg: #f3f0ff;
+
+  --font-sans: 'Archivo', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  --radius-dz: 14px;
+}
+
+@layer base {
+  html {
+    scroll-padding-top: 84px;
+  }
+  body {
+    @apply bg-white text-ink antialiased;
+    font-size: 15px;
+    line-height: 1.5;
+  }
+  /* Condensed, heavy display type for headings (Archivo width axis). */
+  h1,
+  h2,
+  .font-display {
+    font-stretch: 74%;
+    font-weight: 900;
+    letter-spacing: -0.01em;
+  }
+  h1 {
+    line-height: 0.98;
+  }
+  /* Indian scripts: the condensed, tight Latin display style clips matras and conjuncts —
+     use normal width and room for marks above/below the line. */
+  html:not(:lang(en)) h1,
+  html:not(:lang(en)) h2,
+  html:not(:lang(en)) .font-display {
+    font-stretch: 100%;
+    letter-spacing: 0;
+    line-height: 1.25;
+  }
+  h3 {
+    font-weight: 800;
+  }
+  :focus-visible {
+    outline: 3px solid var(--color-dz-red);
+    outline-offset: 2px;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation: none !important;
+      transition: none !important;
+    }
+  }
+}
+
+@layer components {
+  /* Yellow app/site header with the red rule, as in the reference */
+  .dz-header {
+    @apply border-b-[3px] border-dz-red bg-dz-yellow text-black;
+  }
+  .dz-badge {
+    @apply inline-flex items-center gap-1.5 whitespace-nowrap rounded-full border border-dz-yellow-strong bg-dz-yellow-soft px-2.5 py-1 text-xs font-bold text-ink;
+  }
+  .dz-btn-red {
+    @apply inline-flex min-h-12 items-center justify-center gap-2 rounded-[10px] bg-dz-red px-6 font-extrabold text-white transition hover:bg-dz-red-deep;
+  }
+  .dz-btn-outline {
+    @apply inline-flex min-h-12 items-center justify-center gap-2 rounded-[10px] border-[1.5px] border-ink bg-white px-6 font-extrabold text-ink transition hover:bg-soft;
+  }
+  .dz-btn-yellow {
+    @apply inline-flex min-h-12 items-center justify-center gap-2 rounded-[10px] border-[1.5px] border-black bg-dz-yellow px-6 font-extrabold text-black transition hover:bg-dz-yellow-strong;
+  }
+
+  /* App surfaces: one card style everywhere, lifting slightly when it's a link */
+  .dz-card {
+    @apply rounded-[14px] border border-line bg-white;
+  }
+  a.dz-card,
+  button.dz-card {
+    @apply transition hover:-translate-y-px hover:border-neutral-400 hover:shadow-[0_6px_20px_-12px_rgb(0_0_0/0.35)];
+  }
+
+  /* Loading shimmer */
+  .dz-skeleton {
+    background: linear-gradient(90deg, var(--color-neutral-100) 0%, var(--color-neutral-50) 50%, var(--color-neutral-100) 100%);
+    background-size: 200% 100%;
+    animation: dz-shimmer 1.3s ease-in-out infinite;
+  }
+  /* Entrances for popovers, toasts and dialogs */
+  .dz-pop {
+    animation: dz-pop 0.14s ease-out;
+    transform-origin: top right;
+  }
+  .dz-toast {
+    animation: dz-rise 0.22s cubic-bezier(0.2, 0.9, 0.3, 1.2);
+  }
+  .dz-dialog {
+    animation: dz-rise 0.2s ease-out;
+  }
+  .dz-fade {
+    animation: dz-fade 0.18s ease-out;
+  }
+  /* New orders pulse until someone acts on them */
+  .dz-pulse-ring {
+    animation: dz-pulse-ring 1.4s ease-out infinite;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .dz-pulse-ring {
+      animation: none;
+      box-shadow: 0 0 0 3px rgb(200 16 46 / 0.5);
+    }
+  }
+  /* Horizontal tab strips scroll without a visible bar */
+  .dz-scroll-x {
+    scrollbar-width: none;
+  }
+  .dz-scroll-x::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+@keyframes dz-shimmer {
+  from {
+    background-position: 100% 0;
+  }
+  to {
+    background-position: -100% 0;
+  }
+}
+@keyframes dz-pop {
+  from {
+    opacity: 0;
+    transform: scale(0.96) translateY(-4px);
+  }
+}
+@keyframes dz-rise {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+}
+@keyframes dz-pulse-ring {
+  0% {
+    box-shadow: 0 0 0 0 rgb(200 16 46 / 0.55);
+  }
+  100% {
+    box-shadow: 0 0 0 12px rgb(200 16 46 / 0);
+  }
+}
+@keyframes dz-fade {
+  from {
+    opacity: 0;
+  }
+}
