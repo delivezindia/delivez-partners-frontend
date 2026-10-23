@@ -210,7 +210,9 @@ export default function Login() {
                   <p className="flex items-center gap-2 rounded-lg bg-ai-bg px-3 py-2 text-xs text-ai-accent">
                     <ShieldCheck className="h-4 w-4 shrink-0" aria-hidden />
                     <span>
-                      {t('login.devCode')} <b data-dev-code>{otp.devCode}</b> (also printed in the API log)
+                      {/* Live servers show the code only while SMS isn't connected (OTP_SHOW_IN_RESPONSE). */}
+                      {t(import.meta.env.DEV ? 'login.devCode' : 'login.testCode')} <b data-dev-code>{otp.devCode}</b>
+                      {import.meta.env.DEV && ' (also printed in the API log)'}
                     </span>
                   </p>
                 )}

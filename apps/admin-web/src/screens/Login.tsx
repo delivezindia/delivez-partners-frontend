@@ -71,7 +71,11 @@ export default function Login() {
                 6-digit code
                 <input value={code} onChange={(e) => setCode(e.target.value.replace(/\D/g, ''))} maxLength={6} autoFocus autoComplete="one-time-code" inputMode="numeric" className="mt-1 h-14 w-full rounded-[9px] border-[1.5px] border-line text-center text-2xl tracking-[0.4em] outline-none focus:border-black" />
               </label>
-              {req.devCode && <p className="rounded-lg bg-dz-yellow-soft px-3 py-2 text-xs">Dev mode — code <b>{req.devCode}</b></p>}
+              {req.devCode && (
+                <p className="rounded-lg bg-dz-yellow-soft px-3 py-2 text-xs">
+                  {import.meta.env.DEV ? 'Dev mode' : 'Test mode (SMS not connected yet)'} — code <b>{req.devCode}</b>
+                </p>
+              )}
               {error && <p className="text-sm font-semibold text-dz-red">{error}</p>}
               <Button type="submit" className="min-h-12 w-full" disabled={busy || code.length !== 6}>
                 {busy ? 'Checking…' : 'Log in'}

@@ -1,6 +1,6 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { NavLink, Outlet, useNavigate } from 'react-router-dom';
-import { FileCheck2, LayoutDashboard, Map, MessageSquareText, ScrollText, ShieldCheck, Store, Users, type LucideIcon } from 'lucide-react';
+import { Activity, FileCheck2, LayoutDashboard, Map, MessageSquareText, ScrollText, ShieldCheck, Store, Users, type LucideIcon } from 'lucide-react';
 import { api, useAuth } from '../lib/api';
 import { CAN, can, type AdminMe, type AdminRole } from '../lib/types';
 import { Brand } from '../components/ui';
@@ -17,6 +17,7 @@ const NAV: { to: string; label: string; icon: LucideIcon; end?: boolean; roles?:
   { to: '/cities', label: 'Cities', icon: Map },
   { to: '/legal', label: 'Legal', icon: ScrollText },
   { to: '/audit', label: 'Audit log', icon: ShieldCheck, roles: CAN.audit },
+  { to: '/system', label: 'System', icon: Activity, roles: CAN.team },
   // Local dev phone for SMS / WhatsApp; never shown in a production build.
   ...(import.meta.env.DEV ? [{ to: '/dev/messages', label: 'Messages (dev)', icon: MessageSquareText }] : []),
 ];

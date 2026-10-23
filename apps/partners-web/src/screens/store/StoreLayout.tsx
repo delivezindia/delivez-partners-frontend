@@ -7,7 +7,7 @@ import { useStoreSocket, type DomainEvent } from '../../lib/socket';
 import { useLogout } from '../../lib/use-logout';
 import type { MeResponse, OpenState, PartnerRole, StoreDetail } from '../../lib/types';
 import type { ReactNode } from 'react';
-import { AlertTriangle, CalendarClock, ChevronDown, ClipboardList, FileText, LayoutDashboard, LogOut, Package, Settings as SettingsIcon, Store, UserRoundCog, Users, UtensilsCrossed, type LucideIcon } from 'lucide-react';
+import { AlertTriangle, CalendarClock, Download, ChevronDown, ClipboardList, FileText, LayoutDashboard, LogOut, Package, Settings as SettingsIcon, Store, UserRoundCog, Users, UtensilsCrossed, type LucideIcon } from 'lucide-react';
 import { Brand, Button, ErrorText } from '../../components/ui';
 import { Avatar, Dropdown, Skeleton, toast, Toaster } from '../../components/feedback';
 import { useI18n, type MsgKey } from '../../lib/i18n';
@@ -15,6 +15,7 @@ import { ring } from '../../lib/orders';
 import { usePushBridge } from '../../lib/notifications';
 import { NotificationBell } from '../../components/NotificationBell';
 import { AlertsBanner } from '../../components/AlertsBanner';
+import { useInstallPrompt } from '../../lib/install';
 
 export interface StoreContext {
   storeId: string;
@@ -45,6 +46,7 @@ export default function StoreLayout() {
   const [feed, setFeed] = useState<DomainEvent[]>([]);
   const { t } = useI18n();
   usePushBridge();
+  const installer = useInstallPrompt();
 
   const connected = useStoreSocket(storeId, (event) => {
     setFeed((f) => [event, ...f].slice(0, 8));
@@ -150,6 +152,7 @@ export default function StoreLayout() {
               items={[
                 { label: t('shell.switchUser'), icon: UserRoundCog, onSelect: () => navigate(`/stores/${storeId}/switch`) },
                 ...(allStores.length > 1 ? [{ label: t('shell.allOutlets'), icon: Store, onSelect: () => navigate('/accounts') }] : []),
+                ...(installer.canInstall ? [{ label: t('shell.installApp'), icon: Download, onSelect: () => void installer.install() }] : []),
                 null,
                 { label: t('shell.logout'), icon: LogOut, danger: true, onSelect: () => void logout() },
               ]}

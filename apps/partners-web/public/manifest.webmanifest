@@ -1,0 +1,17 @@
+{
+  "id": "/",
+  "name": "Delivez Partners",
+  "short_name": "Delivez",
+  "description": "Take Delivez orders, manage your menu and get new-order alerts.",
+  "start_url": "/accounts",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#FFCC00",
+  "theme_color": "#FFCC00",
+  "icons": [
+    { "src": "/icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "/icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "/icons/maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}
