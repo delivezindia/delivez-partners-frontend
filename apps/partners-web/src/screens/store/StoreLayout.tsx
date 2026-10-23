@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import { NavLink, Outlet, useNavigate, useOutletContext, useParams } from 'react-router-dom';
+import { useEffect } from 'react';
+import { NavLink, Outlet, useLocation, useNavigate, useOutletContext, useParams } from 'react-router-dom';
 import { useQueryClient } from '@tanstack/react-query';
 import { ApiError } from '../../lib/api';
 import { useMe, useStore } from '../../lib/queries';
@@ -16,6 +17,8 @@ import { usePushBridge } from '../../lib/notifications';
 import { NotificationBell } from '../../components/NotificationBell';
 import { AlertsBanner } from '../../components/AlertsBanner';
 import { useInstallPrompt } from '../../lib/install';
+import { useNewOrders } from '../../lib/orders';
+import { useLabBookings } from '../../lib/labBookings';
 
 export interface StoreContext {
   storeId: string;
@@ -90,6 +93,22 @@ export default function StoreLayout() {
   const allStores = me.data?.memberships.flatMap((m) => m.stores) ?? [];
   const role = data?.role;
   const userName = me.data?.user.fullName ?? me.data?.user.phone;
+
+  // Browser tab: waiting orders/bookings first, so staff notice them even when the tab is in the background.
+  const location = useLocation();
+  const lab = data?.store.vertical === 'DIAGNOSTICS';
+  const takesOrders = !!role && ['OWNER', 'MANAGER', 'KITCHEN_LEAD', 'COUNTER_STAFF', 'PHARMACIST'].includes(role);
+  const newOrders = useNewOrders(storeId, !!data && takesOrders && !lab);
+  const newBookings = useLabBookings(storeId, 'TO_CONFIRM', !!data && takesOrders && lab);
+  const waiting = lab ? (newBookings.data?.counts.TO_CONFIRM ?? 0) : (newOrders.data?.counts.NEW ?? 0);
+  const [, , , section = '', sub] = location.pathname.split('/');
+  const PAGE: Record<string, MsgKey> = { '': 'tab.dashboard', orders: 'tab.orders', menu: lab ? 'tab.tests' : 'tab.menu', bookings: 'tab.bookings', inventory: 'tab.inventory', staff: 'tab.staff', settings: 'tab.settings', notifications: 'shell.notifications', switch: 'shell.switchUser' };
+  const page = section === 'orders' && sub ? sub : PAGE[section] ? t(PAGE[section]) : '';
+  useEffect(() => {
+    if (!data) return;
+    document.title = `${waiting ? `(${waiting}) ` : ''}${page ? `${page} · ` : ''}${data.store.name} – Delivez Partners`;
+  }, [data, waiting, page]);
+  useEffect(() => () => void (document.title = 'Delivez Partners'), []);
 
   if (error) {
     return (

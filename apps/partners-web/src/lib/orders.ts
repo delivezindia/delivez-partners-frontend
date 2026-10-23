@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useInfiniteQuery, useQuery, useQueryClient } from '@tanstack/react-query';
 import { api, ApiError, newIdempotencyKey } from './api';
 
 export type OrderStatus =
@@ -86,11 +86,23 @@ export const REJECT_REASONS = [
 type OrdersPage = { orders: Order[]; counts: Record<'NEW' | 'PREPARING' | 'READY', number>; nextCursor: string | null };
 
 // Sockets keep the screen live; the 15 s poll is the fallback when the socket drops.
-export const useOrders = (storeId: string, tab: OrderTab) =>
-  useQuery({ queryKey: ['orders', storeId, tab], queryFn: () => api<OrdersPage>(`/partners/stores/${storeId}/orders?tab=${tab}`), refetchInterval: 15_000 });
+export const useOrders = (storeId: string, tab: OrderTab, enabled = true) =>
+  useQuery({ queryKey: ['orders', storeId, tab], queryFn: () => api<OrdersPage>(`/partners/stores/${storeId}/orders?tab=${tab}`), refetchInterval: 15_000, enabled });
+
+/** History tabs (Picked up / Cancelled / All) page back 50 at a time. */
+export const HISTORY_TABS: OrderTab[] = ['DONE', 'CANCELLED', 'ALL'];
+export const useOrderHistory = (storeId: string, tab: OrderTab, enabled: boolean) =>
+  useInfiniteQuery({
+    queryKey: ['orders', storeId, tab, 'history'],
+    queryFn: ({ pageParam }) => api<OrdersPage>(`/partners/stores/${storeId}/orders?tab=${tab}${pageParam ? `&cursor=${encodeURIComponent(pageParam)}` : ''}`),
+    initialPageParam: '' as string,
+    getNextPageParam: (last) => last.nextCursor ?? undefined,
+    refetchInterval: 30_000,
+    enabled,
+  });
 
 /** The New tab is watched on every tab: it drives the sound and the badge. */
-export const useNewOrders = (storeId: string) => useOrders(storeId, 'NEW');
+export const useNewOrders = (storeId: string, enabled = true) => useOrders(storeId, 'NEW', enabled);
 
 export const useOrder = (storeId: string, idOrNumber: string | null) =>
   useQuery({ queryKey: ['order', storeId, idOrNumber], queryFn: () => api<Order>(`/partners/stores/${storeId}/orders/${idOrNumber}`), enabled: !!idOrNumber });
@@ -231,6 +243,42 @@ export function useNow(active = true) {
 // Browsers only allow sound after the user has interacted with the page once.
 // --------------------------------------------------------------------
 
+// Each device (kitchen tablet, counter PC) keeps its own tone and volume.
+export type Tone = 'classic' | 'bell' | 'urgent';
+export const TONES: { value: Tone; label: string }[] = [
+  { value: 'classic', label: 'Classic' },
+  { value: 'bell', label: 'Bell' },
+  { value: 'urgent', label: 'Urgent' },
+];
+/** Notes per tone: [frequency Hz, start s, length s]. */
+const NOTES: Record<Tone, { wave: OscillatorType; notes: [number, number, number][] }> = {
+  classic: { wave: 'square', notes: [[880, 0, 0.16], [1175, 0.18, 0.16]] },
+  bell: { wave: 'sine', notes: [[1319, 0, 0.5], [1568, 0.16, 0.5], [2093, 0.32, 0.7]] },
+  urgent: { wave: 'sawtooth', notes: [[988, 0, 0.1], [988, 0.14, 0.1], [988, 0.28, 0.1], [1319, 0.42, 0.18]] },
+};
+/** Volume steps 1–5 → peak gain (3 = the original level). */
+const GAIN = [0, 0.04, 0.08, 0.15, 0.24, 0.35];
+const PREFS_KEY = 'dz-order-sound';
+export interface SoundPrefs {
+  tone: Tone;
+  volume: 1 | 2 | 3 | 4 | 5;
+}
+export function getSoundPrefs(): SoundPrefs {
+  try {
+    const p = JSON.parse(localStorage.getItem(PREFS_KEY) ?? '{}') as Partial<SoundPrefs>;
+    return { tone: p.tone && p.tone in NOTES ? p.tone : 'classic', volume: p.volume && p.volume >= 1 && p.volume <= 5 ? p.volume : 3 };
+  } catch {
+    return { tone: 'classic', volume: 3 };
+  }
+}
+export function setSoundPrefs(p: SoundPrefs) {
+  try {
+    localStorage.setItem(PREFS_KEY, JSON.stringify(p));
+  } catch {
+    /* private mode: keep for this visit only */
+  }
+}
+
 let ctx: AudioContext | null = null;
 export const soundReady = () => ctx?.state === 'running';
 export async function enableSound() {
@@ -239,21 +287,30 @@ export async function enableSound() {
   beep();
   return soundReady();
 }
-function beep() {
+function play(prefs: SoundPrefs) {
   if (!ctx || ctx.state !== 'running') return;
   const t = ctx.currentTime;
-  for (const [i, f] of [880, 1175].entries()) {
+  const { wave, notes } = NOTES[prefs.tone];
+  const peak = GAIN[prefs.volume];
+  for (const [f, start, len] of notes) {
     const o = ctx.createOscillator();
     const g = ctx.createGain();
     o.frequency.value = f;
-    o.type = 'square';
-    g.gain.setValueAtTime(0.0001, t + i * 0.18);
-    g.gain.exponentialRampToValueAtTime(0.15, t + i * 0.18 + 0.02);
-    g.gain.exponentialRampToValueAtTime(0.0001, t + i * 0.18 + 0.16);
+    o.type = wave;
+    g.gain.setValueAtTime(0.0001, t + start);
+    g.gain.exponentialRampToValueAtTime(peak, t + start + 0.02);
+    g.gain.exponentialRampToValueAtTime(0.0001, t + start + len);
     o.connect(g).connect(ctx.destination);
-    o.start(t + i * 0.18);
-    o.stop(t + i * 0.18 + 0.17);
+    o.start(t + start);
+    o.stop(t + start + len + 0.01);
   }
+}
+const beep = () => play(getSoundPrefs());
+/** "Test sound" button: also unlocks audio, since it runs from a tap. */
+export async function testSound(prefs: SoundPrefs) {
+  ctx ??= new AudioContext();
+  await ctx.resume();
+  play(prefs);
 }
 /** One alert (e.g. a new order while on another screen). */
 export const ring = () => beep();

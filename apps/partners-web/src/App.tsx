@@ -12,6 +12,7 @@ import SwitchUser from './screens/store/SwitchUser';
 import Orders from './screens/store/Orders';
 import OrderDetail from './screens/store/OrderDetail';
 import Notifications from './screens/store/Notifications';
+import { OfflineBar } from './components/OfflineBar';
 import Menu from './screens/store/Menu';
 import Bookings from './screens/store/Bookings';
 import Import from './screens/store/Import';
@@ -44,6 +45,7 @@ export default function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <BrowserRouter>
+        <OfflineBar />
         <Routes>
           {/* Public site — shared navbar + footer */}
           <Route element={<PublicLayout />}>

@@ -1,11 +1,11 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { Bell, BellOff, Bike, CheckCircle2, ClipboardList, CloudOff, Plus, ShoppingBag, Sparkles, Timer } from 'lucide-react';
+import { Bell, BellOff, Bike, CheckCircle2, ClipboardList, CloudOff, Plus, ShoppingBag, SlidersHorizontal, Sparkles, Timer, Volume2 } from 'lucide-react';
 import { api } from '../../lib/api';
 import { inr } from '../../lib/catalog';
 import { errorMessageOf } from '../../lib/onboarding';
-import { clock, enableSound, mmss, orderAction, QueuedOffline, REJECT_REASONS, RIDER, soundReady, STATUS, TABS, useAlarm, useNewOrders, useNow, useOrders, usePendingSync, type Order, type OrderTab } from '../../lib/orders';
+import { clock, enableSound, getSoundPrefs, HISTORY_TABS, mmss, orderAction, QueuedOffline, REJECT_REASONS, RIDER, setSoundPrefs, soundReady, STATUS, TABS, testSound, TONES, useAlarm, useNewOrders, useNow, useOrderHistory, useOrders, usePendingSync, type Order, type OrderTab, type SoundPrefs } from '../../lib/orders';
 import { Field, TextInput } from '../../components/form';
 import { Modal } from '../../components/Modal';
 import { Button, ErrorText } from '../../components/ui';
@@ -27,8 +27,11 @@ export default function Orders() {
   const [heard, setHeard] = useState<Set<string>>(new Set());
   const [sound, setSound] = useState(soundReady());
   const fresh = useNewOrders(storeId);
-  const list = useOrders(storeId, tab);
-  const data = tab === 'NEW' ? fresh.data : list.data;
+  const isHistory = HISTORY_TABS.includes(tab);
+  const list = useOrders(storeId, tab, tab !== 'NEW' && !isHistory);
+  const history = useOrderHistory(storeId, tab, isHistory);
+  const [soundPanel, setSoundPanel] = useState(false);
+  const data = tab === 'NEW' ? fresh.data : isHistory ? (history.data ? { orders: history.data.pages.flatMap((p) => p.orders) } : undefined) : list.data;
   const pending = usePendingSync(storeId);
   const qc = useQueryClient();
 
@@ -59,8 +62,8 @@ export default function Orders() {
 
   const counts = fresh.data?.counts ?? list.data?.counts;
   const orders = data?.orders ?? [];
-  const isLoading = tab === 'NEW' ? fresh.isLoading : list.isLoading;
-  const error = tab === 'NEW' ? fresh.error : list.error;
+  const isLoading = tab === 'NEW' ? fresh.isLoading : isHistory ? history.isLoading : list.isLoading;
+  const error = tab === 'NEW' ? fresh.error : isHistory ? history.error : list.error;
 
   return (
     <div className="space-y-5">
@@ -77,9 +80,15 @@ export default function Orders() {
               <CloudOff className="h-3.5 w-3.5" /> {pending.length} pending sync
             </span>
           )}
-          <Button variant="ghost" className="min-h-11" onClick={() => (sound ? setSound(false) : void enableSound().then(setSound))} aria-pressed={sound}>
-            {sound ? <Bell className="h-4 w-4" /> : <BellOff className="h-4 w-4" />} {sound ? 'Sound on' : 'Turn on sound'}
-          </Button>
+          <span className="relative flex">
+            <Button variant="ghost" className="min-h-11 rounded-r-none" onClick={() => (sound ? setSound(false) : void enableSound().then(setSound))} aria-pressed={sound}>
+              {sound ? <Bell className="h-4 w-4" /> : <BellOff className="h-4 w-4" />} {sound ? 'Sound on' : 'Turn on sound'}
+            </Button>
+            <Button variant="ghost" className="min-h-11 rounded-l-none border-l-0 px-3" onClick={() => setSoundPanel((v) => !v)} aria-label="Sound settings" aria-expanded={soundPanel}>
+              <SlidersHorizontal className="h-4 w-4" />
+            </Button>
+            {soundPanel && <SoundSettings onClose={() => setSoundPanel(false)} onEnabled={() => setSound(true)} />}
+          </span>
           {import.meta.env.DEV && (role === 'OWNER' || role === 'MANAGER') && (
             <Button variant="ghost" className="min-h-11" disabled={simulate.isPending} onClick={() => simulate.mutate()}>
               <Sparkles className="h-4 w-4" /> Test order
@@ -122,9 +131,44 @@ export default function Orders() {
           <OrderCard key={o.id} order={o} onDialog={(kind) => (setHeard((h) => new Set([...h, o.id])), setDialog({ kind, order: o }))} onSeen={() => setHeard((h) => new Set([...h, o.id]))} />
         ))}
       </div>
+      {isHistory && history.hasNextPage && (
+        <Button variant="ghost" className="w-full" disabled={history.isFetchingNextPage} onClick={() => void history.fetchNextPage()}>
+          {history.isFetchingNextPage ? 'Loading…' : 'Load older orders'}
+        </Button>
+      )}
 
       {dialog && <ActionDialog dialog={dialog} onClose={() => setDialog(null)} />}
       {creating && <NewOrder onClose={() => setCreating(false)} />}
+    </div>
+  );
+}
+
+/** Tone + volume for the new-order alarm, saved on this device. */
+function SoundSettings({ onClose, onEnabled }: { onClose: () => void; onEnabled: () => void }) {
+  const [prefs, setPrefs] = useState<SoundPrefs>(getSoundPrefs);
+  const update = (p: SoundPrefs) => (setPrefs(p), setSoundPrefs(p));
+  return (
+    <div role="dialog" aria-label="Sound settings" className="dz-pop absolute right-0 top-12 z-40 w-72 space-y-3 rounded-2xl border-[1.5px] border-black bg-white p-4 shadow-2xl">
+      <div className="flex items-center justify-between">
+        <b>Order sound</b>
+        <button type="button" onClick={onClose} className="text-sm font-bold text-ink-3 hover:text-ink">Done</button>
+      </div>
+      <div className="flex gap-1.5" role="radiogroup" aria-label="Tone">
+        {TONES.map((t) => (
+          <button key={t.value} type="button" role="radio" aria-checked={prefs.tone === t.value} onClick={() => update({ ...prefs, tone: t.value })} className={`flex-1 rounded-lg border-[1.5px] px-2 py-1.5 text-sm font-bold ${prefs.tone === t.value ? 'border-black bg-black text-dz-yellow' : 'border-line'}`}>
+            {t.label}
+          </button>
+        ))}
+      </div>
+      <label className="block text-sm font-semibold">
+        Volume
+        <input type="range" min={1} max={5} step={1} value={prefs.volume} onChange={(e) => update({ ...prefs, volume: Number(e.target.value) as SoundPrefs['volume'] })} className="mt-1 w-full accent-dz-red" aria-label="Volume" />
+        <span className="flex justify-between text-[11px] text-ink-3"><span>Quiet</span><span>Loud</span></span>
+      </label>
+      <Button variant="dark" className="min-h-10 w-full text-sm" onClick={() => void testSound(prefs).then(onEnabled)}>
+        <Volume2 className="h-4 w-4" /> Test sound
+      </Button>
+      <p className="text-[11px] text-ink-3">Saved on this device. Also check the tablet’s own volume.</p>
     </div>
   );
 }

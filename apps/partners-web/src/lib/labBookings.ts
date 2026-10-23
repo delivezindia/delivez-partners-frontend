@@ -50,11 +50,12 @@ export const STATUS: Record<LabStatus, { label: string; cls: string }> = {
   REJECTED: { label: 'Rejected', cls: 'border-line bg-soft text-ink-3' },
 };
 
-export const useLabBookings = (storeId: string, tab: BookingTab) =>
+export const useLabBookings = (storeId: string, tab: BookingTab, enabled = true) =>
   useQuery({
     queryKey: ['lab-bookings', storeId, tab],
     queryFn: () => api<{ bookings: LabBooking[]; counts: Record<'TO_CONFIRM' | 'UPCOMING' | 'IN_LAB', number> }>(`/partners/stores/${storeId}/lab-bookings?tab=${tab}`),
     refetchInterval: 30_000,
+    enabled,
   });
 
 export const useLabBooking = (storeId: string, id: string | null) =>
