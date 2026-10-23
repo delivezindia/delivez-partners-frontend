@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useInfiniteQuery, useQuery, useQueryClient } from '@tanstack/react-query';
 import { api, ApiError, newIdempotencyKey } from './api';
+import type { MsgKey } from './i18n';
 
 export type OrderStatus =
   | 'PLACED' | 'ACCEPTED' | 'PREPARING' | 'READY_SOON' | 'READY' | 'PICKED_UP' | 'OUT_FOR_DELIVERY' | 'ARRIVED'
@@ -33,54 +34,54 @@ export interface Order {
   timeline?: { from: OrderStatus | null; to: OrderStatus; actorType: string; reason: string | null; meta: Record<string, unknown> | null; at: string }[];
 }
 
-export const TABS: { key: OrderTab; label: string }[] = [
-  { key: 'NEW', label: 'New' },
-  { key: 'PREPARING', label: 'Preparing' },
-  { key: 'READY', label: 'Ready' },
-  { key: 'DONE', label: 'Picked up' },
-  { key: 'CANCELLED', label: 'Cancelled' },
-  { key: 'ALL', label: 'All' },
+export const TABS: { key: OrderTab; label: string; t: MsgKey }[] = [
+  { key: 'NEW', label: 'New', t: 'ord.tab.NEW' },
+  { key: 'PREPARING', label: 'Preparing', t: 'ord.tab.PREPARING' },
+  { key: 'READY', label: 'Ready', t: 'ord.tab.READY' },
+  { key: 'DONE', label: 'Picked up', t: 'ord.tab.DONE' },
+  { key: 'CANCELLED', label: 'Cancelled', t: 'ord.tab.CANCELLED' },
+  { key: 'ALL', label: 'All', t: 'ord.tab.ALL' },
 ];
 
 /** State colours (plan §16.1). */
-export const STATUS: Record<OrderStatus, { label: string; cls: string; bar: string }> = {
-  PLACED: { label: 'New', cls: 'border-dz-red bg-dz-red-soft text-dz-red', bar: 'bg-dz-red' },
-  ACCEPTED: { label: 'Accepted', cls: 'border-dz-blue bg-dz-blue-soft text-dz-blue', bar: 'bg-dz-blue' },
-  PREPARING: { label: 'Preparing', cls: 'border-dz-yellow-strong bg-dz-yellow-soft text-ink', bar: 'bg-dz-yellow-strong' },
-  READY_SOON: { label: 'Ready soon', cls: 'border-amber-500 bg-amber-50 text-amber-800', bar: 'bg-amber-500' },
-  READY: { label: 'Ready', cls: 'border-dz-green bg-dz-green-soft text-dz-green', bar: 'bg-dz-green' },
-  PICKED_UP: { label: 'Picked up', cls: 'border-line bg-soft text-ink-2', bar: 'bg-neutral-400' },
-  OUT_FOR_DELIVERY: { label: 'Out for delivery', cls: 'border-line bg-soft text-ink-2', bar: 'bg-neutral-400' },
-  ARRIVED: { label: 'At customer', cls: 'border-line bg-soft text-ink-2', bar: 'bg-neutral-400' },
-  DELIVERED: { label: 'Delivered', cls: 'border-line bg-soft text-ink-2', bar: 'bg-neutral-400' },
-  COMPLETED: { label: 'Collected', cls: 'border-line bg-soft text-ink-2', bar: 'bg-neutral-400' },
-  REJECTED: { label: 'Rejected', cls: 'border-line bg-soft text-ink-3', bar: 'bg-neutral-300' },
-  CANCELLED: { label: 'Cancelled', cls: 'border-line bg-soft text-ink-3', bar: 'bg-neutral-300' },
-  DELIVERY_FAILED: { label: 'Delivery failed', cls: 'border-dz-red bg-soft text-dz-red', bar: 'bg-neutral-300' },
-  REFUNDED: { label: 'Refunded', cls: 'border-line bg-soft text-ink-3', bar: 'bg-neutral-300' },
+export const STATUS: Record<OrderStatus, { label: string; cls: string; bar: string; t: MsgKey }> = {
+  PLACED: { label: 'New', cls: 'border-dz-red bg-dz-red-soft text-dz-red', bar: 'bg-dz-red', t: 'ord.st.PLACED' },
+  ACCEPTED: { label: 'Accepted', cls: 'border-dz-blue bg-dz-blue-soft text-dz-blue', bar: 'bg-dz-blue', t: 'ord.st.ACCEPTED' },
+  PREPARING: { label: 'Preparing', cls: 'border-dz-yellow-strong bg-dz-yellow-soft text-ink', bar: 'bg-dz-yellow-strong', t: 'ord.st.PREPARING' },
+  READY_SOON: { label: 'Ready soon', cls: 'border-amber-500 bg-amber-50 text-amber-800', bar: 'bg-amber-500', t: 'ord.st.READY_SOON' },
+  READY: { label: 'Ready', cls: 'border-dz-green bg-dz-green-soft text-dz-green', bar: 'bg-dz-green', t: 'ord.st.READY' },
+  PICKED_UP: { label: 'Picked up', cls: 'border-line bg-soft text-ink-2', bar: 'bg-neutral-400', t: 'ord.st.PICKED_UP' },
+  OUT_FOR_DELIVERY: { label: 'Out for delivery', cls: 'border-line bg-soft text-ink-2', bar: 'bg-neutral-400', t: 'ord.st.OUT_FOR_DELIVERY' },
+  ARRIVED: { label: 'At customer', cls: 'border-line bg-soft text-ink-2', bar: 'bg-neutral-400', t: 'ord.st.ARRIVED' },
+  DELIVERED: { label: 'Delivered', cls: 'border-line bg-soft text-ink-2', bar: 'bg-neutral-400', t: 'ord.st.DELIVERED' },
+  COMPLETED: { label: 'Collected', cls: 'border-line bg-soft text-ink-2', bar: 'bg-neutral-400', t: 'ord.st.COMPLETED' },
+  REJECTED: { label: 'Rejected', cls: 'border-line bg-soft text-ink-3', bar: 'bg-neutral-300', t: 'ord.st.REJECTED' },
+  CANCELLED: { label: 'Cancelled', cls: 'border-line bg-soft text-ink-3', bar: 'bg-neutral-300', t: 'ord.st.CANCELLED' },
+  DELIVERY_FAILED: { label: 'Delivery failed', cls: 'border-dz-red bg-soft text-dz-red', bar: 'bg-neutral-300', t: 'ord.st.DELIVERY_FAILED' },
+  REFUNDED: { label: 'Refunded', cls: 'border-line bg-soft text-ink-3', bar: 'bg-neutral-300', t: 'ord.st.REFUNDED' },
 };
 
-export const RIDER: Record<TaskStatus, string> = {
-  CREATED: 'Finding a rider',
-  SEARCHING_RIDER: 'Finding a rider',
-  ASSIGNED: 'Rider assigned',
-  EN_ROUTE_TO_PICKUP: 'Rider on the way',
-  ARRIVED_AT_PICKUP: 'Rider has arrived',
-  WAITING_AT_PICKUP: 'Rider is waiting',
-  PICKED_UP: 'Picked up',
-  EN_ROUTE_TO_DROP: 'On the way to customer',
-  ARRIVED_AT_DROP: 'At the customer',
-  DELIVERED: 'Delivered',
-  FAILED: 'Delivery failed',
-  CANCELLED: 'Cancelled',
+export const RIDER: Record<TaskStatus, MsgKey> = {
+  CREATED: 'ord.rider.CREATED',
+  SEARCHING_RIDER: 'ord.rider.SEARCHING_RIDER',
+  ASSIGNED: 'ord.rider.ASSIGNED',
+  EN_ROUTE_TO_PICKUP: 'ord.rider.EN_ROUTE_TO_PICKUP',
+  ARRIVED_AT_PICKUP: 'ord.rider.ARRIVED_AT_PICKUP',
+  WAITING_AT_PICKUP: 'ord.rider.WAITING_AT_PICKUP',
+  PICKED_UP: 'ord.rider.PICKED_UP',
+  EN_ROUTE_TO_DROP: 'ord.rider.EN_ROUTE_TO_DROP',
+  ARRIVED_AT_DROP: 'ord.rider.ARRIVED_AT_DROP',
+  DELIVERED: 'ord.rider.DELIVERED',
+  FAILED: 'ord.rider.FAILED',
+  CANCELLED: 'ord.rider.CANCELLED',
 };
 
 export const REJECT_REASONS = [
-  { value: 'ITEMS_UNAVAILABLE', label: 'Items unavailable' },
-  { value: 'TOO_BUSY', label: 'Too busy right now' },
-  { value: 'STORE_CLOSING', label: 'Store closing' },
-  { value: 'KITCHEN_ISSUE', label: 'Kitchen / equipment issue' },
-  { value: 'OTHER', label: 'Other' },
+  { value: 'ITEMS_UNAVAILABLE', label: 'Items unavailable', t: 'ord.rr.ITEMS_UNAVAILABLE' as MsgKey },
+  { value: 'TOO_BUSY', label: 'Too busy right now', t: 'ord.rr.TOO_BUSY' as MsgKey },
+  { value: 'STORE_CLOSING', label: 'Store closing', t: 'ord.rr.STORE_CLOSING' as MsgKey },
+  { value: 'KITCHEN_ISSUE', label: 'Kitchen / equipment issue', t: 'ord.rr.KITCHEN_ISSUE' as MsgKey },
+  { value: 'OTHER', label: 'Other', t: 'ord.rr.OTHER' as MsgKey },
 ] as const;
 
 type OrdersPage = { orders: Order[]; counts: Record<'NEW' | 'PREPARING' | 'READY', number>; nextCursor: string | null };
@@ -245,10 +246,10 @@ export function useNow(active = true) {
 
 // Each device (kitchen tablet, counter PC) keeps its own tone and volume.
 export type Tone = 'classic' | 'bell' | 'urgent';
-export const TONES: { value: Tone; label: string }[] = [
-  { value: 'classic', label: 'Classic' },
-  { value: 'bell', label: 'Bell' },
-  { value: 'urgent', label: 'Urgent' },
+export const TONES: { value: Tone; label: string; t: MsgKey }[] = [
+  { value: 'classic', label: 'Classic', t: 'ord.tone.classic' },
+  { value: 'bell', label: 'Bell', t: 'ord.tone.bell' },
+  { value: 'urgent', label: 'Urgent', t: 'ord.tone.urgent' },
 ];
 /** Notes per tone: [frequency Hz, start s, length s]. */
 const NOTES: Record<Tone, { wave: OscillatorType; notes: [number, number, number][] }> = {
@@ -344,10 +345,38 @@ export function printKot(o: Order, storeName: string) {
     ${o.note ? `<hr><div><b>Note:</b> ${esc(o.note)}</div>` : ''}<hr>
     <div class="c">Printed ${new Date().toLocaleTimeString('en-IN', { hour: 'numeric', minute: '2-digit' })}</div>
   </body></html>`;
-  const w = window.open('', '_blank', 'width=320,height=600');
-  if (!w) return false;
-  w.document.write(html);
-  w.document.close();
-  setTimeout(() => (w.focus(), w.print()), 300);
+  // A hidden frame instead of a popup: works for automatic printing too (popup blockers only allow clicks).
+  const frame = document.createElement('iframe');
+  frame.setAttribute('aria-hidden', 'true');
+  frame.dataset.kot = o.orderNumber;
+  Object.assign(frame.style, { position: 'fixed', right: '0', bottom: '0', width: '0', height: '0', border: '0' });
+  document.body.appendChild(frame);
+  const doc = frame.contentDocument;
+  if (!doc || !frame.contentWindow) return false;
+  doc.open();
+  doc.write(html);
+  doc.close();
+  setTimeout(() => {
+    frame.contentWindow?.focus();
+    frame.contentWindow?.print();
+    setTimeout(() => frame.remove(), 60_000);
+  }, 250);
   return true;
 }
+
+// Auto-print the kitchen ticket on accept — a per-device choice (the tablet next to the printer).
+const AUTO_KOT_KEY = 'dz-auto-kot';
+export const getAutoKot = () => {
+  try {
+    return localStorage.getItem(AUTO_KOT_KEY) === '1';
+  } catch {
+    return false;
+  }
+};
+export const setAutoKot = (on: boolean) => {
+  try {
+    localStorage.setItem(AUTO_KOT_KEY, on ? '1' : '0');
+  } catch {
+    /* private mode */
+  }
+};

@@ -1,5 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { api, newIdempotencyKey } from './api';
+import type { MsgKey } from './i18n';
 
 export type LabStatus = 'BOOKED' | 'RX_REVIEW' | 'CONFIRMED' | 'COLLECTOR_ASSIGNED' | 'SAMPLE_COLLECTED' | 'PROCESSING' | 'REPORT_READY' | 'CANCELLED' | 'REJECTED';
 export type BookingTab = 'TO_CONFIRM' | 'UPCOMING' | 'IN_LAB' | 'REPORTS' | 'CANCELLED';
@@ -30,24 +31,24 @@ export interface LabBooking {
   timeline?: { from: LabStatus | null; to: LabStatus; actorType: string; reason: string | null; meta: Record<string, unknown> | null; at: string }[];
 }
 
-export const TABS: { key: BookingTab; label: string; states: LabStatus[] }[] = [
-  { key: 'TO_CONFIRM', label: 'To confirm', states: ['BOOKED', 'RX_REVIEW'] },
-  { key: 'UPCOMING', label: 'Upcoming', states: ['CONFIRMED', 'COLLECTOR_ASSIGNED'] },
-  { key: 'IN_LAB', label: 'In the lab', states: ['SAMPLE_COLLECTED', 'PROCESSING'] },
-  { key: 'REPORTS', label: 'Reports sent', states: ['REPORT_READY'] },
-  { key: 'CANCELLED', label: 'Cancelled', states: ['CANCELLED', 'REJECTED'] },
+export const TABS: { key: BookingTab; t: MsgKey; states: LabStatus[] }[] = [
+  { key: 'TO_CONFIRM', t: 'lb.tab.TO_CONFIRM', states: ['BOOKED', 'RX_REVIEW'] },
+  { key: 'UPCOMING', t: 'lb.tab.UPCOMING', states: ['CONFIRMED', 'COLLECTOR_ASSIGNED'] },
+  { key: 'IN_LAB', t: 'lb.tab.IN_LAB', states: ['SAMPLE_COLLECTED', 'PROCESSING'] },
+  { key: 'REPORTS', t: 'lb.tab.REPORTS', states: ['REPORT_READY'] },
+  { key: 'CANCELLED', t: 'lb.tab.CANCELLED', states: ['CANCELLED', 'REJECTED'] },
 ];
 
-export const STATUS: Record<LabStatus, { label: string; cls: string }> = {
-  BOOKED: { label: 'New booking', cls: 'border-dz-yellow-strong bg-dz-yellow-soft text-ink' },
-  RX_REVIEW: { label: 'Check prescription', cls: 'border-dz-red bg-dz-red-soft text-dz-red' },
-  CONFIRMED: { label: 'Confirmed', cls: 'border-dz-blue bg-dz-blue-soft text-dz-blue' },
-  COLLECTOR_ASSIGNED: { label: 'Collector assigned', cls: 'border-dz-blue bg-dz-blue-soft text-dz-blue' },
-  SAMPLE_COLLECTED: { label: 'Sample collected', cls: 'border-teal-600 bg-teal-50 text-teal-800' },
-  PROCESSING: { label: 'Processing', cls: 'border-teal-600 bg-teal-50 text-teal-800' },
-  REPORT_READY: { label: 'Report sent', cls: 'border-dz-green bg-dz-green-soft text-dz-green' },
-  CANCELLED: { label: 'Cancelled', cls: 'border-line bg-soft text-ink-3' },
-  REJECTED: { label: 'Rejected', cls: 'border-line bg-soft text-ink-3' },
+export const STATUS: Record<LabStatus, { t: MsgKey; cls: string }> = {
+  BOOKED: { t: 'lb.st.BOOKED', cls: 'border-dz-yellow-strong bg-dz-yellow-soft text-ink' },
+  RX_REVIEW: { t: 'lb.st.RX_REVIEW', cls: 'border-dz-red bg-dz-red-soft text-dz-red' },
+  CONFIRMED: { t: 'lb.st.CONFIRMED', cls: 'border-dz-blue bg-dz-blue-soft text-dz-blue' },
+  COLLECTOR_ASSIGNED: { t: 'lb.st.COLLECTOR_ASSIGNED', cls: 'border-dz-blue bg-dz-blue-soft text-dz-blue' },
+  SAMPLE_COLLECTED: { t: 'lb.st.SAMPLE_COLLECTED', cls: 'border-teal-600 bg-teal-50 text-teal-800' },
+  PROCESSING: { t: 'lb.st.PROCESSING', cls: 'border-teal-600 bg-teal-50 text-teal-800' },
+  REPORT_READY: { t: 'lb.st.REPORT_READY', cls: 'border-dz-green bg-dz-green-soft text-dz-green' },
+  CANCELLED: { t: 'lb.st.CANCELLED', cls: 'border-line bg-soft text-ink-3' },
+  REJECTED: { t: 'lb.st.REJECTED', cls: 'border-line bg-soft text-ink-3' },
 };
 
 export const useLabBookings = (storeId: string, tab: BookingTab, enabled = true) =>

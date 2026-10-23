@@ -11,6 +11,7 @@ import { Modal } from '../../components/Modal';
 import { Button, ErrorText } from '../../components/ui';
 import { toast } from '../../components/feedback';
 import { MapPicker } from '../../components/MapPicker';
+import { useI18n } from '../../lib/i18n';
 import { useStoreContext } from './StoreLayout';
 
 type Line = { productId: string; variantId?: string; qty: number };
@@ -19,6 +20,7 @@ const lineKey = (l: Pick<Line, 'productId' | 'variantId'>) => `${l.productId}:${
 /** Phone / counter orders entered by the store. They start accepted (plan Step 10). */
 export default function NewOrder({ onClose }: { onClose: () => void }) {
   const { storeId, detail } = useStoreContext();
+  const { t } = useI18n();
   const navigate = useNavigate();
   const qc = useQueryClient();
   const products = useProducts(storeId);
@@ -68,7 +70,7 @@ export default function NewOrder({ onClose }: { onClose: () => void }) {
       }),
     onSuccess: (o) => {
       void qc.invalidateQueries({ queryKey: ['orders', storeId] });
-      toast.success(`Order ${o.orderNumber} created`);
+      toast.success(t('no.created', { no: o.orderNumber }));
       onClose();
       navigate(`/stores/${storeId}/orders/${o.orderNumber}`);
     },
@@ -78,17 +80,17 @@ export default function NewOrder({ onClose }: { onClose: () => void }) {
   const addressOk = f.type === 'PICKUP' || (!!pin && f.line1.trim().length >= 3 && /^\d{6}$/.test(f.pincode));
 
   return (
-    <Modal title="New order" onClose={onClose} wide>
+    <Modal title={t('ord.newOrder')} onClose={onClose} wide>
       <div className="space-y-4">
         <div className="grid gap-3 sm:grid-cols-2">
-          <Field label="Customer mobile"><TextInput inputMode="tel" value={f.phone} onChange={(e) => set('phone', e.target.value)} placeholder="98450 12345" /></Field>
-          <Field label="Customer name (optional)"><TextInput value={f.name} onChange={(e) => set('name', e.target.value)} /></Field>
+          <Field label={t('no.mobile')}><TextInput inputMode="tel" value={f.phone} onChange={(e) => set('phone', e.target.value)} placeholder="98450 12345" /></Field>
+          <Field label={t('no.name')}><TextInput value={f.name} onChange={(e) => set('name', e.target.value)} /></Field>
         </div>
 
         <div className="flex flex-wrap gap-2">
-          {(['PICKUP', 'DELIVERY'] as const).map((t) => (
-            <button key={t} type="button" disabled={t === 'PICKUP' ? !s.supportsPickup : !s.supportsDelivery} onClick={() => set('type', t)} className={`flex h-11 items-center gap-2 rounded-xl border-[1.5px] px-3 text-sm font-semibold disabled:opacity-40 ${f.type === t ? 'border-black bg-dz-yellow-soft' : 'border-line'}`}>
-              {t === 'PICKUP' ? <ShoppingBag className="h-4 w-4" /> : <Bike className="h-4 w-4" />} {t === 'PICKUP' ? 'Customer picks up' : 'Delivery'}
+          {(['PICKUP', 'DELIVERY'] as const).map((ft) => (
+            <button key={ft} type="button" disabled={ft === 'PICKUP' ? !s.supportsPickup : !s.supportsDelivery} onClick={() => set('type', ft)} className={`flex h-11 items-center gap-2 rounded-xl border-[1.5px] px-3 text-sm font-semibold disabled:opacity-40 ${f.type === ft ? 'border-black bg-dz-yellow-soft' : 'border-line'}`}>
+              {ft === 'PICKUP' ? <ShoppingBag className="h-4 w-4" /> : <Bike className="h-4 w-4" />} {ft === 'PICKUP' ? t('no.picksUp') : t('ord.delivery')}
             </button>
           ))}
         </div>
@@ -98,8 +100,8 @@ export default function NewOrder({ onClose }: { onClose: () => void }) {
             lng={pin?.lng ?? null}
             fallbackCenter={[s.lat ?? 12.9716, s.lng ?? 77.5946]}
             height="h-56"
-            placeholder="Search the customer’s address or landmark"
-            hint="Drop the pin on the customer’s door — the rider is sent here."
+            placeholder={t('no.searchAddress')}
+            hint={t('no.pinHint')}
             onChange={(lat, lng) => setPin({ lat, lng })}
             onAddress={(r) =>
               setF((x) => {
@@ -112,20 +114,20 @@ export default function NewOrder({ onClose }: { onClose: () => void }) {
         )}
         {f.type === 'DELIVERY' && (
           <div className="grid gap-3 sm:grid-cols-[2fr_1.4fr_1fr]">
-            <Field label="Delivery address"><TextInput value={f.line1} onChange={(e) => set('line1', e.target.value)} placeholder="House no., street, area" /></Field>
-            <Field label="Landmark"><TextInput value={f.landmark} onChange={(e) => set('landmark', e.target.value)} /></Field>
-            <Field label="PIN code"><TextInput inputMode="numeric" maxLength={6} value={f.pincode} onChange={(e) => set('pincode', e.target.value.replace(/\D/g, ''))} /></Field>
+            <Field label={t('no.address')}><TextInput value={f.line1} onChange={(e) => set('line1', e.target.value)} placeholder={t('no.addressPh')} /></Field>
+            <Field label={t('no.landmark')}><TextInput value={f.landmark} onChange={(e) => set('landmark', e.target.value)} /></Field>
+            <Field label={t('no.pincode')}><TextInput inputMode="numeric" maxLength={6} value={f.pincode} onChange={(e) => set('pincode', e.target.value.replace(/\D/g, ''))} /></Field>
           </div>
         )}
 
         <div>
           <div className="relative">
             <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-ink-3" />
-            <TextInput className="pl-9" value={q} onChange={(e) => setQ(e.target.value)} placeholder={`Search ${sellable.length} items`} aria-label="Search items" />
+            <TextInput className="pl-9" value={q} onChange={(e) => setQ(e.target.value)} placeholder={t('no.searchItems', { n: sellable.length })} aria-label={t('no.searchItemsAria')} />
           </div>
           <ul className="mt-2 max-h-64 divide-y divide-line overflow-auto rounded-xl border border-line">
-            {products.isLoading && <li className="p-3 text-sm text-ink-3">Loading menu…</li>}
-            {!products.isLoading && shown.length === 0 && <li className="p-3 text-sm text-ink-3">No items match.</li>}
+            {products.isLoading && <li className="p-3 text-sm text-ink-3">{t('no.loadingMenu')}</li>}
+            {!products.isLoading && shown.length === 0 && <li className="p-3 text-sm text-ink-3">{t('no.noMatch')}</li>}
             {shown.map((p) => <PickerRow key={p.id} p={p} lines={lines} bump={bump} />)}
           </ul>
         </div>
@@ -146,8 +148,8 @@ export default function NewOrder({ onClose }: { onClose: () => void }) {
         )}
 
         <div className="grid gap-3 sm:grid-cols-2">
-          <Field label="Note for the kitchen (optional)"><TextInput value={f.note} maxLength={300} onChange={(e) => set('note', e.target.value)} placeholder="e.g. Less spicy" /></Field>
-          <Field label="Ready in (minutes)">
+          <Field label={t('no.note')}><TextInput value={f.note} maxLength={300} onChange={(e) => set('note', e.target.value)} placeholder={t('no.notePh')} /></Field>
+          <Field label={t('no.readyIn')}>
             <TextInput inputMode="numeric" value={String(f.prep)} onChange={(e) => set('prep', Math.min(120, Number(e.target.value.replace(/\D/g, '')) || 0))} />
           </Field>
         </div>
@@ -155,14 +157,14 @@ export default function NewOrder({ onClose }: { onClose: () => void }) {
         <div className="flex flex-wrap items-center justify-between gap-3 border-t border-line pt-3">
           <div className="flex gap-2">
             {(['COD', 'UPI'] as const).map((m) => (
-              <button key={m} type="button" onClick={() => set('pay', m)} className={`rounded-lg border-[1.5px] px-3 py-1.5 text-sm font-bold ${f.pay === m ? 'border-black bg-black text-white' : 'border-line'}`}>{m === 'COD' ? 'Cash' : 'Paid (UPI)'}</button>
+              <button key={m} type="button" onClick={() => set('pay', m)} className={`rounded-lg border-[1.5px] px-3 py-1.5 text-sm font-bold ${f.pay === m ? 'border-black bg-black text-white' : 'border-line'}`}>{m === 'COD' ? t('ord.cash') : t('no.paidUpi')}</button>
             ))}
           </div>
-          <span className="text-right"><b className="text-lg">{inr(total)}</b>{f.type === 'DELIVERY' && <span className="block text-xs text-ink-3">+ delivery fee</span>}</span>
+          <span className="text-right"><b className="text-lg">{inr(total)}</b>{f.type === 'DELIVERY' && <span className="block text-xs text-ink-3">{t('no.plusDelivery')}</span>}</span>
         </div>
         {save.error && <ErrorText>{errorMessageOf(save.error)}</ErrorText>}
         <Button className="w-full" disabled={save.isPending || !phoneOk || !addressOk || !lines.length || f.prep < 5} onClick={() => save.mutate()}>
-          {save.isPending ? 'Creating…' : 'Create order'}
+          {save.isPending ? t('no.creating') : t('no.create')}
         </Button>
       </div>
     </Modal>
@@ -170,6 +172,7 @@ export default function NewOrder({ onClose }: { onClose: () => void }) {
 }
 
 function PickerRow({ p, lines, bump }: { p: Product; lines: Line[]; bump: (productId: string, variantId: string | undefined, d: number) => void }) {
+  const { t } = useI18n();
   const [variantId, setVariantId] = useState(p.variants.find((v) => v.isDefault)?.id ?? p.variants[0]?.id);
   const qty = lines.find((l) => lineKey(l) === lineKey({ productId: p.id, variantId }))?.qty ?? 0;
   const price = p.price + (p.variants.find((v) => v.id === variantId)?.priceDiff ?? 0);
@@ -181,17 +184,17 @@ function PickerRow({ p, lines, bump }: { p: Product; lines: Line[]; bump: (produ
         <span className="text-xs text-ink-3">{inr(price)}{p.inventory?.available != null && ` · ${p.inventory.available} in stock`}</span>
       </span>
       {p.variants.length > 1 && (
-        <select className="h-9 rounded-lg border border-line bg-white px-2 text-sm" value={variantId} onChange={(e) => setVariantId(e.target.value)} aria-label={`${p.name} size`}>
+        <select className="h-9 rounded-lg border border-line bg-white px-2 text-sm" value={variantId} onChange={(e) => setVariantId(e.target.value)} aria-label={t('no.sizeAria', { name: p.name })}>
           {p.variants.map((v) => <option key={v.id} value={v.id}>{v.name}</option>)}
         </select>
       )}
       {qty === 0 ? (
-        <button type="button" onClick={() => bump(p.id, variantId, 1)} className="h-9 rounded-lg border-[1.5px] border-black px-3 text-sm font-extrabold" aria-label={`Add ${p.name}`}>Add</button>
+        <button type="button" onClick={() => bump(p.id, variantId, 1)} className="h-9 rounded-lg border-[1.5px] border-black px-3 text-sm font-extrabold" aria-label={t('no.addAria', { name: p.name })}>{t('no.add')}</button>
       ) : (
         <span className="flex items-center gap-1">
-          <button type="button" onClick={() => bump(p.id, variantId, -1)} className="grid h-9 w-9 place-items-center rounded-lg border-[1.5px] border-line" aria-label={`Less ${p.name}`}><Minus className="h-4 w-4" /></button>
+          <button type="button" onClick={() => bump(p.id, variantId, -1)} className="grid h-9 w-9 place-items-center rounded-lg border-[1.5px] border-line" aria-label={t('no.lessAria', { name: p.name })}><Minus className="h-4 w-4" /></button>
           <b className="w-6 text-center tabular-nums">{qty}</b>
-          <button type="button" onClick={() => bump(p.id, variantId, 1)} className="grid h-9 w-9 place-items-center rounded-lg border-[1.5px] border-black" aria-label={`More ${p.name}`}><Plus className="h-4 w-4" /></button>
+          <button type="button" onClick={() => bump(p.id, variantId, 1)} className="grid h-9 w-9 place-items-center rounded-lg border-[1.5px] border-black" aria-label={t('no.moreAria', { name: p.name })}><Plus className="h-4 w-4" /></button>
         </span>
       )}
     </li>

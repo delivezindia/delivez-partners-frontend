@@ -5,6 +5,7 @@ import { api, errorText } from '../lib/api';
 import type { Dashboard as Data, StoreStatus } from '../lib/types';
 import { ago, Card, Empty, fmtDate, PageHead, StatusChip } from '../components/ui';
 import { useMe } from './Layout';
+import { OrdersOverview } from '../components/OrdersOverview';
 
 const VERTICAL: Record<string, string> = { EAT: 'Eat', GROCERY: 'Grocery', PHARMACY: 'Pharmacy', DIAGNOSTICS: 'Diagnostics', LOCAL_STORES: 'Local stores' };
 const ACTION: Record<string, string> = {
@@ -40,6 +41,8 @@ export default function Dashboard() {
         <Stat to="/documents?status=EXPIRING" icon={CalendarClock} label="Licences expiring (30 days)" value={data.docsExpiring} tone={data.docsExpiring ? 'red' : undefined} />
         <Stat to="/stores?status=SUSPENDED" icon={AlertTriangle} label="Paused / suspended" value={c.PAUSED + c.SUSPENDED} tone={c.PAUSED + c.SUSPENDED ? 'red' : undefined} />
       </div>
+
+      {data.orders && <OrdersOverview data={data.orders} />}
 
       <div className="grid gap-5 lg:grid-cols-2">
         <Card title="Waiting longest for review" actions={<Link to="/stores?status=SUBMITTED" className="text-sm font-bold underline">All</Link>}>

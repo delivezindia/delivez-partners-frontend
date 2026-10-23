@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { api } from './api';
+import type { MsgKey } from './i18n';
 
 export interface Notice {
   id: string;
@@ -19,11 +20,11 @@ export const useNotifications = (limit = 30) =>
 
 export const markRead = (id?: string) => api<{ unread: number }>(id ? `/me/notifications/${id}/read` : '/me/notifications/read-all', { method: 'POST' });
 
-export const ago = (iso: string) => {
+export const ago = (iso: string, t: (key: MsgKey, vars?: Record<string, number>) => string) => {
   const s = (Date.now() - new Date(iso).getTime()) / 1000;
-  if (s < 60) return 'just now';
-  if (s < 3600) return `${Math.floor(s / 60)} min ago`;
-  if (s < 86_400) return `${Math.floor(s / 3600)} h ago`;
+  if (s < 60) return t('nt.justNow');
+  if (s < 3600) return t('nt.minAgo', { n: Math.floor(s / 60) });
+  if (s < 86_400) return t('nt.hAgo', { n: Math.floor(s / 3600) });
   return new Date(iso).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' });
 };
 

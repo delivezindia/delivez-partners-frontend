@@ -14,6 +14,8 @@ export const CAN = {
   geo: ['FOUNDER', 'HEAD_OF_OPS', 'REGIONAL_HEAD'] as AdminRole[],
   legal: ['FOUNDER', 'LEGAL'] as AdminRole[],
   audit: ['FOUNDER', 'HEAD_OF_OPS', 'COMPLIANCE', 'LEGAL', 'AUDITOR'] as AdminRole[],
+  /** Cancel orders (mirrors ORDER_OPS on the API). */
+  orderOps: ['FOUNDER', 'HEAD_OF_OPS', 'REGIONAL_HEAD', 'CITY_OPS', 'SUPPORT'] as AdminRole[],
 };
 export const can = (role: AdminRole | undefined, list: AdminRole[]) => !!role && list.includes(role);
 export const ALL_ROLES: AdminRole[] = ['FOUNDER', 'HEAD_OF_OPS', 'REGIONAL_HEAD', 'CITY_OPS', 'COMPLIANCE', 'FINANCE', 'LEGAL', 'SUPPORT', 'SALES_AGENT', 'AUDITOR'];
@@ -123,6 +125,13 @@ export interface Dashboard {
   oldestDocuments: { id: string; label: string; createdAt: string; store: { id: string; name: string } | null }[];
   expiringDocuments: { id: string; label: string; expiresAt: string; store: { id: string; name: string; status: StoreStatus } | null }[];
   recentActions: { id: string; type: string; reason: string | null; at: string; store: { id: string; name: string } | null; by: string }[];
+  orders?: {
+    today: { orders: number; sold: number; missed: number; revenue: number };
+    last7Days: { date: string; orders: number; sold: number; missed: number; revenue: number }[];
+    missedRate7d: number;
+    busiestStores: { id: string; name: string; orders: number; sold: number; missed: number }[];
+    mostMissed: { id: string; name: string; orders: number; sold: number; missed: number; missedRate: number }[];
+  };
 }
 
 export interface TeamMember {

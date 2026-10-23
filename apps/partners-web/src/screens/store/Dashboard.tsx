@@ -9,12 +9,15 @@ import type { OpenState, PartnerRole, StoreDetail } from '../../lib/types';
 import { ErrorText } from '../../components/ui';
 import { Skeleton, toast } from '../../components/feedback';
 import { StoreStatusChip } from '../../components/StatusChip';
+import { SalesCard } from '../../components/SalesCard';
 import { useStoreContext } from './StoreLayout';
 import { useMe } from '../../lib/queries';
 import { useI18n, type MsgKey } from '../../lib/i18n';
 
 const CAN_TOGGLE: PartnerRole[] = ['OWNER', 'MANAGER', 'KITCHEN_LEAD'];
 const CAN_SEE_MENU: PartnerRole[] = ['OWNER', 'MANAGER', 'KITCHEN_LEAD', 'COUNTER_STAFF', 'PHARMACIST'];
+/** Sales numbers: the people who run the money side (matches the API). */
+const CAN_SEE_SALES: PartnerRole[] = ['OWNER', 'MANAGER', 'ACCOUNTANT'];
 
 const OPEN_STATES: { value: OpenState; label: MsgKey; hint: MsgKey; active: string; dot: string }[] = [
   { value: 'OPEN', label: 'state.open', hint: 'state.openHint', active: 'bg-dz-green text-white', dot: 'bg-dz-green' },
@@ -150,6 +153,7 @@ export default function Dashboard() {
         </div>
       )}
 
+      {CAN_SEE_SALES.includes(role) && store.vertical !== 'DIAGNOSTICS' && ['LIVE', 'LIMITED', 'PAUSED'].includes(store.status) && <SalesCard storeId={storeId} />}
       {CAN_SEE_MENU.includes(role) && <CatalogStats storeId={storeId} />}
 
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">

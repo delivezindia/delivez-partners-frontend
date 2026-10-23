@@ -12,6 +12,7 @@ import Legal from './screens/Legal';
 import Audit from './screens/Audit';
 import DevMessages from './screens/DevMessages';
 import System from './screens/System';
+import Orders from './screens/Orders';
 import Documents from './screens/Documents';
 import StoreReview from './screens/StoreReview';
 
@@ -35,6 +36,7 @@ export default function App() {
             <Route path="/legal" element={<Legal />} />
             <Route path="/audit" element={<Audit />} />
             <Route path="/system" element={<System />} />
+            <Route path="/orders" element={<Orders />} />
             {import.meta.env.DEV && <Route path="/dev/messages" element={<DevMessages />} />}
             <Route path="/documents" element={<Documents />} />
             <Route path="/stores/:storeId" element={<StoreReview />} />

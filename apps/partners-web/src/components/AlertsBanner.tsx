@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { BellRing, X } from 'lucide-react';
 import { enablePush, usePushState } from '../lib/notifications';
+import { useI18n } from '../lib/i18n';
 import { Button } from './ui';
 import { toast } from './feedback';
 
@@ -19,8 +20,8 @@ export function AlertsBanner({ bookings = false }: { bookings?: boolean }) {
   const [state, setState] = usePushState();
   const [hidden, setHidden] = useState(snoozed);
   const [busy, setBusy] = useState(false);
+  const { t } = useI18n();
   if (hidden || (state !== 'off' && state !== 'blocked')) return null;
-  const what = bookings ? 'bookings' : 'orders';
 
   const dismiss = () => {
     try {
@@ -32,17 +33,17 @@ export function AlertsBanner({ bookings = false }: { bookings?: boolean }) {
   };
 
   return (
-    <div className="border-b border-dz-blue/30 bg-dz-blue-soft" role="region" aria-label="New-order alerts">
+    <div className="border-b border-dz-blue/30 bg-dz-blue-soft" role="region" aria-label={t('nt.bannerAria')}>
       <div className="mx-auto flex max-w-6xl flex-wrap items-center gap-3 px-4 py-2.5 text-sm sm:px-6">
         <BellRing className="h-5 w-5 shrink-0 text-dz-blue" aria-hidden />
         <p className="min-w-[12rem] flex-1">
           {state === 'blocked' ? (
             <>
-              <b>Alerts are blocked on this device.</b> Click the lock icon next to the address bar → Notifications → Allow, then reload — or you may miss new {what}.
+              <b>{t('nt.blockedTitle')}</b> {t(bookings ? 'nt.blockedHowBookings' : 'nt.blockedHowOrders')}
             </>
           ) : (
             <>
-              <b>Never miss an order.</b> Turn on alerts so new {what} ring on this device even when this tab is closed.
+              <b>{t('nt.neverMiss')}</b> {t(bookings ? 'nt.turnOnHowBookings' : 'nt.turnOnHowOrders')}
             </>
           )}
         </p>
@@ -56,14 +57,14 @@ export function AlertsBanner({ bookings = false }: { bookings?: boolean }) {
               const s = await enablePush().catch(() => 'off' as const);
               setBusy(false);
               setState(s);
-              if (s === 'on') toast.success(`Alerts are on — new ${what} will ring on this device`);
-              if (s === 'blocked') toast.error('Notifications are blocked in your browser settings');
+              if (s === 'on') toast.success(t(bookings ? 'nt.onBookings' : 'nt.onOrders'));
+              if (s === 'blocked') toast.error(t('nt.blockedToast'));
             }}
           >
-            {busy ? 'Turning on…' : 'Turn on alerts'}
+            {busy ? t('nt.turningOn') : t('nt.turnOnAlerts')}
           </Button>
         )}
-        <button type="button" onClick={dismiss} className="grid h-8 w-8 place-items-center rounded-lg text-ink-2 hover:bg-white/60" aria-label="Not now">
+        <button type="button" onClick={dismiss} className="grid h-8 w-8 place-items-center rounded-lg text-ink-2 hover:bg-white/60" aria-label={t('nt.notNow')}>
           <X className="h-4 w-4" />
         </button>
       </div>
