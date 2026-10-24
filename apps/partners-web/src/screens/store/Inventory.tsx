@@ -1,23 +1,26 @@
 import { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { api } from '../../lib/api';
 import { inr, type Product } from '../../lib/catalog';
 import { errorMessageOf } from '../../lib/onboarding';
 import { Field, TextInput } from '../../components/form';
 import { Modal } from '../../components/Modal';
-import { History, PackageCheck, PackageOpen, Search, SlidersHorizontal } from 'lucide-react';
+import { CalendarX, Download, History, PackageCheck, PackageOpen, Search, SlidersHorizontal } from 'lucide-react';
+import { downloadFile } from '../../lib/download';
+import { useI18n } from '../../lib/i18n';
 import { Button, ErrorText } from '../../components/ui';
 import { EmptyState, SkeletonList, toast } from '../../components/feedback';
 import { useStoreContext } from './StoreLayout';
 
-type Item = Product & { expiringSoon: boolean };
+type Item = Product & { expiringSoon: boolean; expired: boolean; daysLeft: number | null };
+const WINDOWS = [30, 60, 90] as const;
 type Filter = 'ALL' | 'LOW' | 'OUT' | 'EXPIRING';
 const FILTERS: { key: Filter; label: string }[] = [
   { key: 'ALL', label: 'All tracked' },
   { key: 'LOW', label: 'Low stock' },
   { key: 'OUT', label: 'Out of stock' },
-  { key: 'EXPIRING', label: 'Expiring in 30 days' },
+  { key: 'EXPIRING', label: 'Expiring' },
 ];
 const MODES = {
   RECEIVE: { label: 'Receive stock', hint: 'Add a delivery from your supplier', mode: 'ADJUST', type: 'PURCHASE', sign: 1 },
@@ -31,13 +34,18 @@ type ModeKey = keyof typeof MODES;
 export default function Inventory() {
   const { storeId } = useStoreContext();
   const qc = useQueryClient();
-  const [filter, setFilter] = useState<Filter>('ALL');
+  const { t } = useI18n();
+  const [params] = useSearchParams();
+  // The morning expiry alert opens this screen straight on the expiring list.
+  const [filter, setFilter] = useState<Filter>(params.get('filter') === 'EXPIRING' ? 'EXPIRING' : 'ALL');
+  const [days, setDays] = useState<(typeof WINDOWS)[number]>(30);
+  const [downloading, setDownloading] = useState(false);
   const [q, setQ] = useState('');
   const [adjusting, setAdjusting] = useState<Item | null>(null);
   const [history, setHistory] = useState<Item | null>(null);
   const { data, isLoading, error } = useQuery({
-    queryKey: ['inventory', storeId, filter],
-    queryFn: () => api<{ items: Item[]; counts: Record<Filter, number>; untracked: number }>(`/partners/stores/${storeId}/inventory?filter=${filter}`),
+    queryKey: ['inventory', storeId, filter, days],
+    queryFn: () => api<{ items: Item[]; counts: Record<Filter | 'EXPIRED', number>; untracked: number }>(`/partners/stores/${storeId}/inventory?filter=${filter}&days=${days}`),
   });
   const quick = useMutation({
     mutationFn: ({ id, qty }: { id: string; qty: number; name: string }) => api(`/partners/stores/${storeId}/products/${id}/stock`, { method: 'POST', body: { mode: 'ADJUST', qty, type: qty > 0 ? 'PURCHASE' : 'ADJUSTMENT', note: 'Quick adjust' } }),
@@ -65,11 +73,36 @@ export default function Inventory() {
       <div className="dz-scroll-x flex gap-1 overflow-x-auto border-b-[1.5px] border-line" role="tablist">
         {FILTERS.map((f) => (
           <button key={f.key} role="tab" aria-selected={filter === f.key} onClick={() => setFilter(f.key)} className={`-mb-[1.5px] whitespace-nowrap border-b-[3px] px-3 py-2.5 text-sm font-bold ${filter === f.key ? 'border-dz-red text-dz-red' : 'border-transparent text-ink-3 hover:text-ink'}`}>
-            {f.label}
+            {f.key === 'EXPIRING' ? t('inv.expiringTab', { n: days }) : f.label}
             {data && <span className={`ml-1.5 rounded-full px-1.5 text-xs ${f.key !== 'ALL' && data.counts[f.key] > 0 ? 'bg-dz-red text-white' : 'bg-white text-ink-2'}`}>{data.counts[f.key]}</span>}
           </button>
         ))}
       </div>
+      {filter === 'EXPIRING' && (
+        <div className="flex flex-wrap items-center gap-2" data-expiry-bar>
+          <span className="text-sm font-semibold text-ink-2">{t('inv.within')}</span>
+          {WINDOWS.map((w) => (
+            <button key={w} type="button" aria-pressed={days === w} onClick={() => setDays(w)} className={`h-9 rounded-full border-[1.5px] px-3 text-sm font-bold ${days === w ? 'border-black bg-black text-white' : 'border-line bg-white'}`}>
+              {t('inv.days', { n: w })}
+            </button>
+          ))}
+          {!!data?.counts.EXPIRED && <span className="rounded-full bg-dz-red px-2.5 py-1 text-xs font-bold text-white" data-expired-count>{t('inv.expiredCount', { n: data.counts.EXPIRED })}</span>}
+          <Button
+            variant="ghost"
+            className="min-h-9 text-sm sm:ml-auto"
+            disabled={downloading || !data?.items.length}
+            onClick={() => {
+              setDownloading(true);
+              downloadFile(`/partners/stores/${storeId}/inventory/expiry.csv?days=${days}`, `delivez-expiry-${days}-days.csv`, t('sales.downloadFailed'))
+                .then((n) => toast.success(t('sales.downloaded', { n })))
+                .catch((e: Error) => toast.error(e.message))
+                .finally(() => setDownloading(false));
+            }}
+          >
+            <Download className="h-4 w-4" aria-hidden /> {t('inv.downloadList')}
+          </Button>
+        </div>
+      )}
       {(error || quick.error) && <ErrorText>{errorMessageOf(error ?? quick.error)}</ErrorText>}
       {isLoading && <SkeletonList rows={4} />}
       {data && items.length === 0 && (
@@ -115,6 +148,11 @@ export default function Inventory() {
                     <td className="px-4 py-3 text-ink-2">
                       {inv.batchNo ?? '—'}
                       {inv.expiryDate && <span className={`block text-xs ${i.expiringSoon ? 'font-bold text-dz-red' : 'text-ink-3'}`}>exp {new Date(inv.expiryDate).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric', timeZone: 'UTC' })}</span>}
+                      {i.expired ? (
+                        <span className="mt-0.5 inline-flex items-center gap-1 rounded bg-dz-red px-1.5 text-[11px] font-bold text-white" data-expired><CalendarX className="h-3 w-3" aria-hidden /> {t('inv.expired')}</span>
+                      ) : i.expiringSoon && i.daysLeft != null ? (
+                        <span className="block text-[11px] font-semibold text-amber-800">{i.daysLeft === 0 ? t('inv.today') : t('inv.daysLeft', { n: i.daysLeft })}</span>
+                      ) : null}
                     </td>
                     <td className="px-4 py-3">
                       <div className="flex gap-1">

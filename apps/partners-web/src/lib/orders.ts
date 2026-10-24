@@ -32,6 +32,8 @@ export interface Order {
   cancelReason: string | null;
   /** Pharmacy: when an unreviewed prescription order is cancelled. */
   rxReviewBy?: string | null;
+  /** Grocery: replacements offered for items that ran out. */
+  substitutions?: { id: string; itemId: string; name: string; variant: string | null; qty: number; lineTotal: number; status: 'PROPOSED' | 'ACCEPTED' | 'DECLINED' | 'EXPIRED'; respondBy: string; respondedAt: string | null }[];
   rx?: { id: string; status: string; files: number; doctorName: string | null; doctorRegNo: string | null; issuedOn: string | null; patientName: string | null; reviewedBy: { name: string; registrationNo: string } | null; reviewedAt: string | null; notes: string | null; rejectionReason: string | null } | null;
   rider: { taskStatus: TaskStatus; name: string | null; phone: string | null; assignedAt: string | null; arrivedAt: string | null; waitingSince: string | null; readyAtEstimate: string | null } | null;
   timeline?: { from: OrderStatus | null; to: OrderStatus; actorType: string; reason: string | null; meta: Record<string, unknown> | null; at: string }[];
@@ -349,10 +351,17 @@ export function printKot(o: Order, storeName: string) {
     ${o.note ? `<hr><div><b>Note:</b> ${esc(o.note)}</div>` : ''}<hr>
     <div class="c">Printed ${new Date().toLocaleTimeString('en-IN', { hour: 'numeric', minute: '2-digit' })}</div>
   </body></html>`;
-  // A hidden frame instead of a popup: works for automatic printing too (popup blockers only allow clicks).
+  return printHtml(html, 'kot', o.orderNumber);
+}
+
+/**
+ * Prints a small HTML page through a hidden frame instead of a popup: works for automatic printing too
+ * (popup blockers only allow clicks). The frame is tagged (data-kot / data-bill) so tests can find it.
+ */
+export function printHtml(html: string, kind: 'kot' | 'bill', id: string) {
   const frame = document.createElement('iframe');
   frame.setAttribute('aria-hidden', 'true');
-  frame.dataset.kot = o.orderNumber;
+  frame.dataset[kind] = id;
   Object.assign(frame.style, { position: 'fixed', right: '0', bottom: '0', width: '0', height: '0', border: '0' });
   document.body.appendChild(frame);
   const doc = frame.contentDocument;

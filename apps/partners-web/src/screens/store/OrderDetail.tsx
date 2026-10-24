@@ -1,7 +1,7 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { ArrowLeft, Eye, Printer, ShieldCheck } from 'lucide-react';
+import { ArrowLeft, Eye, LifeBuoy, Printer, Receipt, Replace, ShieldCheck, Trash2 } from 'lucide-react';
 import { api, newIdempotencyKey } from '../../lib/api';
 import { inr } from '../../lib/catalog';
 import { errorMessageOf } from '../../lib/onboarding';
@@ -11,6 +11,8 @@ import { Button, ErrorText } from '../../components/ui';
 import { SkeletonList, toast } from '../../components/feedback';
 import { useI18n, type MsgKey } from '../../lib/i18n';
 import { openHealthFile } from '../../lib/labBookings';
+import { fetchInvoice, printBill } from '../../lib/bill';
+import { useProducts } from '../../lib/catalog';
 import { istClock } from '../../lib/pharmacy';
 import { useStoreContext } from './StoreLayout';
 import { ActionDialog, OrderCard } from './Orders';
@@ -37,6 +39,17 @@ export default function OrderDetail() {
   const [removing, setRemoving] = useState<Order['items'][number] | null>(null);
   const editable = o && ['PLACED', 'ACCEPTED', 'PREPARING'].includes(o.status) && role !== 'ACCOUNTANT';
   const canSeeRx = ['OWNER', 'MANAGER', 'PHARMACIST'].includes(role);
+  const now = useTick(!!o?.substitutions?.some((s) => s.status === 'PROPOSED'));
+  const bill = useMutation({
+    mutationFn: () => fetchInvoice(storeId, o!.id),
+    onSuccess: (inv) => void (printBill(inv) || toast.error(t('od.printFailed'))),
+    onError: (e) => toast.error(errorMessageOf(e) ?? t('od.printFailed')),
+  });
+  const respond = useMutation({
+    mutationFn: ({ subId, accept }: { subId: string; accept: boolean }) => api<Order>(`/dev/stores/${storeId}/orders/${o!.id}/substitutions/${subId}/respond`, { method: 'POST', body: { accept } }),
+    onSuccess: (r) => qc.setQueryData(['order', storeId, r.orderNumber], r),
+  });
+  const qc = useQueryClient();
 
   return (
     <div className="space-y-5">
@@ -45,9 +58,17 @@ export default function OrderDetail() {
           <ArrowLeft className="h-4 w-4" /> {t('od.allOrders')}
         </Link>
         {o && (
-          <Button variant="ghost" className="min-h-10 text-sm" onClick={() => printKot(o, detail.store.name) || toast.error(t('od.printFailed'))}>
-            <Printer className="h-4 w-4" /> {t('od.printKot')}
-          </Button>
+          <span className="flex flex-wrap gap-2">
+            <Link to={`/stores/${storeId}/help?order=${o.orderNumber}`} className="inline-flex min-h-10 items-center gap-1.5 px-2 text-sm font-bold text-ink-2 underline hover:text-ink">
+              <LifeBuoy className="h-4 w-4" aria-hidden /> {t('help.reportProblem')}
+            </Link>
+            <Button variant="ghost" className="min-h-10 text-sm" disabled={bill.isPending} onClick={() => bill.mutate()}>
+              <Receipt className="h-4 w-4" aria-hidden /> {t('gst.printBill')}
+            </Button>
+            <Button variant="ghost" className="min-h-10 text-sm" onClick={() => printKot(o, detail.store.name) || toast.error(t('od.printFailed'))}>
+              <Printer className="h-4 w-4" /> {t('od.printKot')}
+            </Button>
+          </span>
         )}
       </div>
       {error && <ErrorText>{errorMessageOf(error)}</ErrorText>}
@@ -61,17 +82,35 @@ export default function OrderDetail() {
               <h2 className="text-xl">{t('od.bill')}</h2>
               <ul className="mt-2 space-y-1.5 text-sm">
                 {o.items.map((i) => (
-                  <li key={i.id} className={`flex items-start justify-between gap-3 ${i.unavailable ? 'text-ink-3 line-through' : ''}`}>
+                  <li key={i.id} className={`flex flex-wrap items-start justify-between gap-x-3 gap-y-1 ${i.unavailable ? 'text-ink-3 line-through' : ''}`}>
                     <span>
                       {i.qty} × {i.name}{i.variant ? ` (${i.variant})` : ''} <span className="text-ink-3">@ {inr(i.unitPrice)}</span>
                       {i.unavailable && <span className="ml-1 text-xs font-bold no-underline">{t('od.removed')}</span>}
                     </span>
                     <span className="flex items-center gap-2">
                       <b className="tabular-nums">{inr(i.lineTotal)}</b>
-                      {editable && !i.unavailable && (
+                      {(editable || o.status === 'READY_SOON') && !i.unavailable && !o.substitutions?.some((s) => s.itemId === i.id && s.status === 'PROPOSED') && (
                         <button type="button" className="text-xs font-bold text-dz-red underline" onClick={() => setRemoving(i)}>{t('od.unavailable')}</button>
                       )}
                     </span>
+                    {o.substitutions?.filter((s) => s.itemId === i.id).map((s) => (
+                      <span key={s.id} className={`basis-full rounded-lg px-2 py-1 text-xs no-underline ${s.status === 'PROPOSED' ? 'bg-amber-50 text-amber-900' : s.status === 'ACCEPTED' ? 'bg-dz-green-soft text-dz-green' : 'bg-soft text-ink-3'}`} data-sub={s.status}>
+                        <Replace className="mr-1 inline h-3.5 w-3.5" aria-hidden />
+                        {s.status === 'PROPOSED'
+                          ? t('sub.waiting', { name: `${s.qty} × ${s.name}`, time: mmss((new Date(s.respondBy).getTime() - now) / 1000) })
+                          : s.status === 'ACCEPTED'
+                            ? t('sub.accepted', { name: `${s.qty} × ${s.name}` })
+                            : s.status === 'DECLINED'
+                              ? t('sub.declined', { name: s.name })
+                              : t('sub.expired', { name: s.name })}
+                        {s.status === 'PROPOSED' && import.meta.env.DEV && (
+                          <span className="ml-2 inline-flex gap-2">
+                            <button type="button" className="font-bold underline" disabled={respond.isPending} onClick={() => respond.mutate({ subId: s.id, accept: true })}>{t('sub.devAccept')}</button>
+                            <button type="button" className="font-bold underline" disabled={respond.isPending} onClick={() => respond.mutate({ subId: s.id, accept: false })}>{t('sub.devDecline')}</button>
+                          </span>
+                        )}
+                      </span>
+                    ))}
                   </li>
                 ))}
                 <li className="flex justify-between border-t border-line pt-1.5 text-ink-2"><span>{t('od.items')}</span><span>{inr(o.totals.items)}</span></li>
@@ -139,27 +178,106 @@ export default function OrderDetail() {
 }
 
 function RemoveItem({ order, item, onClose }: { order: Order; item: Order['items'][number]; onClose: () => void }) {
-  const { storeId } = useStoreContext();
+  const { storeId, detail } = useStoreContext();
   const qc = useQueryClient();
   const [switchOff, setSwitchOff] = useState(true);
   const { t } = useI18n();
+  // Grocery stores with substitutes on can offer a replacement instead of just dropping the item.
+  const canSubstitute = ['GROCERY', 'LOCAL_STORES'].includes(detail.store.vertical) && !!detail.store.allowSubstitutions && ['PLACED', 'ACCEPTED', 'PREPARING', 'READY_SOON'].includes(order.status);
+  const [mode, setMode] = useState<'substitute' | 'remove'>(canSubstitute ? 'substitute' : 'remove');
+  const done = (o: Order, msg: string) => {
+    qc.setQueryData(['order', storeId, o.orderNumber], o);
+    void qc.invalidateQueries({ queryKey: ['orders', storeId] });
+    toast.success(msg);
+    onClose();
+  };
   const m = useMutation({
     mutationFn: () => api<Order>(`/partners/stores/${storeId}/orders/${order.id}/items/${item.id}/unavailable`, { method: 'POST', body: { switchOff }, idempotencyKey: newIdempotencyKey() }),
-    onSuccess: (o) => {
-      qc.setQueryData(['order', storeId, o.orderNumber], o);
-      void qc.invalidateQueries({ queryKey: ['orders', storeId] });
-      toast.success(t('od.removedToast', { name: item.name }));
-      onClose();
-    },
+    onSuccess: (o) => done(o, t('od.removedToast', { name: item.name })),
   });
   return (
-    <Modal title={t('od.removeTitle', { name: item.name })} onClose={onClose}>
-      <p className="text-sm text-ink-2">{item.qty > 1 ? t('od.removeNoteMany', { n: item.qty }) : t('od.removeNoteOne')}</p>
-      <label className="mt-3 flex items-center gap-2 text-sm font-semibold">
-        <input type="checkbox" checked={switchOff} onChange={(e) => setSwitchOff(e.target.checked)} className="h-4 w-4" /> {t('od.switchOff')}
-      </label>
-      <Button variant="primary" className="mt-4 w-full" disabled={m.isPending} onClick={() => m.mutate()}>{t('od.removeItem')}</Button>
-      {m.error && <div className="mt-2"><ErrorText>{errorMessageOf(m.error)}</ErrorText></div>}
+    <Modal title={canSubstitute ? t('sub.title', { name: item.name }) : t('od.removeTitle', { name: item.name })} onClose={onClose}>
+      {canSubstitute && (
+        <div className="mb-4 flex gap-1 rounded-xl bg-soft p-1" role="tablist">
+          {(['substitute', 'remove'] as const).map((k) => (
+            <button key={k} type="button" role="tab" aria-selected={mode === k} onClick={() => setMode(k)} className={`flex flex-1 items-center justify-center gap-1.5 rounded-lg py-2 text-sm font-bold ${mode === k ? 'bg-white shadow' : 'text-ink-3'}`}>
+              {k === 'substitute' ? <Replace className="h-4 w-4" aria-hidden /> : <Trash2 className="h-4 w-4" aria-hidden />} {k === 'substitute' ? t('sub.offer') : t('sub.removeTab')}
+            </button>
+          ))}
+        </div>
+      )}
+      {mode === 'substitute' ? (
+        <SubstitutePicker order={order} item={item} onDone={(o, name) => done(o, t('sub.offered', { name }))} />
+      ) : (
+        <>
+          <p className="text-sm text-ink-2">{item.qty > 1 ? t('od.removeNoteMany', { n: item.qty }) : t('od.removeNoteOne')}</p>
+          <label className="mt-3 flex items-center gap-2 text-sm font-semibold">
+            <input type="checkbox" checked={switchOff} onChange={(e) => setSwitchOff(e.target.checked)} className="h-4 w-4" /> {t('od.switchOff')}
+          </label>
+          <Button variant="primary" className="mt-4 w-full" disabled={m.isPending} onClick={() => m.mutate()}>{t('od.removeItem')}</Button>
+          {m.error && <div className="mt-2"><ErrorText>{errorMessageOf(m.error)}</ErrorText></div>}
+        </>
+      )}
     </Modal>
   );
 }
+
+function SubstitutePicker({ order, item, onDone }: { order: Order; item: Order['items'][number]; onDone: (o: Order, name: string) => void }) {
+  const { storeId } = useStoreContext();
+  const { t } = useI18n();
+  const products = useProducts(storeId);
+  const [q, setQ] = useState('');
+  const [pick, setPick] = useState<string | null>(null);
+  const [qty, setQty] = useState(item.qty);
+  const prepaid = order.payment.status === 'CAPTURED';
+  const options = (products.data?.products ?? []).filter((p) => p.status === 'AVAILABLE' && !p.prescriptionRequired && p.name !== item.name && (!q.trim() || p.name.toLowerCase().includes(q.trim().toLowerCase())));
+  const chosen = options.find((p) => p.id === pick) ?? (products.data?.products ?? []).find((p) => p.id === pick);
+  const cost = chosen ? chosen.price * qty : 0;
+  const tooDear = prepaid && cost > item.lineTotal;
+  const offer = useMutation({
+    mutationFn: () => api<Order>(`/partners/stores/${storeId}/orders/${order.id}/items/${item.id}/substitute`, { method: 'POST', body: { productId: pick, qty }, idempotencyKey: newIdempotencyKey() }),
+    onSuccess: (o) => onDone(o, chosen?.name ?? ''),
+  });
+  return (
+    <div className="space-y-3">
+      <p className="text-sm text-ink-2">{t('sub.explain')}</p>
+      <input value={q} onChange={(e) => setQ(e.target.value)} placeholder={t('sub.search')} aria-label={t('sub.search')} className="h-11 w-full rounded-[10px] border-[1.5px] border-line bg-white px-3 outline-none focus:border-black" />
+      <ul className="max-h-56 divide-y divide-line overflow-auto rounded-xl border border-line" role="listbox" aria-label={t('sub.search')}>
+        {products.isLoading && <li className="p-3 text-sm text-ink-3">{t('no.loadingMenu')}</li>}
+        {options.slice(0, 30).map((p) => (
+          <li key={p.id}>
+            <button type="button" role="option" aria-selected={pick === p.id} onClick={() => setPick(p.id)} className={`flex w-full items-center justify-between gap-2 px-3 py-2 text-left text-sm ${pick === p.id ? 'bg-dz-yellow-soft font-bold' : 'hover:bg-soft'}`}>
+              <span>{p.name}</span>
+              <span className="tabular-nums">{inr(p.price)}</span>
+            </button>
+          </li>
+        ))}
+      </ul>
+      <div className="flex items-center gap-3">
+        <span className="text-sm font-semibold">{t('sub.qty')}</span>
+        <button type="button" className="h-9 w-9 rounded-lg border border-line font-bold" onClick={() => setQty((x) => Math.max(1, x - 1))} aria-label="−">−</button>
+        <b className="w-6 text-center tabular-nums">{qty}</b>
+        <button type="button" className="h-9 w-9 rounded-lg border border-line font-bold" onClick={() => setQty((x) => Math.min(50, x + 1))} aria-label="+">+</button>
+        {chosen && <span className="ml-auto text-sm">{t('sub.newPrice', { amount: inr(cost), was: inr(item.lineTotal) })}</span>}
+      </div>
+      {prepaid && <p className={`text-xs ${tooDear ? 'font-bold text-dz-red' : 'text-ink-3'}`}>{t('sub.prepaidNote', { amount: inr(item.lineTotal) })}</p>}
+      {offer.error && <ErrorText>{errorMessageOf(offer.error)}</ErrorText>}
+      <Button className="w-full" disabled={!pick || tooDear || offer.isPending} onClick={() => offer.mutate()}>{t('sub.send')}</Button>
+    </div>
+  );
+}
+
+function useTick(on: boolean) {
+  const [now, setNow] = useState(Date.now());
+  useEffect(() => {
+    if (!on) return;
+    const id = setInterval(() => setNow(Date.now()), 1000);
+    return () => clearInterval(id);
+  }, [on]);
+  return now;
+}
+
+const mmss = (s: number) => {
+  const v = Math.max(0, Math.round(s));
+  return `${Math.floor(v / 60)}:${String(v % 60).padStart(2, '0')}`;
+};

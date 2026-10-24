@@ -1,10 +1,9 @@
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { AlertTriangle, Download, TrendingUp } from 'lucide-react';
+import { AlertTriangle, Download, Receipt, TrendingUp } from 'lucide-react';
 import { api } from '../lib/api';
-import { useAuth } from '../lib/auth-store';
 import { inr } from '../lib/catalog';
-import { apiUrl } from '../lib/config';
+import { downloadFile } from '../lib/download';
 import { useI18n } from '../lib/i18n';
 import { Button } from './ui';
 import { Skeleton, toast } from './feedback';
@@ -123,21 +122,8 @@ function CsvDownload({ storeId }: { storeId: string }) {
   const download = async () => {
     setBusy(true);
     try {
-      const res = await fetch(apiUrl(`/v1/partners/stores/${storeId}/reports/orders.csv?from=${from}&to=${to}`), { headers: { authorization: `Bearer ${useAuth.getState().accessToken ?? ''}` } });
-      if (!res.ok) {
-        const e = (await res.json().catch(() => null)) as { error?: { message?: string } } | null;
-        throw new Error(e?.error?.message ?? t('sales.downloadFailed'));
-      }
-      const blob = await res.blob();
-      const a = document.createElement('a');
-      a.href = URL.createObjectURL(blob);
-      a.download = `delivez-orders-${from}-to-${to}.csv`;
-      // The link must be in the page for Firefox (and some Chrome setups) to save the file.
-      document.body.appendChild(a);
-      a.click();
-      a.remove();
-      setTimeout(() => URL.revokeObjectURL(a.href), 30_000);
-      toast.success(t('sales.downloaded', { n: Number(res.headers.get('x-row-count') ?? 0) }));
+      const n = await downloadFile(`/partners/stores/${storeId}/reports/orders.csv?from=${from}&to=${to}`, `delivez-orders-${from}-to-${to}.csv`, t('sales.downloadFailed'));
+      toast.success(t('sales.downloaded', { n }));
     } catch (e) {
       toast.error((e as Error).message);
     } finally {
@@ -157,6 +143,37 @@ function CsvDownload({ storeId }: { storeId: string }) {
       <Button variant="ghost" className="min-h-10 text-sm" disabled={busy || !from || !to} onClick={() => void download()}>
         <Download className="h-4 w-4" /> {busy ? '…' : t('sales.download')}
       </Button>
+      <GstDownload storeId={storeId} />
     </div>
+  );
+}
+
+/** Month of sales split by GST rate, for the accountant. */
+function GstDownload({ storeId }: { storeId: string }) {
+  const { t } = useI18n();
+  const thisMonth = istToday().slice(0, 7);
+  const [month, setMonth] = useState(thisMonth);
+  const [busy, setBusy] = useState(false);
+  const download = async () => {
+    setBusy(true);
+    try {
+      const n = await downloadFile(`/partners/stores/${storeId}/reports/gst.csv?month=${month}`, `delivez-gst-${month}.csv`, t('sales.downloadFailed'));
+      toast.success(t('gst.downloaded', { n }));
+    } catch (e) {
+      toast.error((e as Error).message);
+    } finally {
+      setBusy(false);
+    }
+  };
+  return (
+    <span className="flex items-end gap-2 sm:ml-auto">
+      <label className="text-xs font-semibold text-ink-3">
+        {t('gst.month')}
+        <input type="month" value={month} max={thisMonth} onChange={(e) => setMonth(e.target.value)} className="mt-0.5 block h-10 rounded-lg border border-neutral-300 bg-white px-2 text-sm text-ink" aria-label={t('gst.month')} />
+      </label>
+      <Button variant="ghost" className="min-h-10 text-sm" disabled={busy || !month} onClick={() => void download()}>
+        <Receipt className="h-4 w-4" aria-hidden /> {busy ? '…' : t('gst.download')}
+      </Button>
+    </span>
   );
 }

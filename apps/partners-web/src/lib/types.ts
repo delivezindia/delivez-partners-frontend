@@ -52,6 +52,7 @@ export interface StoreDetail {
     lat: number | null;
     lng: number | null;
     closedReason: string | null;
+    allowSubstitutions?: boolean;
     city: { name: string; state: string } | null;
     timings: { dayOfWeek: number; opensAt: string; closesAt: string }[];
     _count: { products: number };

@@ -8,7 +8,7 @@ import { useStoreSocket, type DomainEvent } from '../../lib/socket';
 import { useLogout } from '../../lib/use-logout';
 import type { MeResponse, OpenState, PartnerRole, StoreDetail } from '../../lib/types';
 import type { ReactNode } from 'react';
-import { AlertTriangle, CalendarClock, Download, ChevronDown, ClipboardList, FileText, LayoutDashboard, LogOut, Package, Settings as SettingsIcon, ShieldCheck, Store, UserRoundCog, Users, UtensilsCrossed, type LucideIcon } from 'lucide-react';
+import { AlertTriangle, CalendarClock, Download, ChevronDown, ClipboardList, FileText, LayoutDashboard, LifeBuoy, LogOut, Package, Settings as SettingsIcon, ShieldCheck, Store, UserRoundCog, Users, UtensilsCrossed, type LucideIcon } from 'lucide-react';
 import { Brand, Button, ErrorText } from '../../components/ui';
 import { Avatar, Dropdown, Skeleton, toast, Toaster } from '../../components/feedback';
 import { useI18n, type MsgKey } from '../../lib/i18n';
@@ -75,6 +75,8 @@ export default function StoreLayout() {
         ring();
         toast.info(`${t('ord.newOrder')} ${no}`.trim());
       }
+      if (event.type === 'order.substitution_accepted') toast.success(t('sub.toastAccepted', { no }));
+      if (event.type === 'order.substitution_declined') toast.info(t('sub.toastDeclined', { no }));
       if (event.type === 'order.rx_submitted') {
         ring();
         toast.info(t('rx.newToast', { no }));
@@ -109,7 +111,7 @@ export default function StoreLayout() {
   const newBookings = useLabBookings(storeId, 'TO_CONFIRM', !!data && takesOrders && lab);
   const waiting = lab ? (newBookings.data?.counts.TO_CONFIRM ?? 0) : (newOrders.data?.counts.NEW ?? 0) + (newOrders.data?.counts.RX ?? 0);
   const [, , , section = '', sub] = location.pathname.split('/');
-  const PAGE: Record<string, MsgKey> = { '': 'tab.dashboard', orders: 'tab.orders', menu: lab ? 'tab.tests' : 'tab.menu', bookings: 'tab.bookings', prescriptions: 'tab.prescriptions', inventory: 'tab.inventory', staff: 'tab.staff', settings: 'tab.settings', notifications: 'shell.notifications', switch: 'shell.switchUser' };
+  const PAGE: Record<string, MsgKey> = { '': 'tab.dashboard', orders: 'tab.orders', menu: lab ? 'tab.tests' : 'tab.menu', bookings: 'tab.bookings', prescriptions: 'tab.prescriptions', inventory: 'tab.inventory', staff: 'tab.staff', settings: 'tab.settings', notifications: 'shell.notifications', switch: 'shell.switchUser', help: 'help.title' };
   const page = section === 'orders' && sub ? sub : PAGE[section] ? t(PAGE[section]) : '';
   useEffect(() => {
     if (!data) return;
@@ -177,6 +179,7 @@ export default function StoreLayout() {
               }
               items={[
                 { label: t('shell.switchUser'), icon: UserRoundCog, onSelect: () => navigate(`/stores/${storeId}/switch`) },
+                { label: t('help.title'), icon: LifeBuoy, onSelect: () => navigate(`/stores/${storeId}/help`) },
                 ...(allStores.length > 1 ? [{ label: t('shell.allOutlets'), icon: Store, onSelect: () => navigate('/accounts') }] : []),
                 ...(installer.canInstall ? [{ label: t('shell.installApp'), icon: Download, onSelect: () => void installer.install() }] : []),
                 null,

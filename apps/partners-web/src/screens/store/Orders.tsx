@@ -227,6 +227,7 @@ export function OrderCard({ order: o, onDialog, onSeen, detail = false }: { orde
   const act = useOrderAction(o);
   const [code, setCode] = useState('');
   const [scanning, setScanning] = useState(false);
+  const subPending = !!o.substitutions?.some((s) => s.status === 'PROPOSED');
   const codeIsQr = isHandoverQr(code);
   const left = o.acceptBy ? (new Date(o.acceptBy).getTime() - now) / 1000 : 0;
   const etaLeft = o.etaAt ? (new Date(o.etaAt).getTime() - now) / 1000 : null;
@@ -279,6 +280,9 @@ export function OrderCard({ order: o, onDialog, onSeen, detail = false }: { orde
           </li>
         ))}
         {o.items.length > items.length && <li className="text-xs text-ink-3">{t('ord.itemsRemoved', { n: o.items.length - items.length })}</li>}
+        {o.substitutions?.filter((s) => s.status === 'PROPOSED').map((s) => (
+          <li key={s.id} className="rounded-lg bg-amber-50 px-2 py-1 text-xs font-semibold text-amber-900" data-sub-pending>{t('sub.pendingCard', { name: s.name })}</li>
+        ))}
         {o.note && <li className="mt-2 rounded-lg bg-dz-yellow-soft px-2 py-1 text-ink">“{o.note}”</li>}
         {(o.rejectReason || o.cancelReason) && <li className="mt-2 text-ink-2">{t('ord.reason', { reason: o.rejectReason ?? o.cancelReason ?? '' })}</li>}
       </ul>
@@ -314,7 +318,8 @@ export function OrderCard({ order: o, onDialog, onSeen, detail = false }: { orde
                 <button type="button" className="ml-auto text-sm font-bold text-ink-3 underline" onClick={() => onDialog('delay')}>{t('ord.delay')}</button>
               </div>
             )}
-            <button type="button" onClick={() => onDialog('ready')} className="flex h-14 w-full items-center justify-center gap-2 rounded-xl bg-dz-green text-lg font-extrabold tracking-wide text-white shadow-[0_3px_0_#0b4d2a] transition-transform active:translate-y-0.5">
+            {subPending && <p className="text-xs font-semibold text-amber-900">{t('sub.readyBlocked')}</p>}
+            <button type="button" disabled={subPending} onClick={() => onDialog('ready')} className="flex h-14 w-full items-center justify-center gap-2 rounded-xl bg-dz-green text-lg font-extrabold tracking-wide text-white shadow-[0_3px_0_#0b4d2a] transition-transform active:translate-y-0.5 disabled:opacity-40 disabled:shadow-none">
               <CheckCircle2 className="h-6 w-6" /> {t('ord.orderReady')}
             </button>
           </>
