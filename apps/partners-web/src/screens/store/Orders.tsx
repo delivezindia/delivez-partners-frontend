@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { Bell, BellOff, Bike, CheckCircle2, ClipboardList, CloudOff, Plus, ShoppingBag, SlidersHorizontal, Sparkles, Timer, Volume2 } from 'lucide-react';
+import { Bell, BellOff, Bike, CheckCircle2, ClipboardList, CloudOff, Plus, ScanLine, ShieldCheck, ShoppingBag, SlidersHorizontal, Sparkles, Timer, Volume2 } from 'lucide-react';
 import { api } from '../../lib/api';
 import { inr } from '../../lib/catalog';
 import { errorMessageOf } from '../../lib/onboarding';
@@ -11,6 +11,7 @@ import { Modal } from '../../components/Modal';
 import { Button, ErrorText } from '../../components/ui';
 import { EmptyState, SkeletonList, toast } from '../../components/feedback';
 import { useI18n } from '../../lib/i18n';
+import { QrScanner, isHandoverQr } from '../../components/QrScanner';
 import { useStoreContext } from './StoreLayout';
 import NewOrder from './NewOrder';
 
@@ -109,6 +110,13 @@ export default function Orders() {
           <span className="flex items-center gap-2"><Bell className="h-5 w-5" /> {unheard.length === 1 ? t('ord.waitingOne') : t('ord.waitingMany', { n: unheard.length })}</span>
           <span className="text-sm underline">{sound ? t('ord.silence') : t('ord.gotIt')}</span>
         </button>
+      )}
+
+      {(counts?.RX ?? 0) > 0 && (
+        <Link to={`/stores/${storeId}/prescriptions`} className="flex w-full items-center justify-between gap-3 rounded-2xl border-[1.5px] border-dz-blue bg-dz-blue-soft px-4 py-3 font-bold text-dz-blue" data-rx-banner>
+          <span className="flex items-center gap-2"><ShieldCheck className="h-5 w-5" aria-hidden /> {t('rx.waitingBanner', { n: counts?.RX ?? 0 })}</span>
+          <span className="text-sm underline">{t('rx.review')}</span>
+        </Link>
       )}
 
       <div className="dz-scroll-x flex gap-1 overflow-x-auto border-b-[1.5px] border-line" role="tablist">
@@ -218,6 +226,8 @@ export function OrderCard({ order: o, onDialog, onSeen, detail = false }: { orde
   const now = useNow(isNew || cooking || o.status === 'READY');
   const act = useOrderAction(o);
   const [code, setCode] = useState('');
+  const [scanning, setScanning] = useState(false);
+  const codeIsQr = isHandoverQr(code);
   const left = o.acceptBy ? (new Date(o.acceptBy).getTime() - now) / 1000 : 0;
   const etaLeft = o.etaAt ? (new Date(o.etaAt).getTime() - now) / 1000 : null;
   const items = useMemo(() => o.items.filter((i) => !i.unavailable), [o.items]);
@@ -315,13 +325,24 @@ export function OrderCard({ order: o, onDialog, onSeen, detail = false }: { orde
             <RiderPanel order={o} now={now} />
             <form
               className="flex items-end gap-2"
-              onSubmit={(e) => (e.preventDefault(), act.mutate({ action: 'handover', body: { otp: code }, label: `Hand over ${o.orderNumber}` }, { onSuccess: () => setCode('') }))}
+              onSubmit={(e) => (e.preventDefault(), act.mutate({ action: 'handover', body: codeIsQr ? { qr: code.trim() } : { otp: code }, label: `Hand over ${o.orderNumber}` }, { onSuccess: () => setCode('') }))}
             >
               <Field label={t('ord.riderCode')} className="flex-1">
-                <TextInput inputMode="numeric" maxLength={4} value={code} onChange={(e) => setCode(e.target.value.replace(/\D/g, ''))} placeholder="••••" aria-label={t('ord.handoverAria', { no: o.orderNumber })} />
+                {/* Digits typed by hand, or a full QR payload from a USB/Bluetooth scanner (it types and presses Enter). */}
+                <TextInput inputMode="numeric" autoComplete="off" value={code} onChange={(e) => setCode(/^d(z(1.*)?)?$/i.test(e.target.value) ? e.target.value.slice(0, 120) : e.target.value.replace(/\D/g, '').slice(0, 4))} placeholder="••••" aria-label={t('ord.handoverAria', { no: o.orderNumber })} />
               </Field>
-              <Button className="min-h-12" disabled={code.length !== 4 || act.isPending}>{t('ord.handOver')}</Button>
+              <Button type="button" variant="ghost" className="min-h-12 px-3" onClick={() => setScanning(true)} aria-label={t('qr.scanAria', { no: o.orderNumber })}>
+                <ScanLine className="h-5 w-5" aria-hidden /> <span className="hidden sm:inline">{t('qr.scan')}</span>
+              </Button>
+              <Button className="min-h-12" disabled={(code.length !== 4 && !codeIsQr) || act.isPending}>{t('ord.handOver')}</Button>
             </form>
+            {scanning && (
+              <QrScanner
+                title={t('qr.title', { no: o.orderNumber })}
+                onClose={() => setScanning(false)}
+                onCode={(qr) => (setScanning(false), act.mutate({ action: 'handover', body: { qr }, label: `Hand over ${o.orderNumber}` }))}
+              />
+            )}
           </>
         )}
         {o.status === 'READY' && o.fulfilmentType === 'PICKUP' && (

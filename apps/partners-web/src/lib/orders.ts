@@ -4,9 +4,9 @@ import { api, ApiError, newIdempotencyKey } from './api';
 import type { MsgKey } from './i18n';
 
 export type OrderStatus =
-  | 'PLACED' | 'ACCEPTED' | 'PREPARING' | 'READY_SOON' | 'READY' | 'PICKED_UP' | 'OUT_FOR_DELIVERY' | 'ARRIVED'
+  | 'AWAITING_RX_REVIEW' | 'PLACED' | 'ACCEPTED' | 'PREPARING' | 'READY_SOON' | 'READY' | 'PICKED_UP' | 'OUT_FOR_DELIVERY' | 'ARRIVED'
   | 'DELIVERED' | 'COMPLETED' | 'REJECTED' | 'CANCELLED' | 'DELIVERY_FAILED' | 'REFUNDED';
-export type OrderTab = 'NEW' | 'PREPARING' | 'READY' | 'DONE' | 'CANCELLED' | 'ALL';
+export type OrderTab = 'RX' | 'NEW' | 'PREPARING' | 'READY' | 'DONE' | 'CANCELLED' | 'ALL';
 export type TaskStatus = 'CREATED' | 'SEARCHING_RIDER' | 'ASSIGNED' | 'EN_ROUTE_TO_PICKUP' | 'ARRIVED_AT_PICKUP' | 'WAITING_AT_PICKUP' | 'PICKED_UP' | 'EN_ROUTE_TO_DROP' | 'ARRIVED_AT_DROP' | 'DELIVERED' | 'FAILED' | 'CANCELLED';
 
 export interface Order {
@@ -30,6 +30,9 @@ export interface Order {
   times: Record<'placedAt' | 'acceptedAt' | 'preparingAt' | 'readySoonAt' | 'readyAt' | 'pickedUpAt' | 'deliveredAt' | 'completedAt' | 'cancelledAt', string | null>;
   rejectReason: string | null;
   cancelReason: string | null;
+  /** Pharmacy: when an unreviewed prescription order is cancelled. */
+  rxReviewBy?: string | null;
+  rx?: { id: string; status: string; files: number; doctorName: string | null; doctorRegNo: string | null; issuedOn: string | null; patientName: string | null; reviewedBy: { name: string; registrationNo: string } | null; reviewedAt: string | null; notes: string | null; rejectionReason: string | null } | null;
   rider: { taskStatus: TaskStatus; name: string | null; phone: string | null; assignedAt: string | null; arrivedAt: string | null; waitingSince: string | null; readyAtEstimate: string | null } | null;
   timeline?: { from: OrderStatus | null; to: OrderStatus; actorType: string; reason: string | null; meta: Record<string, unknown> | null; at: string }[];
 }
@@ -45,6 +48,7 @@ export const TABS: { key: OrderTab; label: string; t: MsgKey }[] = [
 
 /** State colours (plan §16.1). */
 export const STATUS: Record<OrderStatus, { label: string; cls: string; bar: string; t: MsgKey }> = {
+  AWAITING_RX_REVIEW: { label: 'Prescription check', cls: 'border-dz-blue bg-dz-blue-soft text-dz-blue', bar: 'bg-dz-blue', t: 'rx.status' },
   PLACED: { label: 'New', cls: 'border-dz-red bg-dz-red-soft text-dz-red', bar: 'bg-dz-red', t: 'ord.st.PLACED' },
   ACCEPTED: { label: 'Accepted', cls: 'border-dz-blue bg-dz-blue-soft text-dz-blue', bar: 'bg-dz-blue', t: 'ord.st.ACCEPTED' },
   PREPARING: { label: 'Preparing', cls: 'border-dz-yellow-strong bg-dz-yellow-soft text-ink', bar: 'bg-dz-yellow-strong', t: 'ord.st.PREPARING' },
@@ -84,7 +88,7 @@ export const REJECT_REASONS = [
   { value: 'OTHER', label: 'Other', t: 'ord.rr.OTHER' as MsgKey },
 ] as const;
 
-type OrdersPage = { orders: Order[]; counts: Record<'NEW' | 'PREPARING' | 'READY', number>; nextCursor: string | null };
+type OrdersPage = { orders: Order[]; counts: Record<'NEW' | 'PREPARING' | 'READY', number> & { RX?: number }; nextCursor: string | null };
 
 // Sockets keep the screen live; the 15 s poll is the fallback when the socket drops.
 export const useOrders = (storeId: string, tab: OrderTab, enabled = true) =>

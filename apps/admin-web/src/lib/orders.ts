@@ -1,7 +1,7 @@
 // Admin view of orders (Delivez team). Mirrors GET /v1/admin/orders and /v1/admin/orders/:id.
 
 export type OrderStatus =
-  | 'PLACED' | 'ACCEPTED' | 'PREPARING' | 'READY_SOON' | 'READY' | 'PICKED_UP' | 'OUT_FOR_DELIVERY' | 'ARRIVED'
+  | 'AWAITING_RX_REVIEW' | 'PLACED' | 'ACCEPTED' | 'PREPARING' | 'READY_SOON' | 'READY' | 'PICKED_UP' | 'OUT_FOR_DELIVERY' | 'ARRIVED'
   | 'DELIVERED' | 'COMPLETED' | 'REJECTED' | 'CANCELLED' | 'DELIVERY_FAILED' | 'REFUNDED';
 
 export interface AdminOrderRow {
@@ -47,9 +47,10 @@ export interface AdminOrderDetail {
   codes?: { handoverOtp: string | null; handoverQr: string | null; pickupOtp: string | null; deliveryOtp: string | null };
 }
 
-export const ACTIVE: OrderStatus[] = ['PLACED', 'ACCEPTED', 'PREPARING', 'READY_SOON', 'READY', 'PICKED_UP', 'OUT_FOR_DELIVERY', 'ARRIVED'];
+export const ACTIVE: OrderStatus[] = ['AWAITING_RX_REVIEW', 'PLACED', 'ACCEPTED', 'PREPARING', 'READY_SOON', 'READY', 'PICKED_UP', 'OUT_FOR_DELIVERY', 'ARRIVED'];
 
 export const STATUS_LABEL: Record<OrderStatus, { label: string; cls: string }> = {
+  AWAITING_RX_REVIEW: { label: 'Prescription check', cls: 'border-dz-blue bg-dz-blue-soft text-dz-blue' },
   PLACED: { label: 'New', cls: 'border-dz-red bg-dz-red-soft text-dz-red' },
   ACCEPTED: { label: 'Accepted', cls: 'border-dz-blue bg-dz-blue-soft text-dz-blue' },
   PREPARING: { label: 'Preparing', cls: 'border-dz-yellow-strong bg-dz-yellow-soft text-ink' },
@@ -70,6 +71,7 @@ export const STATUS_LABEL: Record<OrderStatus, { label: string; cls: string }> =
 export const FILTERS: { value: string; label: string }[] = [
   { value: 'ACTIVE', label: 'Active' },
   { value: '', label: 'All' },
+  { value: 'AWAITING_RX_REVIEW', label: 'Prescription check' },
   { value: 'PLACED', label: 'New' },
   { value: 'READY', label: 'Ready' },
   { value: 'DELIVERED', label: 'Delivered' },

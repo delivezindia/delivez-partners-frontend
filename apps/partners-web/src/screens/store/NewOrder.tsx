@@ -31,6 +31,7 @@ export default function NewOrder({ onClose }: { onClose: () => void }) {
   // The map fills the address fields unless staff have typed their own text since.
   const autoLine = useRef('');
   const [lines, setLines] = useState<Line[]>([]);
+  const [rxSeen, setRxSeen] = useState(false);
   const set = <K extends keyof typeof f>(k: K, v: (typeof f)[K]) => setF((x) => ({ ...x, [k]: v }));
 
   const sellable = useMemo(() => (products.data?.products ?? []).filter((p) => p.status === 'AVAILABLE'), [products.data]);
@@ -42,6 +43,7 @@ export default function NewOrder({ onClose }: { onClose: () => void }) {
     return (p.price + (p.variants.find((v) => v.id === l.variantId)?.priceDiff ?? 0)) * l.qty;
   };
   const total = lines.reduce((n, l) => n + priceOf(l), 0);
+  const needsRx = s.vertical === 'PHARMACY' && lines.some((l) => byId.get(l.productId)?.prescriptionRequired);
 
   const bump = (productId: string, variantId: string | undefined, d: number) =>
     setLines((ls) => {
@@ -64,6 +66,7 @@ export default function NewOrder({ onClose }: { onClose: () => void }) {
           paymentMode: f.pay,
           prepMinutes: f.prep,
           note: f.note || undefined,
+          rxSeenByStore: needsRx ? rxSeen : undefined,
           // Until address search lands here, the map pin is the store's own location.
           address: f.type === 'DELIVERY' && pin ? { line1: f.line1, landmark: f.landmark || undefined, pincode: f.pincode, lat: pin.lat, lng: pin.lng } : undefined,
         },
@@ -162,8 +165,14 @@ export default function NewOrder({ onClose }: { onClose: () => void }) {
           </div>
           <span className="text-right"><b className="text-lg">{inr(total)}</b>{f.type === 'DELIVERY' && <span className="block text-xs text-ink-3">{t('no.plusDelivery')}</span>}</span>
         </div>
+        {needsRx && (
+          <label className="flex items-start gap-2 rounded-xl bg-dz-red-soft p-3 text-sm">
+            <input type="checkbox" className="mt-0.5 h-4 w-4" checked={rxSeen} onChange={(e) => setRxSeen(e.target.checked)} />
+            {t('rx.counterCheck')}
+          </label>
+        )}
         {save.error && <ErrorText>{errorMessageOf(save.error)}</ErrorText>}
-        <Button className="w-full" disabled={save.isPending || !phoneOk || !addressOk || !lines.length || f.prep < 5} onClick={() => save.mutate()}>
+        <Button className="w-full" disabled={save.isPending || !phoneOk || !addressOk || !lines.length || f.prep < 5 || (needsRx && !rxSeen)} onClick={() => save.mutate()}>
           {save.isPending ? t('no.creating') : t('no.create')}
         </Button>
       </div>

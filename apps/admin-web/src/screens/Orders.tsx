@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Bike, ShoppingBag } from 'lucide-react';
@@ -194,6 +194,7 @@ function OrderPanel({ id, onClose }: { id: string; onClose: () => void }) {
               <b>Development only —</b> handover code <b>{o.codes.handoverOtp ?? '—'}</b> · pickup code <b>{o.codes.pickupOtp ?? '—'}</b> · delivery code <b>{o.codes.deliveryOtp ?? '—'}</b>
             </p>
           )}
+          {o.codes?.handoverQr && o.status === 'READY' && <HandoverQr payload={o.codes.handoverQr} />}
 
           <details>
             <summary className="cursor-pointer font-bold">Timeline ({o.timeline.length})</summary>
@@ -224,5 +225,25 @@ function OrderPanel({ id, onClose }: { id: string; onClose: () => void }) {
         </div>
       )}
     </Modal>
+  );
+}
+
+/** Development only: the QR the rider app will show, so the store's scanner can be tried end to end. */
+function HandoverQr({ payload }: { payload: string }) {
+  const [src, setSrc] = useState<string | null>(null);
+  useEffect(() => {
+    let live = true;
+    void import('qrcode').then((q) => q.toDataURL(payload, { margin: 2, width: 220 })).then((url) => live && setSrc(url));
+    return () => {
+      live = false;
+    };
+  }, [payload]);
+  return (
+    <div className="flex items-center gap-3 rounded-xl bg-dz-yellow-soft px-3 py-2 text-xs" data-handover-qr>
+      {src && <img src={src} alt="Rider handover QR" className="h-28 w-28 rounded bg-white" />}
+      <span>
+        <b>Rider handover QR (development only).</b> Show this to the store's “Scan QR” camera, or save it and use “Scan from a photo”.
+      </span>
+    </div>
   );
 }

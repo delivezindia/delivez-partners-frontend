@@ -8,7 +8,7 @@ import { useStoreSocket, type DomainEvent } from '../../lib/socket';
 import { useLogout } from '../../lib/use-logout';
 import type { MeResponse, OpenState, PartnerRole, StoreDetail } from '../../lib/types';
 import type { ReactNode } from 'react';
-import { AlertTriangle, CalendarClock, Download, ChevronDown, ClipboardList, FileText, LayoutDashboard, LogOut, Package, Settings as SettingsIcon, Store, UserRoundCog, Users, UtensilsCrossed, type LucideIcon } from 'lucide-react';
+import { AlertTriangle, CalendarClock, Download, ChevronDown, ClipboardList, FileText, LayoutDashboard, LogOut, Package, Settings as SettingsIcon, ShieldCheck, Store, UserRoundCog, Users, UtensilsCrossed, type LucideIcon } from 'lucide-react';
 import { Brand, Button, ErrorText } from '../../components/ui';
 import { Avatar, Dropdown, Skeleton, toast, Toaster } from '../../components/feedback';
 import { useI18n, type MsgKey } from '../../lib/i18n';
@@ -33,6 +33,7 @@ const TABS: { to: string; label: MsgKey; icon: LucideIcon; roles: PartnerRole[];
   { to: '', label: 'tab.dashboard', icon: LayoutDashboard, roles: ['OWNER', 'MANAGER', 'KITCHEN_LEAD', 'COUNTER_STAFF', 'PHARMACIST', 'ACCOUNTANT'], end: true },
   { to: 'orders', label: 'tab.orders', icon: ClipboardList, roles: ['OWNER', 'MANAGER', 'KITCHEN_LEAD', 'COUNTER_STAFF', 'PHARMACIST'], hideFor: ['DIAGNOSTICS'] },
   { to: 'bookings', label: 'tab.bookings', icon: CalendarClock, roles: ['OWNER', 'MANAGER', 'COUNTER_STAFF'], onlyFor: ['DIAGNOSTICS'] },
+  { to: 'prescriptions', label: 'tab.prescriptions', icon: ShieldCheck, roles: ['OWNER', 'MANAGER', 'KITCHEN_LEAD', 'COUNTER_STAFF', 'PHARMACIST'], onlyFor: ['PHARMACY'] },
   { to: 'menu', label: 'tab.menu', icon: UtensilsCrossed, roles: ['OWNER', 'MANAGER', 'KITCHEN_LEAD', 'COUNTER_STAFF', 'PHARMACIST'] },
   { to: 'inventory', label: 'tab.inventory', icon: Package, roles: ['OWNER', 'MANAGER', 'PHARMACIST'], hideFor: ['EAT', 'DIAGNOSTICS'] },
   { to: 'staff', label: 'tab.staff', icon: Users, roles: ['OWNER', 'MANAGER'] },
@@ -69,9 +70,14 @@ export default function StoreLayout() {
     if (event.type.startsWith('order.') || event.type === 'delivery.task_updated' || event.type === 'payment.refund_initiated') {
       void qc.invalidateQueries({ queryKey: ['orders', storeId] });
       void qc.invalidateQueries({ queryKey: ['order', storeId] });
-      if (event.type === 'order.placed' && event.actor?.type !== 'PARTNER') {
+      const no = (event.data as { orderNumber?: string }).orderNumber ?? '';
+      if ((event.type === 'order.placed' && event.actor?.type !== 'PARTNER') || event.type === 'order.rx_approved') {
         ring();
-        toast.info(`New order ${(event.data as { orderNumber?: string }).orderNumber ?? ''}`.trim());
+        toast.info(`${t('ord.newOrder')} ${no}`.trim());
+      }
+      if (event.type === 'order.rx_submitted') {
+        ring();
+        toast.info(t('rx.newToast', { no }));
       }
     }
     if (event.type.startsWith('lab.')) {
@@ -79,6 +85,7 @@ export default function StoreLayout() {
       void qc.invalidateQueries({ queryKey: ['lab-booking', storeId] });
       if (event.type === 'lab.booking_created') toast.info('New lab booking');
     }
+    if (event.type === 'pharmacy.duty_changed') void qc.invalidateQueries({ queryKey: ['pharmacists', storeId] });
     if (event.type === 'store.admin_notice') {
       void qc.invalidateQueries({ queryKey: ['store', storeId] });
       toast.info(t('dash.notice'));
@@ -100,9 +107,9 @@ export default function StoreLayout() {
   const takesOrders = !!role && ['OWNER', 'MANAGER', 'KITCHEN_LEAD', 'COUNTER_STAFF', 'PHARMACIST'].includes(role);
   const newOrders = useNewOrders(storeId, !!data && takesOrders && !lab);
   const newBookings = useLabBookings(storeId, 'TO_CONFIRM', !!data && takesOrders && lab);
-  const waiting = lab ? (newBookings.data?.counts.TO_CONFIRM ?? 0) : (newOrders.data?.counts.NEW ?? 0);
+  const waiting = lab ? (newBookings.data?.counts.TO_CONFIRM ?? 0) : (newOrders.data?.counts.NEW ?? 0) + (newOrders.data?.counts.RX ?? 0);
   const [, , , section = '', sub] = location.pathname.split('/');
-  const PAGE: Record<string, MsgKey> = { '': 'tab.dashboard', orders: 'tab.orders', menu: lab ? 'tab.tests' : 'tab.menu', bookings: 'tab.bookings', inventory: 'tab.inventory', staff: 'tab.staff', settings: 'tab.settings', notifications: 'shell.notifications', switch: 'shell.switchUser' };
+  const PAGE: Record<string, MsgKey> = { '': 'tab.dashboard', orders: 'tab.orders', menu: lab ? 'tab.tests' : 'tab.menu', bookings: 'tab.bookings', prescriptions: 'tab.prescriptions', inventory: 'tab.inventory', staff: 'tab.staff', settings: 'tab.settings', notifications: 'shell.notifications', switch: 'shell.switchUser' };
   const page = section === 'orders' && sub ? sub : PAGE[section] ? t(PAGE[section]) : '';
   useEffect(() => {
     if (!data) return;

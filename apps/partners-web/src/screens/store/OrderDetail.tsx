@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { ArrowLeft, Printer } from 'lucide-react';
+import { ArrowLeft, Eye, Printer, ShieldCheck } from 'lucide-react';
 import { api, newIdempotencyKey } from '../../lib/api';
 import { inr } from '../../lib/catalog';
 import { errorMessageOf } from '../../lib/onboarding';
@@ -10,6 +10,8 @@ import { Modal } from '../../components/Modal';
 import { Button, ErrorText } from '../../components/ui';
 import { SkeletonList, toast } from '../../components/feedback';
 import { useI18n, type MsgKey } from '../../lib/i18n';
+import { openHealthFile } from '../../lib/labBookings';
+import { istClock } from '../../lib/pharmacy';
 import { useStoreContext } from './StoreLayout';
 import { ActionDialog, OrderCard } from './Orders';
 
@@ -34,6 +36,7 @@ export default function OrderDetail() {
   const [dialog, setDialog] = useState<{ kind: 'accept' | 'reject' | 'ready' | 'delay'; order: Order } | null>(null);
   const [removing, setRemoving] = useState<Order['items'][number] | null>(null);
   const editable = o && ['PLACED', 'ACCEPTED', 'PREPARING'].includes(o.status) && role !== 'ACCOUNTANT';
+  const canSeeRx = ['OWNER', 'MANAGER', 'PHARMACIST'].includes(role);
 
   return (
     <div className="space-y-5">
@@ -82,6 +85,23 @@ export default function OrderDetail() {
           </div>
 
           <div className="space-y-5">
+            {o.rx && (
+              <section className="dz-card p-5" data-rx-section>
+                <h2 className="flex items-center gap-2 text-xl"><ShieldCheck className="h-5 w-5 text-dz-blue" aria-hidden /> {t('lb.rx')}</h2>
+                <dl className="mt-2 space-y-1 text-sm">
+                  <div className="flex justify-between gap-3"><dt className="text-ink-3">{t('lb.rxStatusLabel')}</dt><dd className="font-bold">{t(o.rx.status === 'APPROVED' ? 'rx.approved' : o.rx.status === 'REJECTED' ? 'rx.rejected' : o.rx.status === 'EXPIRED' ? 'rx.expired' : 'rx.status')}</dd></div>
+                  {o.rx.reviewedBy && <div className="flex justify-between gap-3"><dt className="text-ink-3">{t('rx.pharmacist')}</dt><dd className="text-right font-semibold">{o.rx.reviewedBy.name} ({o.rx.reviewedBy.registrationNo}){o.rx.reviewedAt ? ` · ${istClock(o.rx.reviewedAt)}` : ''}</dd></div>}
+                  {o.rx.doctorName && <div className="flex justify-between gap-3"><dt className="text-ink-3">{t('rx.doctor')}</dt><dd className="text-right font-semibold">{o.rx.doctorName} ({o.rx.doctorRegNo}){o.rx.issuedOn ? ` · ${o.rx.issuedOn.slice(0, 10)}` : ''}</dd></div>}
+                  {o.rx.notes && <div className="rounded bg-soft px-2 py-1 text-ink-2">{o.rx.notes}</div>}
+                  {o.rx.rejectionReason && <div className="text-dz-red">{o.rx.rejectionReason}</div>}
+                </dl>
+                {canSeeRx && (
+                  <Button variant="ghost" className="mt-3 min-h-10 text-sm" onClick={() => void openHealthFile(`/partners/stores/${storeId}/orders/${o.id}/prescription`).catch((e) => toast.error(errorMessageOf(e) ?? t('lb.openFailed')))}>
+                    <Eye className="h-4 w-4" aria-hidden /> {t('lb.openRx')}
+                  </Button>
+                )}
+              </section>
+            )}
             <section className="dz-card p-5">
               <h2 className="text-xl">{t('od.times')}</h2>
               <dl className="mt-2 grid grid-cols-2 gap-x-4 gap-y-2 text-sm sm:grid-cols-3">

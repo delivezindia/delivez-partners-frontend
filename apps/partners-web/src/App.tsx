@@ -15,6 +15,7 @@ import Notifications from './screens/store/Notifications';
 import { OfflineBar } from './components/OfflineBar';
 import Menu from './screens/store/Menu';
 import Bookings from './screens/store/Bookings';
+import Prescriptions from './screens/store/Prescriptions';
 import Import from './screens/store/Import';
 import Inventory from './screens/store/Inventory';
 import StartOnboarding from './screens/onboarding/StartOnboarding';
@@ -72,6 +73,7 @@ export default function App() {
             <Route path="notifications" element={<Notifications />} />
             <Route path="menu" element={<Menu />} />
             <Route path="bookings" element={<Bookings />} />
+            <Route path="prescriptions" element={<Prescriptions />} />
             <Route path="menu/import" element={<Import />} />
             <Route path="inventory" element={<Inventory />} />
           </Route>
