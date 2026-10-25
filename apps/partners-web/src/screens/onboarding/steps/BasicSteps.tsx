@@ -1,6 +1,7 @@
 import { useRef, useState } from 'react';
 import { Card, Chips, Field, Select, TextArea, TextInput, Toggle } from '../../../components/form';
 import { MapPicker } from '../../../components/MapPicker';
+import { useAddressAutofill } from '../../../lib/addressAutofill';
 import { slotsFrom, slotsToTimings, TimingsEditor } from '../../../components/TimingsEditor';
 import { STEP_FORM_ID, type StepProps } from './types';
 
@@ -144,9 +145,10 @@ export function OutletStep({ view, submit, errors }: StepProps) {
     pincode: view.store.pincode ?? elig?.pincode ?? '',
   });
   const [placeId, setPlaceId] = useState(saved?.placeId);
-  // Map lookups may fill the PIN code only until the partner types one themselves.
-  // A ref, because the lookup callback may resolve after the partner has typed.
-  const pinTyped = useRef(!!(view.store.pincode ?? elig?.pincode));
+  // The address follows the pin until the partner edits a field themselves. The eligibility PIN code counts as
+  // map-filled, so the pin's real PIN code replaces it.
+  const autofill = useAddressAutofill<'addressLine1' | 'addressLine2' | 'landmark' | 'pincode'>({ pincode: view.store.pincode ? undefined : elig?.pincode });
+  const [filled, setFilled] = useState(false);
   const [seating, setSeating] = useState(saved?.seatingType ?? 'DINE_IN');
   const [slots, setSlots] = useState(slotsFrom(view.store.timings, view.store.vertical === 'EAT' ? { opensAt: '11:00', closesAt: '23:00' } : undefined));
   const [pinError, setPinError] = useState('');
@@ -175,14 +177,19 @@ export function OutletStep({ view, submit, errors }: StepProps) {
           }}
           onAddress={(r) => {
             setPlaceId(r.placeId);
-            setAddress((cur) => ({
-              ...cur,
-              addressLine1: cur.addressLine1 || r.line1,
-              pincode: !pinTyped.current && r.pincode && /^\d{6}$/.test(r.pincode) ? r.pincode : cur.pincode,
-            }));
+            setFilled(true);
+            setAddress((cur) =>
+              autofill(cur, {
+                addressLine1: r.street ?? r.line1,
+                addressLine2: r.street ? r.area : null,
+                landmark: r.landmark,
+                pincode: r.pincode && /^\d{6}$/.test(r.pincode) ? r.pincode : null,
+              }),
+            );
           }}
         />
         {(pinError || errors.lat) && <p className="mt-2 text-sm text-state-delayed">{pinError || errors.lat}</p>}
+        {filled && <p className="mt-2 rounded-lg bg-dz-yellow-soft px-3 py-2 text-xs font-semibold" data-autofilled>Address filled from the pin — check it and correct anything that’s wrong.</p>}
         {view.store.addressConfidence && view.store.lat === lat && (
           <p className="mt-2 text-xs text-neutral-500">
             Address confidence: <b>{view.store.addressConfidence}</b>
@@ -204,10 +211,7 @@ export function OutletStep({ view, submit, errors }: StepProps) {
               inputMode="numeric"
               maxLength={6}
               value={address.pincode}
-              onChange={(e) => {
-                pinTyped.current = true;
-                setAddress((a) => ({ ...a, pincode: e.target.value.replace(/\D/g, '') }));
-              }}
+              onChange={(e) => setAddress((a) => ({ ...a, pincode: e.target.value.replace(/\D/g, '') }))}
               required
             />
           </Field>

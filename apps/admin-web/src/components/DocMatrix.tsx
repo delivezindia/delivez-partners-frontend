@@ -47,6 +47,7 @@ const toQueueDoc = (shop: ShopDocs, slot: ShopDocSlot): QueueDoc & { rejectionRe
   superseded: false,
   documentNumber: slot.doc!.documentNumber,
   expiresAt: slot.doc!.expiresAt,
+  reading: slot.doc!.reading ?? null,
   createdAt: slot.doc!.createdAt,
   viewUrl: slot.doc!.viewUrl,
   contentType: slot.doc!.contentType,

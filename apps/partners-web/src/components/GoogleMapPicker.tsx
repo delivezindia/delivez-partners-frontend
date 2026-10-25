@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { LocateFixed, Search } from 'lucide-react';
-import { mapsAuthFailed, mapsLibrary, onMapsAuthFailure, parseAddress } from '../lib/googleMaps';
+import { mapsAuthFailed, mapsLibrary, nearbyLandmark, onMapsAuthFailure, parseAddress } from '../lib/googleMaps';
 import type { GeocodeResult } from './MapPicker';
 
 type Suggestion = { id: string; main: string; secondary: string; prediction: google.maps.places.PlacePrediction };
@@ -106,8 +106,14 @@ export function GoogleMapPicker({
     if (!lookup || !latest.current.onAddress || !geocoder.current) return;
     try {
       const { results } = await geocoder.current.geocode({ location: { lat: newLat, lng: newLng } });
-      const r = results[0];
-      if (r) latest.current.onAddress({ ...parseAddress(r.formatted_address, r.address_components), lat: round(newLat), lng: round(newLng), placeId: r.place_id });
+      // The most precise street address, plus the nearest named place as a landmark.
+      const r = results.find((x) => x.types.includes('street_address') || x.types.includes('premise')) ?? results[0];
+      if (r) {
+        const parsed = parseAddress(r.formatted_address, r.address_components);
+        latest.current.onAddress({ ...parsed, landmark: nearbyLandmark(results), lat: round(newLat), lng: round(newLng), placeId: r.place_id });
+        setQuery(parsed.line1);
+        setOpen(false);
+      }
     } catch {
       // Reverse geocoding is a convenience; the partner can type the address.
     }
@@ -152,12 +158,14 @@ export function GoogleMapPicker({
     setQuery(s.main);
     try {
       const place = s.prediction.toPlace();
-      await place.fetchFields({ fields: ['location', 'formattedAddress', 'addressComponents', 'id'] });
+      await place.fetchFields({ fields: ['location', 'formattedAddress', 'addressComponents', 'id', 'displayName', 'types'] });
       session.current = null; // session ends with the details call
       const loc = place.location;
       if (!loc) return;
       latest.current.onChange(round(loc.lat()), round(loc.lng()));
-      latest.current.onAddress?.({ ...parseAddress(place.formattedAddress ?? s.main, place.addressComponents ?? []), lat: round(loc.lat()), lng: round(loc.lng()), placeId: place.id });
+      // A picked shop / building name makes a good landmark; a plain street or area doesn't.
+      const named = place.types?.some((t) => ['point_of_interest', 'establishment', 'premise'].includes(t)) ? place.displayName ?? null : null;
+      latest.current.onAddress?.({ ...parseAddress(place.formattedAddress ?? s.main, place.addressComponents ?? []), landmark: named, lat: round(loc.lat()), lng: round(loc.lng()), placeId: place.id });
     } catch {
       setMessage('Could not open that place. Drag the pin instead.');
     }

@@ -8,7 +8,14 @@ import { GoogleMapPicker } from './GoogleMapPicker';
 
 export interface GeocodeResult {
   label: string;
+  /** Street + area on one line (single-line address fields). */
   line1: string;
+  /** House / building number and road. */
+  street?: string | null;
+  /** Neighbourhood / locality. */
+  area?: string | null;
+  /** A named place at or next to the pin, used as the landmark. */
+  landmark?: string | null;
   pincode: string | null;
   city: string | null;
   state: string | null;
@@ -81,7 +88,11 @@ function OsmMapPicker({
     if (!lookup || !onAddress) return;
     try {
       const r = await api<GeocodeResult | null>(`/geo/reverse?lat=${newLat}&lng=${newLng}`);
-      if (r) onAddress(r);
+      if (r) {
+        onAddress(r);
+        setQuery(r.line1);
+        setMessage('');
+      }
     } catch {
       // Reverse geocoding is a convenience; the partner can type the address.
     }

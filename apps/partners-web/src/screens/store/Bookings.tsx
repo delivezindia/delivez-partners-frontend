@@ -10,6 +10,7 @@ import { Modal } from '../../components/Modal';
 import { Button, ErrorText } from '../../components/ui';
 import { EmptyState, SkeletonList, toast } from '../../components/feedback';
 import { MapPicker } from '../../components/MapPicker';
+import { useAddressAutofill } from '../../lib/addressAutofill';
 import { useI18n } from '../../lib/i18n';
 import { useStoreContext } from './StoreLayout';
 
@@ -434,7 +435,7 @@ function NewBooking({ storeId, onClose, onCreated }: { storeId: string; onClose:
   const [f, setF] = useState({ phone: '', name: '', patient: '', age: '', gender: '' as '' | 'F' | 'M' | 'O', type: (detail.store.supportsPickup ? 'WALK_IN' : 'HOME') as 'HOME' | 'WALK_IN', date: new Date(Date.now() + 5.5 * 3600_000 + 86_400_000).toISOString().slice(0, 10), slot: '', pay: 'COD' as 'COD' | 'UPI', line1: '', pincode: '', rxSeen: false });
   const [testIds, setTestIds] = useState<string[]>([]);
   const [pin, setPin] = useState<{ lat: number; lng: number } | null>(null);
-  const autoLine = useRef('');
+  const autofill = useAddressAutofill<'line1' | 'pincode'>();
   const tests = useQuery({ queryKey: ['products', storeId], queryFn: () => api<{ products: { id: string; name: string; price: number; prescriptionRequired: boolean; isAvailable: boolean; lab: { homeCollection: boolean | null; walkIn: boolean | null } | null }[] }>(`/partners/stores/${storeId}/products`) });
   const slots = useQuery({ queryKey: ['lab-slots', storeId, f.date, f.type], queryFn: () => api<{ slots: { start: string; left: number; available: boolean }[] }>(`/partners/stores/${storeId}/lab-slots?date=${f.date}&type=${f.type}`) });
   const offered = (tests.data?.products ?? []).filter((t) => t.isAvailable && (f.type === 'HOME' ? t.lab?.homeCollection !== false : t.lab?.walkIn !== false));
@@ -493,13 +494,7 @@ function NewBooking({ storeId, onClose, onCreated }: { storeId: string; onClose:
             placeholder={t('lb.searchAddress')}
             hint={t('lb.pinHint')}
             onChange={(lat, lng) => setPin({ lat, lng })}
-            onAddress={(r) =>
-              setF((x) => {
-                const line1 = !x.line1 || x.line1 === autoLine.current ? r.line1 : x.line1;
-                autoLine.current = r.line1;
-                return { ...x, line1, pincode: r.pincode && /^\d{6}$/.test(r.pincode) ? r.pincode : x.pincode };
-              })
-            }
+            onAddress={(r) => setF((x) => autofill(x, { line1: r.landmark ? `${r.line1} (near ${r.landmark})` : r.line1, pincode: r.pincode && /^\d{6}$/.test(r.pincode) ? r.pincode : null }))}
           />
         )}
         {f.type === 'HOME' && (

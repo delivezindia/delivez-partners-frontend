@@ -11,6 +11,7 @@ import { Modal } from '../../components/Modal';
 import { Button, ErrorText } from '../../components/ui';
 import { toast } from '../../components/feedback';
 import { MapPicker } from '../../components/MapPicker';
+import { useAddressAutofill } from '../../lib/addressAutofill';
 import { useI18n } from '../../lib/i18n';
 import { useStoreContext } from './StoreLayout';
 
@@ -29,7 +30,7 @@ export default function NewOrder({ onClose }: { onClose: () => void }) {
   const [q, setQ] = useState('');
   const [pin, setPin] = useState<{ lat: number; lng: number } | null>(null);
   // The map fills the address fields unless staff have typed their own text since.
-  const autoLine = useRef('');
+  const autofill = useAddressAutofill<'line1' | 'landmark' | 'pincode'>({ pincode: s.pincode ?? undefined });
   const [lines, setLines] = useState<Line[]>([]);
   const [rxSeen, setRxSeen] = useState(false);
   const set = <K extends keyof typeof f>(k: K, v: (typeof f)[K]) => setF((x) => ({ ...x, [k]: v }));
@@ -106,13 +107,7 @@ export default function NewOrder({ onClose }: { onClose: () => void }) {
             placeholder={t('no.searchAddress')}
             hint={t('no.pinHint')}
             onChange={(lat, lng) => setPin({ lat, lng })}
-            onAddress={(r) =>
-              setF((x) => {
-                const line1 = !x.line1 || x.line1 === autoLine.current ? r.line1 : x.line1;
-                autoLine.current = r.line1;
-                return { ...x, line1, pincode: r.pincode && /^\d{6}$/.test(r.pincode) ? r.pincode : x.pincode };
-              })
-            }
+            onAddress={(r) => setF((x) => autofill(x, { line1: r.line1, landmark: r.landmark, pincode: r.pincode && /^\d{6}$/.test(r.pincode) ? r.pincode : null }))}
           />
         )}
         {f.type === 'DELIVERY' && (

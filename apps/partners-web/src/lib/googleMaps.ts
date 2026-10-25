@@ -31,6 +31,8 @@ export function mapsLibrary<K extends 'maps' | 'places' | 'geocoding' | 'marker'
 export interface ParsedAddress {
   label: string;
   line1: string;
+  street: string | null;
+  area: string | null;
   pincode: string | null;
   city: string | null;
   state: string | null;
@@ -42,14 +44,28 @@ export function parseAddress(formatted: string, parts: { types: string[]; long_n
     const p = parts.find((c) => c.types.includes(type));
     return p ? (p.longText ?? p.long_name ?? null) : null;
   };
-  const line1 = [get('premise') ?? get('street_number'), get('route'), get('sublocality_level_2'), get('sublocality_level_1') ?? get('sublocality') ?? get('neighborhood')]
-    .filter(Boolean)
-    .join(', ');
+  const street = [get('premise') ?? get('street_number'), get('route')].filter(Boolean).join(', ') || null;
+  const area = [get('sublocality_level_2'), get('sublocality_level_1') ?? get('sublocality') ?? get('neighborhood')].filter(Boolean).join(', ') || null;
+  const line1 = [street, area].filter(Boolean).join(', ');
   return {
     label: formatted,
     line1: line1 || formatted.split(',').slice(0, 3).join(',').trim(),
+    street,
+    area,
     pincode: get('postal_code'),
     city: get('locality') ?? get('administrative_area_level_3'),
     state: get('administrative_area_level_1'),
   };
+}
+
+/** The nearest named place among reverse-geocode results (a shop, temple, building…), for the landmark. */
+export function nearbyLandmark(results: { types: string[]; address_components: { long_name: string; types: string[] }[] }[]) {
+  // A real place name: starts with a letter and has a few of them ("292/1" or "12A" is a plot number, not a landmark).
+  const isName = (s: string | undefined) => !!s && /^[A-Za-z]/.test(s) && (s.match(/[A-Za-z]/g) ?? []).length >= 3;
+  for (const r of results) {
+    if (!r.types.some((t) => ['point_of_interest', 'establishment', 'premise', 'transit_station', 'park'].includes(t))) continue;
+    const name = r.address_components[0]?.long_name?.trim();
+    if (isName(name)) return name!;
+  }
+  return null;
 }

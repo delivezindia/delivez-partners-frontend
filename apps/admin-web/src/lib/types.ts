@@ -44,8 +44,18 @@ export interface PipelineStore {
   docs: { required: number; verified: number; pending: number; rejected: number };
 }
 
+/** What the partner's browser read off the file (digital PDF text or OCR), with warnings. */
+export interface DocReading {
+  method: 'pdf-text' | 'tesseract';
+  read: { documentNumber: string | null; issuedAt: string | null; expiresAt: string | null } | null;
+  confidence: 'HIGH' | 'LOW' | 'NONE';
+  engineConfidence: number | null;
+  flags: ('NOT_READ' | 'NUMBER_CHANGED' | 'EXPIRY_CHANGED' | 'GSTIN_MISMATCH' | 'PAN_MISMATCH' | 'LOW_QUALITY')[];
+}
+
 export interface QueueDoc {
   id: string;
+  reading?: DocReading | null;
   type: string;
   label: string;
   status: DocStatus;
@@ -195,6 +205,7 @@ export interface ShopDocSlot {
     createdAt: string;
     documentNumber: string | null;
     expiresAt: string | null;
+    reading?: DocReading | null;
     expiringSoon: boolean;
     rejectionReason: string | null;
     reviewedAt: string | null;

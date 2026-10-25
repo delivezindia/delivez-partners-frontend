@@ -1,5 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { api, ApiError } from './api';
+import type { DocReading } from './docOcr';
 
 export type StepKey =
   | 'ELIGIBILITY'
@@ -195,7 +196,7 @@ export function useOnboardingActions(storeId: string) {
 export async function uploadDocument(
   storeId: string,
   file: File,
-  meta: { type: string; documentNumber?: string; expiresAt?: string },
+  meta: { type: string; documentNumber?: string; issuedAt?: string; expiresAt?: string; reading?: DocReading },
 ): Promise<UploadedDocument> {
   const presigned = await api<{ uploadUrl: string; fileKey: string }>(`/partners/stores/${storeId}/uploads`, {
     method: 'POST',
@@ -208,7 +209,7 @@ export async function uploadDocument(
   }
   return api<UploadedDocument>(`/partners/stores/${storeId}/documents`, {
     method: 'POST',
-    body: { type: meta.type, fileKey: presigned.fileKey, documentNumber: meta.documentNumber || undefined, expiresAt: meta.expiresAt || undefined },
+    body: { type: meta.type, fileKey: presigned.fileKey, documentNumber: meta.documentNumber || undefined, issuedAt: meta.issuedAt || undefined, expiresAt: meta.expiresAt || undefined, reading: meta.reading },
   });
 }
 
