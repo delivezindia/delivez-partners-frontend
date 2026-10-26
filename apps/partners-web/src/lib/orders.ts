@@ -20,7 +20,7 @@ export interface Order {
   deliveryArea: string | null;
   distanceKm: number | null;
   note: string | null;
-  items: { id: string; name: string; variant: string | null; addons: { name: string; price: number }[]; qty: number; unitPrice: number; lineTotal: number; isRx: boolean; unavailable: boolean }[];
+  items: { id: string; name: string; variant: string | null; addons: { name: string; price: number }[]; qty: number; unitPrice: number; lineTotal: number; isRx: boolean; unavailable: boolean; returnedQty?: number }[];
   totals: { items: number; delivery: number; packaging: number; discount: number; grandTotal: number };
   payment: { mode: string; status: string; collectCash: number };
   prepMinutes: number | null;
@@ -32,12 +32,18 @@ export interface Order {
   cancelReason: string | null;
   /** Pharmacy: when an unreviewed prescription order is cancelled. */
   rxReviewBy?: string | null;
+  /** Grocery / local stores: the rider's 5-minute doorstep check after delivery. */
+  returnWindow?: { endsAt: string; closedAt: string | null; outcome: 'NO_RETURN' | 'RETURNED' | 'EXPIRED' | null; open: boolean } | null;
+  returns?: { id: string; itemId: string; name: string; qty: number; amount: number; reason: ReturnReason; note: string | null; status: 'WITH_RIDER' | 'RECEIVED' | 'NOT_APPLICABLE'; refundMethod: 'ONLINE' | 'CASH_AT_DOOR'; restocked: boolean | null; receivedAt: string | null }[];
   /** Grocery: replacements offered for items that ran out. */
   substitutions?: { id: string; itemId: string; name: string; variant: string | null; qty: number; lineTotal: number; status: 'PROPOSED' | 'ACCEPTED' | 'DECLINED' | 'EXPIRED'; respondBy: string; respondedAt: string | null }[];
   rx?: { id: string; status: string; files: number; doctorName: string | null; doctorRegNo: string | null; issuedOn: string | null; patientName: string | null; reviewedBy: { name: string; registrationNo: string } | null; reviewedAt: string | null; notes: string | null; rejectionReason: string | null } | null;
   rider: { taskStatus: TaskStatus; name: string | null; phone: string | null; assignedAt: string | null; arrivedAt: string | null; waitingSince: string | null; readyAtEstimate: string | null } | null;
   timeline?: { from: OrderStatus | null; to: OrderStatus; actorType: string; reason: string | null; meta: Record<string, unknown> | null; at: string }[];
 }
+
+export type ReturnReason = 'DAMAGED' | 'WRONG_ITEM' | 'EXPIRED' | 'POOR_QUALITY' | 'MISSING';
+export const RETURN_REASON: Record<ReturnReason, MsgKey> = { DAMAGED: 'ret.r.DAMAGED', WRONG_ITEM: 'ret.r.WRONG_ITEM', EXPIRED: 'ret.r.EXPIRED', POOR_QUALITY: 'ret.r.POOR_QUALITY', MISSING: 'ret.r.MISSING' };
 
 export const TABS: { key: OrderTab; label: string; t: MsgKey }[] = [
   { key: 'NEW', label: 'New', t: 'ord.tab.NEW' },

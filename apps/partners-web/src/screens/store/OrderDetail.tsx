@@ -5,7 +5,7 @@ import { ArrowLeft, Eye, LifeBuoy, Printer, Receipt, Replace, ShieldCheck, Trash
 import { api, newIdempotencyKey } from '../../lib/api';
 import { inr } from '../../lib/catalog';
 import { errorMessageOf } from '../../lib/onboarding';
-import { clock, printKot, STATUS, useOrder, type Order } from '../../lib/orders';
+import { clock, printKot, RETURN_REASON, STATUS, useOrder, type Order } from '../../lib/orders';
 import { Modal } from '../../components/Modal';
 import { Button, ErrorText } from '../../components/ui';
 import { SkeletonList, toast } from '../../components/feedback';
@@ -86,6 +86,7 @@ export default function OrderDetail() {
                     <span>
                       {i.qty} × {i.name}{i.variant ? ` (${i.variant})` : ''} <span className="text-ink-3">@ {inr(i.unitPrice)}</span>
                       {i.unavailable && <span className="ml-1 text-xs font-bold no-underline">{t('od.removed')}</span>}
+                      {!!i.returnedQty && <span className="ml-1 rounded bg-dz-red-soft px-1 text-xs font-bold text-dz-red">{t('ret.returnedTag', { n: i.returnedQty })}</span>}
                     </span>
                     <span className="flex items-center gap-2">
                       <b className="tabular-nums">{inr(i.lineTotal)}</b>
@@ -124,6 +125,7 @@ export default function OrderDetail() {
           </div>
 
           <div className="space-y-5">
+            {o.returnWindow && <ReturnsCard order={o} />}
             {o.rx && (
               <section className="dz-card p-5" data-rx-section>
                 <h2 className="flex items-center gap-2 text-xl"><ShieldCheck className="h-5 w-5 text-dz-blue" aria-hidden /> {t('lb.rx')}</h2>
@@ -281,3 +283,52 @@ const mmss = (s: number) => {
   const v = Math.max(0, Math.round(s));
   return `${Math.floor(v / 60)}:${String(v % 60).padStart(2, '0')}`;
 };
+
+const RECEIVERS = ['OWNER', 'MANAGER', 'KITCHEN_LEAD', 'COUNTER_STAFF', 'PHARMACIST'];
+
+/** Doorstep check result and items coming back with the rider; the shop confirms what it got back. */
+function ReturnsCard({ order: o }: { order: Order }) {
+  const { storeId, role } = useStoreContext();
+  const { t } = useI18n();
+  const qc = useQueryClient();
+  const w = o.returnWindow!;
+  const open = w.open && new Date(w.endsAt).getTime() > Date.now();
+  const receive = useMutation({
+    mutationFn: ({ id, restock }: { id: string; restock: boolean }) => api<Order>(`/partners/stores/${storeId}/orders/${o.id}/returns/${id}/receive`, { method: 'POST', body: { restock }, idempotencyKey: newIdempotencyKey() }),
+    onSuccess: (r, v) => (qc.setQueryData(['order', storeId, r.orderNumber], r), void qc.invalidateQueries({ queryKey: ['orders', storeId] }), toast.success(v.restock ? t('ret.shelfToast') : t('ret.damagedToast'))),
+  });
+  const returns = o.returns ?? [];
+  return (
+    <section className="dz-card p-5" data-returns-card>
+      <h2 className="text-xl">{t('ret.title')}</h2>
+      <p className="mt-1 text-sm text-ink-2" data-outcome={open ? 'OPEN' : w.outcome ?? 'EXPIRED'}>
+        {open ? t('ret.openNow') : w.outcome === 'NO_RETURN' ? t('ret.happy') : w.outcome === 'RETURNED' ? t('ret.returned') : t('ret.expired')}
+      </p>
+      {returns.length > 0 && (
+        <ul className="mt-3 space-y-3">
+          {returns.map((r) => (
+            <li key={r.id} className="rounded-xl bg-soft p-3 text-sm" data-return={r.status}>
+              <div className="flex flex-wrap justify-between gap-2">
+                <b>{r.qty} × {r.name}</b>
+                <span className="tabular-nums">−{inr(r.amount)}</span>
+              </div>
+              <p className="text-xs text-ink-2">
+                {t(RETURN_REASON[r.reason])}{r.note ? ` — ${r.note}` : ''} · {r.refundMethod === 'CASH_AT_DOOR' ? t('ret.cashBack') : t('ret.onlineBack')}
+              </p>
+              {r.status === 'WITH_RIDER' && RECEIVERS.includes(role) && (
+                <div className="mt-2 flex flex-wrap gap-2">
+                  <Button className="min-h-10 text-sm" disabled={receive.isPending} onClick={() => receive.mutate({ id: r.id, restock: true })}>{t('ret.backOnShelf')}</Button>
+                  <Button variant="ghost" className="min-h-10 text-sm" disabled={receive.isPending} onClick={() => receive.mutate({ id: r.id, restock: false })}>{t('ret.damaged')}</Button>
+                </div>
+              )}
+              {r.status === 'WITH_RIDER' && !RECEIVERS.includes(role) && <p className="mt-1 text-xs font-semibold">{t('ret.withRider')}</p>}
+              {r.status === 'RECEIVED' && <p className="mt-1 text-xs font-semibold text-dz-green">{r.restocked ? t('ret.receivedShelf') : t('ret.receivedDamaged')}</p>}
+              {r.status === 'NOT_APPLICABLE' && <p className="mt-1 text-xs text-ink-3">{t('ret.nothingBack')}</p>}
+            </li>
+          ))}
+        </ul>
+      )}
+      {receive.error && <div className="mt-2"><ErrorText>{errorMessageOf(receive.error)}</ErrorText></div>}
+    </section>
+  );
+}

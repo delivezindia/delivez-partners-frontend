@@ -75,6 +75,7 @@ export default function StoreLayout() {
         ring();
         toast.info(`${t('ord.newOrder')} ${no}`.trim());
       }
+      if (event.type === 'order.return_created') toast.info(t('ret.toast', { no }));
       if (event.type === 'order.substitution_accepted') toast.success(t('sub.toastAccepted', { no }));
       if (event.type === 'order.substitution_declined') toast.info(t('sub.toastDeclined', { no }));
       if (event.type === 'order.rx_submitted') {

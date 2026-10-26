@@ -23,6 +23,9 @@ export interface AdminOrderList {
   nextBefore: string | null;
 }
 
+export type ReturnReason = 'DAMAGED' | 'WRONG_ITEM' | 'EXPIRED' | 'POOR_QUALITY' | 'MISSING';
+export const RETURN_REASON_LABEL: Record<ReturnReason, string> = { DAMAGED: 'Damaged', WRONG_ITEM: 'Wrong item', EXPIRED: 'Expired', POOR_QUALITY: 'Poor quality', MISSING: 'Missing (not delivered)' };
+
 export interface AdminOrderDetail {
   id: string;
   orderNumber: string;
@@ -33,7 +36,9 @@ export interface AdminOrderDetail {
   customer: { name: string; phone: string };
   deliveryArea: string | null;
   note: string | null;
-  items: { id: string; name: string; variant: string | null; qty: number; lineTotal: number; unavailable: boolean }[];
+  items: { id: string; name: string; variant: string | null; qty: number; unitPrice: number; lineTotal: number; unavailable: boolean; returnedQty: number }[];
+  returnWindow: { endsAt: string; closedAt: string | null; outcome: 'NO_RETURN' | 'RETURNED' | 'EXPIRED' | null; open: boolean } | null;
+  returns: { id: string; itemId: string; name: string; qty: number; amount: number; reason: ReturnReason; status: 'WITH_RIDER' | 'RECEIVED' | 'NOT_APPLICABLE'; refundMethod: 'ONLINE' | 'CASH_AT_DOOR'; restocked: boolean | null }[];
   totals: { items: number; delivery: number; packaging: number; discount: number; grandTotal: number };
   payment: { mode: string; status: string };
   times: Record<string, string | null>;

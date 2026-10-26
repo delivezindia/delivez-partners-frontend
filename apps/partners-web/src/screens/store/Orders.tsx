@@ -233,6 +233,8 @@ export function OrderCard({ order: o, onDialog, onSeen, detail = false }: { orde
   const etaLeft = o.etaAt ? (new Date(o.etaAt).getTime() - now) / 1000 : null;
   const items = useMemo(() => o.items.filter((i) => !i.unavailable), [o.items]);
   const onRoad = ['PICKED_UP', 'OUT_FOR_DELIVERY', 'ARRIVED'].includes(o.status) && !!o.rider;
+  const checking = !!o.returnWindow?.open && new Date(o.returnWindow.endsAt).getTime() > Date.now();
+  const comingBack = (o.returns ?? []).filter((r) => r.status === 'WITH_RIDER').reduce((n, r) => n + r.qty, 0);
   const hasFooter = isNew || cooking || o.status === 'READY' || onRoad || !!act.error;
 
   return (
@@ -280,6 +282,8 @@ export function OrderCard({ order: o, onDialog, onSeen, detail = false }: { orde
           </li>
         ))}
         {o.items.length > items.length && <li className="text-xs text-ink-3">{t('ord.itemsRemoved', { n: o.items.length - items.length })}</li>}
+        {checking && <li className="rounded-lg bg-amber-50 px-2 py-1 text-xs font-semibold text-amber-900" data-checking><DoorTimer endsAt={o.returnWindow!.endsAt} /></li>}
+        {comingBack > 0 && <li className="rounded-lg bg-dz-red-soft px-2 py-1 text-xs font-semibold text-dz-red" data-coming-back>{t('ret.comingBack', { n: comingBack })}</li>}
         {o.substitutions?.filter((s) => s.status === 'PROPOSED').map((s) => (
           <li key={s.id} className="rounded-lg bg-amber-50 px-2 py-1 text-xs font-semibold text-amber-900" data-sub-pending>{t('sub.pendingCard', { name: s.name })}</li>
         ))}
@@ -487,4 +491,16 @@ export function ActionDialog({ dialog, onClose }: { dialog: NonNullable<Dialog>;
       {act.error && !(act.error instanceof QueuedOffline) && <div className="mt-2"><ErrorText>{errorMessageOf(act.error)}</ErrorText></div>}
     </Modal>
   );
+}
+
+/** "Customer checking items · 4:12" — the rider's doorstep wait after delivery. */
+function DoorTimer({ endsAt }: { endsAt: string }) {
+  const { t } = useI18n();
+  const [now, setNow] = useState(Date.now());
+  useEffect(() => {
+    const id = setInterval(() => setNow(Date.now()), 1000);
+    return () => clearInterval(id);
+  }, []);
+  const left = Math.max(0, Math.round((new Date(endsAt).getTime() - now) / 1000));
+  return <>{t('ret.checking', { time: `${Math.floor(left / 60)}:${String(left % 60).padStart(2, '0')}` })}</>;
 }

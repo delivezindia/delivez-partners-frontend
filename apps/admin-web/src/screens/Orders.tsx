@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Bike, ShoppingBag } from 'lucide-react';
 import { api, errorText } from '../lib/api';
-import { ACTIVE, FILTERS, istTime, RIDER_NEXT, rupees, STATUS_LABEL, type AdminOrderDetail, type AdminOrderList, type OrderStatus } from '../lib/orders';
+import { ACTIVE, FILTERS, istTime, RETURN_REASON_LABEL, RIDER_NEXT, rupees, STATUS_LABEL, type AdminOrderDetail, type AdminOrderList, type OrderStatus, type ReturnReason } from '../lib/orders';
 import { CAN, can } from '../lib/types';
 import { Button, Card, Empty, ErrorBox, inputCls, Modal, PageHead } from '../components/ui';
 import { useMe } from './Layout';
@@ -189,6 +189,8 @@ function OrderPanel({ id, onClose }: { id: string; onClose: () => void }) {
             </div>
           )}
 
+          {o.returnWindow && <DoorstepCheck order={o} canAct={canRide} onChange={refresh} />}
+
           {o.codes && (
             <p className="rounded-xl bg-dz-yellow-soft px-3 py-2 text-xs" data-codes>
               <b>Development only —</b> handover code <b>{o.codes.handoverOtp ?? '—'}</b> · pickup code <b>{o.codes.pickupOtp ?? '—'}</b> · delivery code <b>{o.codes.deliveryOtp ?? '—'}</b>
@@ -244,6 +246,82 @@ function HandoverQr({ payload }: { payload: string }) {
       <span>
         <b>Rider handover QR (development only).</b> Show this to the store's “Scan QR” camera, or save it and use “Scan from a photo”.
       </span>
+    </div>
+  );
+}
+
+const OUTCOME: Record<string, string> = { NO_RETURN: 'Customer was happy — nothing returned', RETURNED: 'Items returned at the door', EXPIRED: 'Time ran out — nothing returned' };
+
+/**
+ * The rider's 5-minute doorstep check (played by ops until the rider app exists): the customer checks the
+ * items; the rider either leaves ("Customer is happy") or takes back damaged / wrong / expired items.
+ */
+function DoorstepCheck({ order: o, canAct, onChange }: { order: AdminOrderDetail; canAct: boolean; onChange: (o: AdminOrderDetail) => void }) {
+  const [now, setNow] = useState(Date.now());
+  const [taking, setTaking] = useState(false);
+  const [pick, setPick] = useState<Record<string, { qty: number; reason: ReturnReason }>>({});
+  const w = o.returnWindow!;
+  const open = w.open && new Date(w.endsAt).getTime() > now;
+  useEffect(() => {
+    if (!open) return;
+    const t = setInterval(() => setNow(Date.now()), 1000);
+    return () => clearInterval(t);
+  }, [open]);
+  const close = useMutation({ mutationFn: () => api<AdminOrderDetail>(`/admin/orders/${o.id}/return-window/close`, { method: 'POST' }), onSuccess: onChange });
+  const take = useMutation({
+    mutationFn: () => api<AdminOrderDetail>(`/admin/orders/${o.id}/returns`, { method: 'POST', body: { items: Object.entries(pick).filter(([, v]) => v.qty > 0).map(([itemId, v]) => ({ itemId, ...v })) } }),
+    onSuccess: (r) => (onChange(r), setTaking(false), setPick({})),
+  });
+  const left = Math.max(0, Math.round((new Date(w.endsAt).getTime() - now) / 1000));
+  const items = o.items.filter((i) => !i.unavailable && i.qty - i.returnedQty > 0);
+  const total = Object.entries(pick).reduce((n, [id, v]) => n + (o.items.find((i) => i.id === id)?.unitPrice ?? 0) * v.qty, 0);
+  return (
+    <div className={`rounded-xl border p-3 ${open ? 'border-amber-400 bg-amber-50' : 'border-line'}`} data-doorstep={open ? 'open' : 'closed'}>
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <p className="font-bold">Doorstep check</p>
+        {open ? <span className="text-xl font-extrabold tabular-nums" data-timer>{Math.floor(left / 60)}:{String(left % 60).padStart(2, '0')}</span> : <span className="text-xs font-semibold text-ink-3">{OUTCOME[w.outcome ?? 'EXPIRED']}</span>}
+      </div>
+      {open && <p className="text-xs text-ink-2">The rider waits while the customer checks the items. Damaged, wrong or expired items go back with the rider; the customer is refunded {o.payment.mode === 'COD' ? 'in cash by the rider' : 'online'}.</p>}
+      {open && canAct && !taking && (
+        <div className="mt-2 flex flex-wrap gap-2">
+          <Button variant="green" className="min-h-9 px-3 text-xs" disabled={close.isPending} onClick={() => close.mutate()}>Customer is happy — leave</Button>
+          <Button variant="outline" className="min-h-9 px-3 text-xs" onClick={() => setTaking(true)}>Take back items…</Button>
+        </div>
+      )}
+      {open && taking && (
+        <div className="mt-3 space-y-2">
+          {items.map((i) => {
+            const p = pick[i.id] ?? { qty: 0, reason: 'DAMAGED' as ReturnReason };
+            const max = i.qty - i.returnedQty;
+            return (
+              <div key={i.id} className="flex flex-wrap items-center gap-2 text-sm" data-return-item={i.name}>
+                <span className="min-w-[10rem] flex-1">{i.name} <span className="text-ink-3">× {max}</span></span>
+                <select aria-label={`Quantity of ${i.name} to take back`} className="h-9 rounded-lg border border-line bg-white px-2" value={p.qty} onChange={(e) => setPick({ ...pick, [i.id]: { ...p, qty: Number(e.target.value) } })}>
+                  {Array.from({ length: max + 1 }, (_, n) => <option key={n} value={n}>{n}</option>)}
+                </select>
+                <select aria-label={`Why ${i.name} is returned`} className="h-9 rounded-lg border border-line bg-white px-2" value={p.reason} onChange={(e) => setPick({ ...pick, [i.id]: { ...p, reason: e.target.value as ReturnReason } })}>
+                  {(Object.keys(RETURN_REASON_LABEL) as ReturnReason[]).map((r) => <option key={r} value={r}>{RETURN_REASON_LABEL[r]}</option>)}
+                </select>
+              </div>
+            );
+          })}
+          <div className="flex flex-wrap items-center gap-2">
+            <Button variant="red" className="min-h-9 px-3 text-xs" disabled={!total || take.isPending} onClick={() => take.mutate()}>Take back · refund {rupees(total)}</Button>
+            <Button variant="outline" className="min-h-9 px-3 text-xs" onClick={() => (setTaking(false), setPick({}))}>Back</Button>
+          </div>
+        </div>
+      )}
+      {(close.error || take.error) && <p className="mt-2 text-sm font-semibold text-dz-red">{errorText(close.error ?? take.error)}</p>}
+      {o.returns.length > 0 && (
+        <ul className="mt-2 space-y-1 text-xs" data-returns>
+          {o.returns.map((r) => (
+            <li key={r.id}>
+              {r.qty} × {r.name} · {RETURN_REASON_LABEL[r.reason]} · {rupees(r.amount)} {r.refundMethod === 'CASH_AT_DOOR' ? 'cash back at the door' : 'refunded online'} ·{' '}
+              <b>{r.status === 'WITH_RIDER' ? 'with rider' : r.status === 'RECEIVED' ? (r.restocked ? 'back on shelf' : 'received damaged') : 'nothing to return'}</b>
+            </li>
+          ))}
+        </ul>
+      )}
     </div>
   );
 }
