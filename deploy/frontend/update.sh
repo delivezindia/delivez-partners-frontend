@@ -12,4 +12,4 @@ fi
 echo "▶ Delivez frontend: updating to $(git rev-parse --short HEAD)"
 pnpm install --frozen-lockfile
 pnpm build
-echo "✔ Frontend built: apps/partners-web/dist and apps/admin-web/dist"
+echo "✔ Frontend built: apps/partners-web/dist, apps/admin-web/dist and apps/local-web/dist"

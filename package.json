@@ -7,8 +7,8 @@
     "typescript": "^5.7.2"
   },
   "scripts": {
-    "dev": "turbo run dev --parallel --filter=@delivez/partners-web --filter=@delivez/admin-web",
-    "build": "turbo run build --filter=@delivez/partners-web --filter=@delivez/admin-web",
+    "dev": "turbo run dev --parallel --filter=@delivez/partners-web --filter=@delivez/admin-web --filter=@delivez/local-web",
+    "build": "turbo run build --filter=@delivez/partners-web --filter=@delivez/admin-web --filter=@delivez/local-web",
     "typecheck": "turbo run typecheck",
     "i18n:check": "node packages/i18n/check.js"
   }

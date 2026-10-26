@@ -1,12 +1,13 @@
 # Delivez Partners — Frontend
 
-Partners web app (restaurants, pharmacies, labs, stores) and the Delivez admin console. React + Vite + Tailwind.
+Partners web app (restaurants, pharmacies, labs, stores), the Delivez admin console and the customer app (Delivez Local). React + Vite + Tailwind.
 The API lives in [delivez-partners-backend](https://github.com/delivezindia/delivez-partners-backend).
 
 | App | Path | Local URL | Built files (served by nginx) |
 |---|---|---|---|
 | Partners web | `apps/partners-web` | http://localhost:5173 | `apps/partners-web/dist` → `partners.delivez.com` |
 | Admin console | `apps/admin-web` | http://localhost:5174 | `apps/admin-web/dist` → `partners.admin.delivez.com` |
+| Customer app (Local) | `apps/local-web` | http://localhost:5175 | `apps/local-web/dist` → `local.delivez.com` |
 | Translations (8 languages) | `packages/i18n` | | |
 | Design tokens | `packages/ui/src/tokens.css` | | |
 
@@ -19,9 +20,9 @@ chmod +x deploy/frontend/update.sh deploy/frontend/hooks/*
 git config core.hooksPath deploy/frontend/hooks   # every future git pull rebuilds automatically
 ./deploy/frontend/update.sh                       # first build
 ```
-Then nginx: copy `deploy/frontend/nginx.conf` to `/etc/nginx/sites-available/`, set the domains and paths, enable it, reload nginx, and add HTTPS with `sudo certbot --nginx -d partners.delivez.com -d partners.admin.delivez.com`.
+Then nginx: copy `deploy/frontend/nginx.conf` to `/etc/nginx/sites-available/`, set the domains and paths, enable it, reload nginx, and add HTTPS with `sudo certbot --nginx -d partners.delivez.com -d partners.admin.delivez.com -d local.delivez.com`.
 
-On the backend, `CORS_ORIGINS` must list both frontend addresses and `PUBLIC_API_URL` must equal `VITE_API_URL`.
+On the backend, `CORS_ORIGINS` must list all three frontend addresses and `PUBLIC_API_URL` must equal `VITE_API_URL`.
 
 ## Updating
 ```bash
