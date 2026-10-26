@@ -30,9 +30,15 @@ export function AppHeader() {
             <Receipt className="h-5 w-5" aria-hidden />
           </Link>
         )}
-        <Link to={token ? '/account' : '/login'} className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-white ring-1 ring-black/10" aria-label={token ? t('lc.acc.title') : t('lc.login')}>
-          <UserRound className="h-5 w-5" aria-hidden />
-        </Link>
+        {token ? (
+          <Link to="/account" className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-white ring-1 ring-black/10" aria-label={t('lc.acc.title')}>
+            <UserRound className="h-5 w-5" aria-hidden />
+          </Link>
+        ) : (
+          <Link to="/login" className="shrink-0 rounded-full bg-black px-4 py-2 text-sm font-extrabold text-dz-yellow">
+            {t('lc.login')}
+          </Link>
+        )}
       </div>
       {picking && <LocationSheet onClose={() => setPicking(false)} />}
     </header>

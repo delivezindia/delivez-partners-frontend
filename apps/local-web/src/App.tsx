@@ -1,11 +1,11 @@
 import type { ReactNode } from 'react';
-import { BrowserRouter, Navigate, Route, Routes, useLocation } from 'react-router-dom';
+import { BrowserRouter, Navigate, Route, Routes, useLocation, useSearchParams } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { useAuth } from './lib/auth-store';
 import { CartBar } from './components/CartBar';
 import Home from './screens/Home';
 import Store from './screens/Store';
-import Login from './screens/Login';
+import Login, { safeNext } from './screens/Login';
 import Account from './screens/Account';
 import AddressEditor from './screens/AddressEditor';
 import Cart from './screens/Cart';
@@ -23,6 +23,13 @@ function RequireAuth({ children }: { children: ReactNode }) {
   return token ? children : <Navigate to={`/login?next=${encodeURIComponent(pathname + search)}`} replace />;
 }
 
+/** Already signed in: /login and /signup go straight on. */
+function GuestOnly({ children }: { children: ReactNode }) {
+  const token = useAuth((s) => s.accessToken);
+  const [params] = useSearchParams();
+  return token ? <Navigate to={safeNext(params.get('next'))} replace /> : children;
+}
+
 function SavedAddress() {
   useAdoptSavedAddress();
   return null;
@@ -36,7 +43,8 @@ export default function App() {
         <Routes>
           <Route path="/" element={<Home />} />
           <Route path="/s/:slug" element={<Store />} />
-          <Route path="/login" element={<Login />} />
+          <Route path="/login" element={<GuestOnly><Login /></GuestOnly>} />
+          <Route path="/signup" element={<GuestOnly><Login /></GuestOnly>} />
           <Route path="/cart" element={<Cart />} />
           <Route path="/addresses/new" element={<AddressEditor />} />
           <Route path="/addresses/:id/edit" element={<RequireAuth><AddressEditor /></RequireAuth>} />

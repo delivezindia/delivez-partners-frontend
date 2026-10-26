@@ -21,27 +21,12 @@ export function LocationSheet({ onClose }: { onClose: () => void }) {
   const addresses = useAddresses();
   const [message, setMessage] = useState('');
 
-  function useGps() {
-    if (!navigator.geolocation) return setMessage(t('lc.loc.noGps'));
-    setMessage(t('lc.loc.finding'));
-    navigator.geolocation.getCurrentPosition(
-      async (pos) => {
-        const lat = Math.round(pos.coords.latitude * 1e6) / 1e6;
-        const lng = Math.round(pos.coords.longitude * 1e6) / 1e6;
-        // The area name is a nicety; signed-out customers just see "Current location".
-        const r = token ? await api<GeocodeResult | null>(`/geo/reverse?lat=${lat}&lng=${lng}`).catch(() => null) : null;
-        set({ lat, lng, title: r?.area?.split(',').pop()?.trim() || t('lc.loc.current'), line: r?.line1 ?? '' });
-        onClose();
-      },
-      () => setMessage(t('lc.loc.gpsFailed')),
-      { enableHighAccuracy: true, timeout: 10000 },
-    );
-  }
+  const gps = useGps(onClose, setMessage);
 
   return (
     <Modal title={t('lc.loc.title')} onClose={onClose}>
       <div className="space-y-3">
-        <button type="button" onClick={useGps} className="flex w-full items-center gap-3 rounded-xl border-[1.5px] border-line px-4 py-3 text-left font-bold text-dz-red hover:border-dz-red">
+        <button type="button" onClick={gps} className="flex w-full items-center gap-3 rounded-xl border-[1.5px] border-line px-4 py-3 text-left font-bold text-dz-red hover:border-dz-red">
           <LocateFixed className="h-5 w-5" aria-hidden /> {t('lc.loc.useGps')}
         </button>
         <button
@@ -79,4 +64,28 @@ export function LocationSheet({ onClose }: { onClose: () => void }) {
       </div>
     </Modal>
   );
+}
+
+/** Returns a function that asks the phone for its location and makes it the delivery spot. */
+export function useGps(onDone: () => void, setMessage: (m: string) => void) {
+  const { t } = useI18n();
+  const token = useAuth((s) => s.accessToken);
+  const set = useDeliverTo((s) => s.set);
+  return () => {
+    if (!navigator.geolocation) return setMessage(t('lc.loc.noGps'));
+    setMessage(t('lc.loc.finding'));
+    navigator.geolocation.getCurrentPosition(
+      async (pos) => {
+        const lat = Math.round(pos.coords.latitude * 1e6) / 1e6;
+        const lng = Math.round(pos.coords.longitude * 1e6) / 1e6;
+        // The area name is a nicety; signed-out customers just see "Current location".
+        const r = token ? await api<GeocodeResult | null>(`/geo/reverse?lat=${lat}&lng=${lng}`).catch(() => null) : null;
+        set({ lat, lng, title: r?.area?.split(',').pop()?.trim() || t('lc.loc.current'), line: r?.line1 ?? '' });
+        setMessage('');
+        onDone();
+      },
+      () => setMessage(t('lc.loc.gpsFailed')),
+      { enableHighAccuracy: true, timeout: 10000 },
+    );
+  };
 }

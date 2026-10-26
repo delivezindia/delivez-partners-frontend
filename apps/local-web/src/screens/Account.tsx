@@ -66,12 +66,13 @@ export default function Account() {
 
   async function logout() {
     const { refreshToken, clear } = useAuth.getState();
+    // Leave this signed-in page first, or it would bounce to the login page once the session is gone.
+    navigate('/', { replace: true });
     await api('/auth/logout', { method: 'POST', body: { refreshToken } }).catch(() => undefined);
     clear();
     qc.clear();
     // A saved address belongs to the account; keep only a plain pin for browsing.
     if (deliverTo.at?.addressId) deliverTo.set({ ...deliverTo.at, addressId: undefined });
-    navigate('/', { replace: true });
   }
 
   return (

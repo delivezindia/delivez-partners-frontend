@@ -1,9 +1,9 @@
 import { useEffect, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
-import { Bike, Clock, MapPin, Search, Star, Store as StoreIcon } from 'lucide-react';
+import { Bike, Clock, Search, Star, Store as StoreIcon } from 'lucide-react';
 import { AppHeader } from '../components/AppHeader';
-import { LocationSheet } from '../components/LocationSheet';
-import { Button, Skeleton } from '../components/ui';
+import Landing from './Landing';
+import { Skeleton } from '../components/ui';
 import { km, opensAtLabel, rupees } from '../lib/format';
 import { useI18n } from '../lib/i18n';
 import { VERTICAL_EMOJI, VERTICAL_LABEL } from '../lib/labels';
@@ -21,7 +21,6 @@ export default function Home() {
   const vertical = (ALL_VERTICALS.find((v) => v === params.get('v')) ?? null) as Vertical | null;
   const [typed, setTyped] = useState(params.get('q') ?? '');
   const [q, setQ] = useState(typed);
-  const [picking, setPicking] = useState(false);
 
   // Search as you type, without a request per keystroke.
   useEffect(() => {
@@ -38,23 +37,12 @@ export default function Home() {
     setParams(p, { replace: true });
   };
 
+  if (!at) return <Landing />;
+
   return (
     <div className="min-h-screen bg-soft pb-28">
       <AppHeader />
-      {!at ? (
-        <section className="mx-auto max-w-md px-4 py-14 text-center">
-          <span className="mx-auto grid h-16 w-16 place-items-center rounded-full bg-dz-yellow">
-            <MapPin className="h-8 w-8 text-dz-red" aria-hidden />
-          </span>
-          <h1 className="mt-5 text-4xl">{t('lc.home.whereTitle')}</h1>
-          <p className="mt-2 text-ink-2">{t('lc.home.whereBody')}</p>
-          <Button className="mt-6 w-full" onClick={() => setPicking(true)}>
-            {t('lc.loc.choose')}
-          </Button>
-          {picking && <LocationSheet onClose={() => setPicking(false)} />}
-        </section>
-      ) : (
-        <main className="mx-auto max-w-3xl px-4">
+      <main className="mx-auto max-w-3xl px-4">
           <label className="relative mt-4 block">
             <Search className="pointer-events-none absolute left-3.5 top-1/2 h-5 w-5 -translate-y-1/2 text-ink-3" aria-hidden />
             <input
@@ -102,8 +90,7 @@ export default function Home() {
               ))}
             </ul>
           )}
-        </main>
-      )}
+      </main>
     </div>
   );
 }
