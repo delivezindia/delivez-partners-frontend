@@ -1,10 +1,11 @@
 import { useEffect, useRef, useState, type FormEvent } from 'react';
 import { Link, useLocation, useNavigate, useSearchParams } from 'react-router-dom';
-import { ArrowLeft, ArrowRight, Banknote, Check, ShieldCheck, Smartphone, Store as StoreIcon, Truck } from 'lucide-react';
+import { ArrowRight, Banknote, Check, ShieldCheck, Smartphone, Store as StoreIcon, Truck } from 'lucide-react';
 import { useQueryClient } from '@tanstack/react-query';
 import { api, ApiError, newIdempotencyKey } from '../lib/api';
 import { useAuth, type SessionUser } from '../lib/auth-store';
-import { Brand, Button, ErrorText } from '../components/ui';
+import { Button, ErrorText } from '../components/ui';
+import { SiteNavbar } from '../components/site';
 import { syncLanguageAfterLogin, useI18n, type MsgKey } from '../lib/i18n';
 import type { Me } from '../lib/types';
 
@@ -125,41 +126,33 @@ export default function Login() {
   const input = 'h-12 w-full rounded-xl border-[1.5px] border-line bg-white px-3.5 outline-none focus:border-black';
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-dz-yellow to-dz-yellow-soft md:bg-soft md:from-soft md:to-soft">
-      <div className="mx-auto grid max-w-5xl gap-8 px-4 pb-10 pt-5 md:grid-cols-[1fr_440px] md:items-center md:py-12">
-        {/* Brand panel (wide screens) */}
-        <aside className="relative hidden h-full min-h-[520px] overflow-hidden rounded-[20px] bg-dz-yellow p-10 md:flex md:flex-col">
-          <span className="pointer-events-none absolute -right-16 -top-16 h-56 w-56 rounded-full border-[16px] border-dz-red" aria-hidden />
-          <Brand size="lg" />
-          <h2 className="relative mt-auto max-w-sm text-5xl leading-[0.98]">{signup ? t('lc.auth.signupPitch') : t('lc.auth.loginPitch')}</h2>
-          <ul className="relative mt-6 space-y-3">
+    <div className="flex min-h-screen flex-col bg-white">
+      <SiteNavbar />
+      <div className="flex-1 bg-gradient-to-br from-dz-yellow-soft via-soft to-soft">
+      <div className="mx-auto grid max-w-6xl items-stretch gap-6 px-4 py-10 sm:px-6 lg:grid-cols-[minmax(0,1fr)_440px] lg:gap-10 lg:py-16">
+        {/* Brand panel (wide screens) — same as the Partners login */}
+        <aside className="relative hidden overflow-hidden rounded-[20px] bg-black p-10 text-white lg:flex lg:flex-col">
+          <span className="pointer-events-none absolute -right-24 -top-24 h-72 w-72 rounded-full bg-dz-yellow/90" aria-hidden />
+          <span className="pointer-events-none absolute -right-10 top-28 h-24 w-24 rounded-full border-[10px] border-dz-red" aria-hidden />
+          <p className="relative text-xs font-extrabold uppercase tracking-[0.16em] text-dz-yellow">Delivez Local</p>
+          <h2 className="relative mt-3 max-w-md text-[clamp(40px,4.4vw,56px)] leading-tight [html:lang(en)_&]:leading-[0.95]">{signup ? t('lc.auth.signupPitch') : t('lc.auth.loginPitch')}</h2>
+          <ul className="relative mt-8 grid gap-4 sm:grid-cols-2">
             {PERKS.map((p) => (
-              <li key={p.text} className="flex items-center gap-3 font-semibold">
-                <span className="grid h-9 w-9 place-items-center rounded-xl bg-black text-dz-yellow">
-                  <p.icon className="h-4 w-4" aria-hidden />
+              <li key={p.text} className="rounded-2xl border border-white/10 bg-white/[0.04] p-4">
+                <span className="grid h-9 w-9 place-items-center rounded-xl bg-dz-yellow text-black">
+                  <p.icon className="h-5 w-5" aria-hidden />
                 </span>
-                {t(p.text)}
+                <b className="mt-3 block text-sm">{t(p.text)}</b>
               </li>
             ))}
+            <li className="rounded-2xl border border-white/10 bg-white/[0.04] p-4 text-3xl" aria-hidden>
+              🍛 🛒 💊 🧪
+            </li>
           </ul>
-          <p className="relative mt-8 text-4xl" aria-hidden>
-            🍛 🛒 💊 🧪 🏪
-          </p>
         </aside>
 
-        <section>
-          <div className="flex items-center justify-between md:hidden">
-            <Link to="/" className="grid h-10 w-10 place-items-center rounded-full bg-white/70" aria-label={t('lc.back')}>
-              <ArrowLeft className="h-5 w-5" />
-            </Link>
-            <Brand />
-            <span className="w-10" />
-          </div>
-          <Link to="/" className="mb-4 hidden items-center gap-1 text-sm font-bold text-ink-2 hover:text-black md:inline-flex">
-            <ArrowLeft className="h-4 w-4" aria-hidden /> {t('lc.backHome')}
-          </Link>
-
-          <div className="mt-6 rounded-[20px] bg-white p-6 shadow-[0_24px_60px_-30px_rgb(0_0_0/0.35)] md:mt-0 sm:p-8">
+        <section className="flex flex-col justify-center">
+          <div className="rounded-[20px] border border-line bg-white p-6 shadow-[0_24px_60px_-30px_rgb(0_0_0/0.35)] sm:p-8">
             {!otp ? (
               <>
                 <div className="grid grid-cols-2 rounded-xl bg-soft p-1" role="tablist">
@@ -270,6 +263,7 @@ export default function Login() {
             )}
           </div>
         </section>
+      </div>
       </div>
     </div>
   );

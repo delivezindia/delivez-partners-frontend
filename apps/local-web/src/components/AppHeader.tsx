@@ -14,9 +14,9 @@ export function AppHeader() {
   const token = useAuth((s) => s.accessToken);
   const [picking, setPicking] = useState(false);
   return (
-    <header className="sticky top-0 z-30 border-b-[3px] border-dz-red bg-dz-yellow">
-      <div className="mx-auto flex max-w-3xl items-center gap-3 px-4 py-2.5">
-        <Brand />
+    <header className="dz-header sticky top-0 z-30">
+      <div className="mx-auto flex h-16 max-w-3xl items-center gap-3 px-4">
+        <Brand pill={false} />
         <button type="button" onClick={() => setPicking(true)} className="min-w-0 flex-1 rounded-lg px-2 py-1 text-left hover:bg-black/5" aria-label={t('lc.loc.change')}>
           <span className="flex items-center gap-1 text-sm font-extrabold">
             <MapPin className="h-4 w-4 shrink-0 text-dz-red" aria-hidden />

@@ -1,13 +1,14 @@
 import type { ButtonHTMLAttributes, ReactNode } from 'react';
 import { Link } from 'react-router-dom';
 
-/** DELIVEZ wordmark (italic, condensed, red). */
-export function Brand({ size = 'sm' }: { size?: 'sm' | 'lg' }) {
+/** DELIVEZ wordmark (italic, condensed, red) + "Local" pill — same as the Partners app. */
+export function Brand({ size = 'sm', pill = true }: { size?: 'sm' | 'lg'; pill?: boolean }) {
   return (
-    <Link to="/" className="flex shrink-0 items-center text-dz-red no-underline" aria-label="Delivez home">
-      <b className={`font-black italic leading-none tracking-tight ${size === 'lg' ? 'text-5xl' : 'text-[26px]'}`} style={{ fontStretch: '72%' }}>
+    <Link to="/" className="flex shrink-0 items-center gap-2.5 text-dz-red no-underline" aria-label="Delivez home">
+      <b className={`font-black italic leading-none tracking-tight ${size === 'lg' ? 'text-5xl' : 'text-[30px]'}`} style={{ fontStretch: '72%' }}>
         DELIVEZ
       </b>
+      {pill && <span className="hidden whitespace-nowrap rounded-md border-[1.5px] border-black bg-white px-2 py-0.5 text-xs font-bold text-black min-[400px]:inline">Local</span>}
     </Link>
   );
 }
