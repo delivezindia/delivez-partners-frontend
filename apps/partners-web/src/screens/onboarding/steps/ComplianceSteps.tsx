@@ -1,10 +1,12 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Card, Field, TextInput } from '../../../components/form';
 import { DocumentUpload } from '../../../components/DocumentUpload';
 import { DAYS, TimingsEditor, type DaySlot } from '../../../components/TimingsEditor';
 import { api } from '../../../lib/api';
-import { errorMessageOf, fieldErrorsOf, type OnboardingView } from '../../../lib/onboarding';
+import { errorMessageOf, fieldErrorsOf, type OnboardingView, uploadDocument } from '../../../lib/onboarding';
 import { STEP_FORM_ID, type StepProps } from './types';
+import { ChequeScan } from '../../../components/ChequeScan';
+import { useAddressAutofill } from '../../../lib/addressAutofill';
 
 // DOCUMENTS — upload never blocks; compliance reviews in parallel (plan §5.2)
 export function DocumentsStep({ view, storeId, submit, refresh }: StepProps) {
@@ -116,6 +118,32 @@ export function BankStep({ view, storeId, submit, refresh }: StepProps) {
   const [error, setError] = useState('');
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const set = (k: keyof typeof form) => (e: { target: { value: string } }) => setForm((f) => ({ ...f, [k]: e.target.value }));
+  // Scanned cheque/passbook: fills fields the partner hasn't typed into (the default business name counts as untouched).
+  const autofill = useAddressAutofill<'accountHolderName' | 'accountNumber' | 'ifsc' | 'bankName'>({ accountHolderName: view.partnerAccount.legalName, bankName: bank?.bankName ?? undefined });
+  const [cheque, setCheque] = useState<File | null>(null);
+  const [scanned, setScanned] = useState(false);
+  const [branch, setBranch] = useState<{ bank: string; branch: string | null; city: string | null } | null>(null);
+  const [ifscError, setIfscError] = useState('');
+
+  // Show the bank and branch for a complete IFSC, and fill the bank name from it.
+  useEffect(() => {
+    const code = form.ifsc.trim().toUpperCase();
+    setBranch(null);
+    setIfscError('');
+    if (!/^[A-Z]{4}0[A-Z0-9]{6}$/.test(code)) return;
+    let live = true;
+    api<{ bank: string; branch: string | null; city: string | null }>(`/partners/stores/${storeId}/ifsc/${code}`)
+      .then((b) => {
+        if (!live) return;
+        setBranch(b);
+        setForm((f) => autofill(f, { bankName: b.bank }));
+      })
+      .catch((e) => live && (e as { status?: number }).status === 404 && setIfscError('No bank branch has this IFSC — check it on your cheque'));
+    return () => {
+      live = false;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [form.ifsc, storeId]);
 
   async function verify() {
     setBusy(true);
@@ -126,6 +154,8 @@ export function BankStep({ view, storeId, submit, refresh }: StepProps) {
         method: 'PUT',
         body: vendor ? { accountHolderName: form.accountHolderName, upiId: form.upiId } : form,
       });
+      // Keep the scanned cheque/passbook as the bank proof document (best effort).
+      if (cheque) await uploadDocument(storeId, cheque, { type: 'BANK_PROOF' }).catch(() => undefined);
       setEditing(false);
     } catch (err) {
       setFieldErrors(fieldErrorsOf(err));
@@ -162,6 +192,17 @@ export function BankStep({ view, storeId, submit, refresh }: StepProps) {
 
       {editing && (
         <Card title={vendor ? 'UPI ID for payouts' : 'Bank account for payouts'}>
+          {!vendor && (
+            <div className="mb-4">
+              <ChequeScan
+                onRead={(r, file) => {
+                  setCheque(file);
+                  setScanned(r.confidence !== 'NONE');
+                  setForm((f) => ({ ...autofill(f, { accountHolderName: r.holderName, accountNumber: r.accountNumber, ifsc: r.ifsc, bankName: r.bankName }), confirmAccountNumber: r.accountNumber ? '' : f.confirmAccountNumber }));
+                }}
+              />
+            </div>
+          )}
           <div className="grid gap-4 sm:grid-cols-2">
             <Field label="Account holder name" error={fieldErrors.accountHolderName} className="sm:col-span-2">
               <TextInput value={form.accountHolderName} onChange={set('accountHolderName')} />
@@ -175,10 +216,10 @@ export function BankStep({ view, storeId, submit, refresh }: StepProps) {
                 <Field label="Account number" error={fieldErrors.accountNumber}>
                   <TextInput inputMode="numeric" autoComplete="off" value={form.accountNumber} onChange={(e) => setForm((f) => ({ ...f, accountNumber: e.target.value.replace(/\D/g, '') }))} />
                 </Field>
-                <Field label="Re-enter account number" error={fieldErrors.confirmAccountNumber}>
+                <Field label="Re-enter account number" error={fieldErrors.confirmAccountNumber} hint={scanned && form.accountNumber && !form.confirmAccountNumber ? 'Type it again from the cheque — this double-checks the digits we read' : undefined}>
                   <TextInput inputMode="numeric" autoComplete="off" onPaste={(e) => e.preventDefault()} value={form.confirmAccountNumber} onChange={(e) => setForm((f) => ({ ...f, confirmAccountNumber: e.target.value.replace(/\D/g, '') }))} />
                 </Field>
-                <Field label="IFSC" error={fieldErrors.ifsc}>
+                <Field label="IFSC" error={fieldErrors.ifsc || ifscError} hint={branch ? `${branch.bank}${branch.branch ? ` · ${branch.branch}` : ''}${branch.city ? `, ${branch.city}` : ''}` : undefined}>
                   <TextInput value={form.ifsc} maxLength={11} onChange={(e) => setForm((f) => ({ ...f, ifsc: e.target.value.toUpperCase() }))} placeholder="HDFC0001234" />
                 </Field>
                 <Field label="Bank name (optional)" error={fieldErrors.bankName}>

@@ -44,14 +44,20 @@ async function ocr(image: File | HTMLCanvasElement, onProgress?: (pct: number) =
   }
 }
 
-/** Reads a licence/certificate and pulls out its number and dates. Everything happens in this browser. */
-export async function readDocument(file: File, type: string, onProgress?: (pct: number) => void): Promise<DocReading> {
+/** The text of a PDF or photo: exact for digital PDFs, OCR otherwise. Everything happens in this browser. */
+export async function readText(file: File, onProgress?: (pct: number) => void): Promise<{ text: string; method: DocReading['method']; engineConfidence: number | null }> {
   if (file.type === 'application/pdf') {
     const { text, firstPage } = await pdfText(file);
-    if (text) return { ...extractDocFields(type, text), method: 'pdf-text', engineConfidence: null };
+    if (text) return { text, method: 'pdf-text', engineConfidence: null };
     const r = await ocr(firstPage!, onProgress);
-    return { ...extractDocFields(type, r.text), method: 'ocr', engineConfidence: Math.round(r.confidence) };
+    return { text: r.text, method: 'ocr', engineConfidence: Math.round(r.confidence) };
   }
   const r = await ocr(file, onProgress);
-  return { ...extractDocFields(type, r.text), method: 'ocr', engineConfidence: Math.round(r.confidence) };
+  return { text: r.text, method: 'ocr', engineConfidence: Math.round(r.confidence) };
+}
+
+/** Reads a licence/certificate and pulls out its number and dates. */
+export async function readDocument(file: File, type: string, onProgress?: (pct: number) => void): Promise<DocReading> {
+  const { text, method, engineConfidence } = await readText(file, onProgress);
+  return { ...extractDocFields(type, text), method, engineConfidence };
 }

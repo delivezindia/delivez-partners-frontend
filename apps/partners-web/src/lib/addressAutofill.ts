@@ -1,22 +1,29 @@
 import { useRef } from 'react';
 
 /**
- * Address fields that follow the map pin. Every time the pin moves, each field is refilled from the map
- * — unless the partner has typed their own text into it since the last fill (then it is left alone).
- * Empty fields are always filled.
+ * Fields filled from a source (the map pin, a scanned cheque). Every new reading refills each field —
+ * unless the person has typed their own text into it (then it is left alone). Empty fields are always filled.
+ *
+ * A field counts as untouched while it holds a value we put there ourselves. Remembering every value we
+ * wrote (not just the last) keeps this correct when React runs a state updater twice (StrictMode).
  */
 export function useAddressAutofill<K extends string>(initial: Partial<Record<K, string>> = {}) {
-  // What the map last put in each field; a field still equal to it hasn't been edited by hand.
-  const last = useRef<Partial<Record<K, string>>>({ ...initial });
-  return function merge<T extends Record<K, string>>(current: T, fromMap: Partial<Record<K, string | null | undefined>>): T {
+  const written = useRef<Map<K, Set<string>> | null>(null);
+  if (!written.current) {
+    written.current = new Map();
+    for (const [k, v] of Object.entries(initial) as [K, string | undefined][]) if (v) written.current.set(k, new Set([v]));
+  }
+  return function merge<T extends Record<K, string>>(current: T, fromSource: Partial<Record<K, string | null | undefined>>): T {
     const next = { ...current };
-    for (const key of Object.keys(fromMap) as K[]) {
-      const value = fromMap[key]?.trim();
+    for (const key of Object.keys(fromSource) as K[]) {
+      const value = fromSource[key]?.trim();
       if (!value) continue;
       const mine = current[key] ?? '';
-      if (!mine.trim() || mine === last.current[key]) {
+      const ours = written.current!.get(key) ?? new Set<string>();
+      if (!mine.trim() || ours.has(mine)) {
         (next as Record<K, string>)[key] = value;
-        last.current[key] = value;
+        ours.add(value);
+        written.current!.set(key, ours);
       }
     }
     return next;
