@@ -108,7 +108,7 @@ export default function Store() {
               </span>
             )}
             {s.delivers === false ? (
-              <span className="rounded-lg bg-dz-yellow-soft px-2.5 py-1">{s.supportsPickup ? t('lc.store.noDeliveryPickup') : t('lc.store.noDelivery')}</span>
+              <span className="rounded-lg bg-dz-yellow-soft px-2.5 py-1">{t('lc.store.noDelivery')}</span>
             ) : (
               s.supportsDelivery && (
                 <span className="inline-flex items-center gap-1 rounded-lg bg-soft px-2.5 py-1">

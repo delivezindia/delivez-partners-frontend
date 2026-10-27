@@ -4,19 +4,46 @@ import type { CartLine } from './cart';
 import type { MsgKey } from './i18n';
 import type { Vertical } from './types';
 
-export type Fulfilment = 'DELIVERY' | 'PICKUP';
-export type Blocker = 'STORE_CLOSED' | 'DELIVERY_NOT_OFFERED' | 'PICKUP_NOT_OFFERED' | 'ADDRESS_REQUIRED' | 'OUT_OF_RANGE' | 'BELOW_MINIMUM' | 'LAB_BOOKING' | 'RX_REQUIRED' | 'ITEMS';
-export type Problem = { productId: string; code: 'GONE' | 'UNAVAILABLE' | 'OUT_OF_STOCK' | 'FEW_LEFT' | 'OPTIONS_CHANGED'; name: string; left?: number };
+export type Blocker = 'STORE_CLOSED' | 'DELIVERY_NOT_OFFERED' | 'ADDRESS_REQUIRED' | 'OUT_OF_RANGE' | 'BELOW_MINIMUM' | 'LAB_BOOKING' | 'RX_REQUIRED' | 'ITEMS';
+export type Problem = {
+  productId: string;
+  code: 'GONE' | 'UNAVAILABLE' | 'OUT_OF_STOCK' | 'FEW_LEFT' | 'OPTIONS_CHANGED';
+  name: string;
+  left?: number;
+};
 
 export interface Quote {
-  store: { id: string; name: string; slug: string | null; vertical: Vertical; supportsDelivery: boolean; supportsPickup: boolean; minOrderAmount: number; open: boolean; address: string | null };
-  lines: { productId: string; variantId: string | null; addonIds: string[]; name: string; qty: number; unitPrice: number; lineTotal: number; isRx: boolean }[];
+  store: {
+    id: string;
+    name: string;
+    slug: string | null;
+    vertical: Vertical;
+    supportsDelivery: boolean;
+    minOrderAmount: number;
+    open: boolean;
+    address: string | null;
+  };
+  lines: {
+    productId: string;
+    variantId: string | null;
+    addonIds: string[];
+    name: string;
+    qty: number;
+    unitPrice: number;
+    lineTotal: number;
+    isRx: boolean;
+  }[];
   problems: Problem[];
   distanceKm: number | null;
   totals: Totals;
   blockers: Blocker[];
   canPlace: boolean;
 }
+
+/** App orders are paid online — no cash on delivery. */
+export const PAY_METHODS = ['UPI', 'CARD', 'NETBANKING'] as const;
+export type PayMethod = (typeof PAY_METHODS)[number];
+export const PAY_LABEL: Record<string, MsgKey> = { UPI: 'lc.pm.UPI', CARD: 'lc.pm.CARD', NETBANKING: 'lc.pm.NETBANKING', COD: 'lc.pm.COD' };
 
 export interface Totals {
   items: number;
@@ -26,37 +53,94 @@ export interface Totals {
   grandTotal: number;
 }
 
-export type OrderStatus = 'AWAITING_RX_REVIEW' | 'PLACED' | 'ACCEPTED' | 'PREPARING' | 'READY_SOON' | 'READY' | 'PICKED_UP' | 'OUT_FOR_DELIVERY' | 'ARRIVED' | 'DELIVERED' | 'COMPLETED' | 'REJECTED' | 'CANCELLED' | 'DELIVERY_FAILED' | 'REFUNDED';
+export type OrderStatus =
+  | 'AWAITING_RX_REVIEW'
+  | 'PLACED'
+  | 'ACCEPTED'
+  | 'PREPARING'
+  | 'READY_SOON'
+  | 'READY'
+  | 'PICKED_UP'
+  | 'OUT_FOR_DELIVERY'
+  | 'ARRIVED'
+  | 'DELIVERED'
+  | 'COMPLETED'
+  | 'REJECTED'
+  | 'CANCELLED'
+  | 'DELIVERY_FAILED'
+  | 'REFUNDED';
 
 export interface CustomerOrder {
   id: string;
   orderNumber: string;
   status: OrderStatus;
   active: boolean;
-  fulfilmentType: Fulfilment;
-  store: { id: string; name: string; slug: string | null; vertical: Vertical; address: string | null; phone: string | null };
+  fulfilmentType: 'DELIVERY' | 'PICKUP';
+  store: {
+    id: string;
+    name: string;
+    slug: string | null;
+    vertical: Vertical;
+    address: string | null;
+    phone: string | null;
+  };
   address: string | null;
-  items: { id: string; productId: string; name: string; variant: string | null; addons: { name: string; price: number }[]; qty: number; unitPrice: number; lineTotal: number; unavailable: boolean; returnedQty: number }[];
+  items: {
+    id: string;
+    productId: string;
+    name: string;
+    variant: string | null;
+    addons: { name: string; price: number }[];
+    qty: number;
+    unitPrice: number;
+    lineTotal: number;
+    unavailable: boolean;
+    returnedQty: number;
+  }[];
   totals: Totals;
   payment: { mode: string; status: string };
-  codes: { delivery: string | null; pickup: string | null } | null;
+  codes: { delivery: string | null } | null;
   etaAt: string | null;
   placedAt: string;
   deliveredAt: string | null;
   canCancel: boolean;
   cancelReason: string | null;
+  /** Order SLA outcome: why (code), whose fault, and the money back. */
+  cancellation: {
+    code: string;
+    fault: 'CUSTOMER' | 'STORE' | 'PLATFORM' | 'RIDER' | 'NO_FAULT' | null;
+    refunded: number;
+    unpaid: number;
+  } | null;
   note: string | null;
   rider: { name: string | null; phone: string; status: string } | null;
   timeline?: { status: OrderStatus; at: string }[];
 }
 
-export const toItems = (lines: CartLine[]) => lines.map((l) => ({ productId: l.productId, qty: l.qty, variantId: l.variantId ?? undefined, addonIds: l.addonIds.length ? l.addonIds : undefined }));
+export const toItems = (lines: CartLine[]) =>
+  lines.map((l) => ({
+    productId: l.productId,
+    qty: l.qty,
+    variantId: l.variantId ?? undefined,
+    addonIds: l.addonIds.length ? l.addonIds : undefined,
+  }));
 
-export function useQuote(input: { storeId: string | null; fulfilmentType: Fulfilment; addressId?: string; lines: CartLine[] }, enabled: boolean) {
+/** Home delivery only — customers don't collect from the shop. */
+export function useQuote(input: { storeId: string | null; addressId?: string; lines: CartLine[] }, enabled: boolean) {
   const items = toItems(input.lines);
   return useQuery({
-    queryKey: ['quote', input.storeId, input.fulfilmentType, input.addressId, items],
-    queryFn: () => api<Quote>('/local/cart/quote', { method: 'POST', body: { storeId: input.storeId, fulfilmentType: input.fulfilmentType, addressId: input.addressId, items }, idempotencyKey: newIdempotencyKey() }),
+    queryKey: ['quote', input.storeId, input.addressId, items],
+    queryFn: () =>
+      api<Quote>('/local/cart/quote', {
+        method: 'POST',
+        body: {
+          storeId: input.storeId,
+          fulfilmentType: 'DELIVERY',
+          addressId: input.addressId,
+          items,
+        },
+        idempotencyKey: newIdempotencyKey(),
+      }),
     enabled: enabled && !!input.storeId && items.length > 0,
     placeholderData: (prev) => prev,
     staleTime: 10_000,
@@ -73,8 +157,36 @@ export function useOrder(id: string) {
 }
 
 export function useOrders() {
-  return useQuery({ queryKey: ['orders'], queryFn: () => api<{ orders: CustomerOrder[]; nextCursor: string | null }>('/local/orders') });
+  return useQuery({
+    queryKey: ['orders'],
+    queryFn: () => api<{ orders: CustomerOrder[]; nextCursor: string | null }>('/local/orders'),
+  });
 }
+
+/** Why an order ended, in the customer's words (one per SLA code). */
+export const CANCEL_REASON: Record<string, MsgKey> = {
+  CUSTOMER_CANCELLED: 'lc.cx.CUSTOMER_CANCELLED',
+  STORE_ITEMS_UNAVAILABLE: 'lc.cx.STORE_ITEMS_UNAVAILABLE',
+  STORE_TOO_BUSY: 'lc.cx.STORE_TOO_BUSY',
+  STORE_CLOSING: 'lc.cx.STORE_CLOSING',
+  STORE_KITCHEN_ISSUE: 'lc.cx.STORE_KITCHEN_ISSUE',
+  STORE_OTHER: 'lc.cx.STORE_OTHER',
+  ACCEPT_TIMEOUT: 'lc.cx.ACCEPT_TIMEOUT',
+  RX_TIMEOUT: 'lc.cx.RX_TIMEOUT',
+  RX_REJECTED: 'lc.cx.RX_REJECTED',
+  OPS_STORE_CANNOT_FULFIL: 'lc.cx.OPS_STORE_CANNOT_FULFIL',
+  OPS_NO_RIDER: 'lc.cx.OPS_NO_RIDER',
+  OPS_PLATFORM_ISSUE: 'lc.cx.OPS_PLATFORM_ISSUE',
+  OPS_CUSTOMER_REQUEST: 'lc.cx.OPS_CUSTOMER_REQUEST',
+  OPS_DUPLICATE_ORDER: 'lc.cx.OPS_DUPLICATE_ORDER',
+  OPS_FORCE_MAJEURE: 'lc.cx.OPS_FORCE_MAJEURE',
+  FAIL_CUSTOMER_UNAVAILABLE: 'lc.cx.FAIL_CUSTOMER_UNAVAILABLE',
+  FAIL_CUSTOMER_REFUSED: 'lc.cx.FAIL_CUSTOMER_REFUSED',
+  FAIL_WRONG_ADDRESS: 'lc.cx.FAIL_WRONG_ADDRESS',
+  FAIL_RIDER_ISSUE: 'lc.cx.FAIL_RIDER_ISSUE',
+  FAIL_DAMAGED_IN_TRANSIT: 'lc.cx.FAIL_DAMAGED_IN_TRANSIT',
+  FAIL_FORCE_MAJEURE: 'lc.cx.FAIL_FORCE_MAJEURE',
+};
 
 /** The customer's view of each state. */
 export const STATUS_LABEL: Record<OrderStatus, MsgKey> = {
@@ -96,18 +208,15 @@ export const STATUS_LABEL: Record<OrderStatus, MsgKey> = {
 };
 
 /** Progress steps shown on the tracking screen. */
-export function steps(f: Fulfilment): { key: MsgKey; states: OrderStatus[] }[] {
-  return f === 'DELIVERY'
-    ? [
-        { key: 'lc.step.placed', states: ['AWAITING_RX_REVIEW', 'PLACED'] },
-        { key: 'lc.step.preparing', states: ['ACCEPTED', 'PREPARING', 'READY_SOON', 'READY'] },
-        { key: 'lc.step.onTheWay', states: ['PICKED_UP', 'OUT_FOR_DELIVERY', 'ARRIVED'] },
-        { key: 'lc.step.delivered', states: ['DELIVERED', 'COMPLETED'] },
-      ]
-    : [
-        { key: 'lc.step.placed', states: ['AWAITING_RX_REVIEW', 'PLACED'] },
-        { key: 'lc.step.preparing', states: ['ACCEPTED', 'PREPARING', 'READY_SOON'] },
-        { key: 'lc.step.ready', states: ['READY'] },
-        { key: 'lc.step.collected', states: ['PICKED_UP', 'DELIVERED', 'COMPLETED'] },
-      ];
-}
+export const STEPS: { key: MsgKey; states: OrderStatus[] }[] = [
+  { key: 'lc.step.placed', states: ['AWAITING_RX_REVIEW', 'PLACED'] },
+  {
+    key: 'lc.step.preparing',
+    states: ['ACCEPTED', 'PREPARING', 'READY_SOON', 'READY'],
+  },
+  {
+    key: 'lc.step.onTheWay',
+    states: ['PICKED_UP', 'OUT_FOR_DELIVERY', 'ARRIVED'],
+  },
+  { key: 'lc.step.delivered', states: ['DELIVERED', 'COMPLETED'] },
+];

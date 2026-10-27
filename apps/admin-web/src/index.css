@@ -1,2 +1,36 @@
 @import 'tailwindcss';
 @import '../../../packages/ui/src/tokens.css';
+
+/*
+ * Live ops alert motion. Every flashing animation stops within 3 seconds (accessibility: no flashing > 3 s),
+ * then the row keeps its colour and icon. Elements are re-keyed when the level rises, so motion replays once.
+ */
+@keyframes dz-glow {
+  0%, 100% { box-shadow: inset 0 0 0 2px rgb(250 178 25 / 0.55), 0 0 0 0 rgb(250 178 25 / 0); }
+  50% { box-shadow: inset 0 0 0 2px rgb(250 178 25 / 1), 0 0 12px 2px rgb(250 178 25 / 0.45); }
+}
+@keyframes dz-blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.3; }
+}
+@keyframes dz-pulse-fast {
+  0%, 100% { opacity: 1; transform: scaleY(1); }
+  50% { opacity: 0.45; transform: scaleY(1.6); }
+}
+@keyframes dz-shake {
+  0%, 100% { transform: translateX(0); }
+  20%, 60% { transform: translateX(-5px); }
+  40%, 80% { transform: translateX(5px); }
+}
+@keyframes dz-slide-down {
+  from { transform: translateY(-110%); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+.dz-alert-glow { animation: dz-glow 1.5s ease-in-out 2; box-shadow: inset 0 0 0 2px rgb(250 178 25 / 0.8); }
+.dz-alert-blink { animation: dz-blink 1s ease-in-out 3; }
+.dz-alert-pulse { animation: dz-pulse-fast 0.5s ease-in-out 6; }
+.dz-shake-once { animation: dz-shake 0.45s ease-in-out 1; }
+.dz-slide-down { animation: dz-slide-down 0.3s ease-out 1; }
+@media (prefers-reduced-motion: reduce) {
+  .dz-alert-glow, .dz-alert-blink, .dz-alert-pulse, .dz-shake-once, .dz-slide-down { animation: none; }
+}

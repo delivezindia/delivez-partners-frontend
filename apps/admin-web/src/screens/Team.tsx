@@ -17,6 +17,7 @@ const ROLE_HELP: Record<AdminRole, string> = {
   SUPPORT: 'View; switch partner staff logins on/off',
   SALES_AGENT: 'No console access yet',
   AUDITOR: 'View; audit log',
+  ACCOUNT_MANAGER: 'Mobile view of assigned stores only: health, churn risk, calls, tasks; can adjust prep time',
 };
 const SENIOR: AdminRole[] = ['FOUNDER', 'HEAD_OF_OPS'];
 

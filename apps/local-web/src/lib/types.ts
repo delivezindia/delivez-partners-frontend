@@ -20,9 +20,8 @@ export interface StoreCard {
   open: boolean;
   busy: boolean;
   bookable: boolean;
-  opensAt: string | null;
+  opensAt: import('./format').Opening | null;
   delivers: boolean;
-  pickup: boolean;
   etaMinutes: number;
   deliveryFee: number;
   minOrderAmount: number;
@@ -73,9 +72,8 @@ export interface Menu {
     address: string;
     open: boolean;
     busy: boolean;
-    opensAt: string | null;
+    opensAt: import('./format').Opening | null;
     supportsDelivery: boolean;
-    supportsPickup: boolean;
     distanceKm: number | null;
     delivers: boolean | null;
     etaMinutes: number;

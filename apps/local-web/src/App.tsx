@@ -11,6 +11,7 @@ import AddressEditor from './screens/AddressEditor';
 import Cart from './screens/Cart';
 import Orders from './screens/Orders';
 import OrderStatus from './screens/OrderStatus';
+import Policy from './screens/Policy';
 import { useAdoptSavedAddress } from './lib/location';
 
 const queryClient = new QueryClient({
@@ -50,6 +51,7 @@ export default function App() {
           <Route path="/addresses/:id/edit" element={<RequireAuth><AddressEditor /></RequireAuth>} />
           <Route path="/orders" element={<RequireAuth><Orders /></RequireAuth>} />
           <Route path="/orders/:id" element={<RequireAuth><OrderStatus /></RequireAuth>} />
+          <Route path="/refund-policy" element={<Policy />} />
           <Route path="/account" element={<RequireAuth><Account /></RequireAuth>} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>

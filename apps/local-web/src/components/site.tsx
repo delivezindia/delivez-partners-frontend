@@ -317,6 +317,11 @@ export function SiteFooter() {
           <p className="mb-3 text-sm font-semibold text-white">{t('lc.site.yourAccount')}</p>
           <ul className="space-y-2 text-sm">
             <li>
+              <Link to="/refund-policy" className="hover:text-dz-yellow">
+                {t('lc.site.policy')}
+              </Link>
+            </li>
+            <li>
               <Link to={token ? '/orders' : '/login?next=/orders'} className="hover:text-dz-yellow">
                 {t('lc.ord.all')}
               </Link>

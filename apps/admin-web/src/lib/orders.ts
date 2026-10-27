@@ -23,8 +23,8 @@ export interface AdminOrderList {
   nextBefore: string | null;
 }
 
-export type ReturnReason = 'DAMAGED' | 'WRONG_ITEM' | 'EXPIRED' | 'POOR_QUALITY' | 'MISSING';
-export const RETURN_REASON_LABEL: Record<ReturnReason, string> = { DAMAGED: 'Damaged', WRONG_ITEM: 'Wrong item', EXPIRED: 'Expired', POOR_QUALITY: 'Poor quality', MISSING: 'Missing (not delivered)' };
+export type ReturnReason = 'DAMAGED' | 'WRONG_ITEM' | 'EXPIRED' | 'POOR_QUALITY' | 'MISSING' | 'UNDELIVERED';
+export const RETURN_REASON_LABEL: Record<ReturnReason, string> = { DAMAGED: 'Damaged', WRONG_ITEM: 'Wrong item', EXPIRED: 'Expired', POOR_QUALITY: 'Poor quality', MISSING: 'Missing (not delivered)', UNDELIVERED: 'Delivery failed — coming back' };
 
 export interface AdminOrderDetail {
   id: string;
@@ -44,6 +44,8 @@ export interface AdminOrderDetail {
   times: Record<string, string | null>;
   rejectReason: string | null;
   cancelReason: string | null;
+  /** Order SLA outcome (sla.ts on the API). */
+  cancellation: { code: string; text: string; fault: Fault | null; stage: string | null; storeCompensation: number; customerDue: number; refunded: number } | null;
   rider: { taskStatus: string; name: string | null; phone: string | null } | null;
   timeline: { from: OrderStatus | null; to: OrderStatus; actorType: string; reason: string | null; at: string }[];
   store: { id: string; name: string };
@@ -51,6 +53,33 @@ export interface AdminOrderDetail {
   /** Development only: lets the team play rider / customer. */
   codes?: { handoverOtp: string | null; handoverQr: string | null; pickupOtp: string | null; deliveryOtp: string | null };
 }
+
+export type Fault = 'CUSTOMER' | 'STORE' | 'PLATFORM' | 'RIDER' | 'NO_FAULT';
+
+export const FAULT_LABEL: Record<Fault, string> = { CUSTOMER: 'Customer', STORE: 'Store', PLATFORM: 'Delivez', RIDER: 'Rider', NO_FAULT: 'No one (force majeure)' };
+
+/** Ops cancel reasons — the code decides refund, store compensation and whose record it goes on. */
+export const OPS_CANCEL: { code: string; label: string; outcome: string }[] = [
+  { code: 'OPS_STORE_CANNOT_FULFIL', label: 'Store cannot complete it', outcome: 'Store’s fault · customer refunded in full · counts on store health' },
+  { code: 'OPS_NO_RIDER', label: 'No rider available', outcome: 'Delivez’s fault · customer refunded · store paid for cooked food' },
+  { code: 'OPS_PLATFORM_ISSUE', label: 'Delivez technical / ops issue', outcome: 'Delivez’s fault · customer refunded · store paid for cooked food' },
+  { code: 'OPS_CUSTOMER_REQUEST', label: 'Customer asked to cancel', outcome: 'Customer’s choice · cooked food not refunded, other orders free' },
+  { code: 'OPS_DUPLICATE_ORDER', label: 'Duplicate order', outcome: 'No one’s fault · customer refunded · store paid for cooked food' },
+  { code: 'OPS_FORCE_MAJEURE', label: 'Weather, strike or emergency', outcome: 'No one’s fault · customer refunded · store paid for cooked food' },
+];
+
+/** Why a delivery failed after pickup. */
+export const FAIL_REASONS: { code: string; label: string; outcome: string }[] = [
+  { code: 'FAIL_CUSTOMER_UNAVAILABLE', label: 'Customer not reachable', outcome: 'Customer’s fault · food not refunded, goods back to the store minus delivery fee' },
+  { code: 'FAIL_CUSTOMER_REFUSED', label: 'Customer refused it', outcome: 'Customer’s fault · same as above' },
+  { code: 'FAIL_WRONG_ADDRESS', label: 'Wrong / incomplete address', outcome: 'Customer’s fault · same as above' },
+  { code: 'FAIL_RIDER_ISSUE', label: 'Rider could not finish (accident, vehicle)', outcome: 'Rider’s fault · customer refunded · store paid for food' },
+  { code: 'FAIL_DAMAGED_IN_TRANSIT', label: 'Damaged on the way', outcome: 'Rider’s fault · customer refunded · store paid for food' },
+  { code: 'FAIL_FORCE_MAJEURE', label: 'Weather, strike or emergency', outcome: 'No one’s fault · customer refunded · store paid for food' },
+];
+
+/** States ops can still cancel from; after pickup it is "Delivery failed" instead. */
+export const CANCELLABLE: OrderStatus[] = ['AWAITING_RX_REVIEW', 'PLACED', 'ACCEPTED', 'PREPARING', 'READY_SOON', 'READY'];
 
 export const ACTIVE: OrderStatus[] = ['AWAITING_RX_REVIEW', 'PLACED', 'ACCEPTED', 'PREPARING', 'READY_SOON', 'READY', 'PICKED_UP', 'OUT_FOR_DELIVERY', 'ARRIVED'];
 

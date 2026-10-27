@@ -6,13 +6,23 @@ export const rupees = (paise: number) => {
 
 export const km = (n: number) => (n < 1 ? `${Math.round(n * 1000)} m` : `${n.toFixed(1)} km`);
 
-/** "10:30 am" in India time, prefixed with the day when it isn't today. */
-export function opensAtLabel(iso: string, locale: string, today: string, tomorrow: string) {
-  const d = new Date(iso);
-  const time = d.toLocaleTimeString(locale, { hour: 'numeric', minute: '2-digit', timeZone: 'Asia/Kolkata' });
-  const day = (x: Date) => x.toLocaleDateString('en-CA', { timeZone: 'Asia/Kolkata' });
-  const now = new Date();
-  if (day(d) === day(now)) return `${today} ${time}`;
-  if (day(d) === day(new Date(now.getTime() + 86_400_000))) return `${tomorrow} ${time}`;
-  return `${d.toLocaleDateString(locale, { weekday: 'short', timeZone: 'Asia/Kolkata' })} ${time}`;
+export interface Opening {
+  /** 'today' | 'tomorrow' | short weekday in English ('Mon'…) */
+  day: string;
+  /** 'HH:MM', shop's local time */
+  time: string;
+}
+
+const WEEKDAY_INDEX: Record<string, number> = { Sun: 0, Mon: 1, Tue: 2, Wed: 3, Thu: 4, Fri: 5, Sat: 6 };
+
+/** { day: 'tomorrow', time: '09:00' } → "tomorrow 9:00 am" in the customer's language. */
+export function opensAtLabel(o: Opening, locale: string, today: string, tomorrow: string) {
+  const [h, m] = o.time.split(':').map(Number);
+  const time = new Date(Date.UTC(2024, 0, 7, h, m)).toLocaleTimeString(locale, { hour: 'numeric', minute: '2-digit', timeZone: 'UTC' });
+  if (o.day === 'today') return `${today} ${time}`;
+  if (o.day === 'tomorrow') return `${tomorrow} ${time}`;
+  // 7 Jan 2024 was a Sunday.
+  const wd = WEEKDAY_INDEX[o.day];
+  const day = wd == null ? o.day : new Date(Date.UTC(2024, 0, 7 + wd)).toLocaleDateString(locale, { weekday: 'short', timeZone: 'UTC' });
+  return `${day} ${time}`;
 }

@@ -7,7 +7,7 @@ import { Button, ErrorText, Skeleton } from '../components/ui';
 import { api, newIdempotencyKey } from '../lib/api';
 import { rupees } from '../lib/format';
 import { useI18n } from '../lib/i18n';
-import { STATUS_LABEL, steps, useOrder, type CustomerOrder } from '../lib/orders';
+import { CANCEL_REASON, PAY_LABEL, STATUS_LABEL, STEPS, useOrder, type CustomerOrder } from '../lib/orders';
 import { messageOf } from './Login';
 
 // L2/L3 Order status: where it is, the code for the door / counter, what was ordered.
@@ -39,11 +39,16 @@ export default function OrderStatus() {
       </div>
     );
 
-  const flow = steps(o.fulfilmentType);
+  const flow = STEPS;
   const current = flow.findIndex((s) => s.states.includes(o.status));
   const failed = ['REJECTED', 'CANCELLED', 'DELIVERY_FAILED', 'REFUNDED'].includes(o.status);
-  const time = (iso: string) => new Date(iso).toLocaleTimeString(locale, { hour: 'numeric', minute: '2-digit', timeZone: 'Asia/Kolkata' });
-  const code = o.codes?.delivery ?? o.codes?.pickup;
+  const time = (iso: string) =>
+    new Date(iso).toLocaleTimeString(locale, {
+      hour: 'numeric',
+      minute: '2-digit',
+      timeZone: 'Asia/Kolkata',
+    });
+  const code = o.codes?.delivery;
 
   async function cancel() {
     setError('');
@@ -85,9 +90,8 @@ export default function OrderStatus() {
             {failed && <XCircle className="h-7 w-7 text-dz-red" aria-hidden />}
             {t(STATUS_LABEL[o.status])}
           </h2>
-          {o.active && o.etaAt && <p className="mt-1 text-ink-2">{o.fulfilmentType === 'DELIVERY' ? t('lc.ord.arrivesBy', { time: time(o.etaAt) }) : t('lc.ord.readyBy', { time: time(o.etaAt) })}</p>}
-          {failed && o.cancelReason && <p className="mt-1 text-sm text-ink-2">{o.cancelReason}</p>}
-          {failed && o.payment.mode !== 'COD' && <p className="mt-1 text-sm text-ink-2">{t('lc.ord.refund')}</p>}
+          {o.active && o.etaAt && <p className="mt-1 text-ink-2">{t('lc.ord.arrivesBy', { time: time(o.etaAt) })}</p>}
+          {failed && <CancelOutcome o={o} />}
 
           {!failed && (
             <ol className="mt-5 grid grid-cols-4 gap-1">
@@ -96,7 +100,11 @@ export default function OrderStatus() {
                 const on = i === current && !done;
                 return (
                   <li key={s.key} className="text-center">
-                    <span className={`mx-auto grid h-8 w-8 place-items-center rounded-full text-sm font-black ${done ? 'bg-dz-green text-white' : on ? 'bg-black text-dz-yellow' : 'bg-soft text-ink-3'}`}>{done ? <Check className="h-4 w-4" /> : i + 1}</span>
+                    <span
+                      className={`mx-auto grid h-8 w-8 place-items-center rounded-full text-sm font-black ${done ? 'bg-dz-green text-white' : on ? 'bg-black text-dz-yellow' : 'bg-soft text-ink-3'}`}
+                    >
+                      {done ? <Check className="h-4 w-4" /> : i + 1}
+                    </span>
                     <span className={`mt-1 block text-[11px] font-bold leading-tight ${done || on ? 'text-ink' : 'text-ink-3'}`}>{t(s.key)}</span>
                   </li>
                 );
@@ -107,7 +115,7 @@ export default function OrderStatus() {
 
         {code && (
           <section className="rounded-2xl bg-dz-yellow p-5 text-center ring-1 ring-black/10">
-            <p className="text-sm font-bold">{o.fulfilmentType === 'DELIVERY' ? t('lc.ord.codeDelivery') : t('lc.ord.codePickup')}</p>
+            <p className="text-sm font-bold">{t('lc.ord.codeDelivery')}</p>
             <p className="mt-1 font-display text-5xl tracking-[0.3em]" data-order-code>
               {code}
             </p>
@@ -159,7 +167,9 @@ export default function OrderStatus() {
               <dd>{rupees(o.totals.grandTotal)}</dd>
             </div>
           </dl>
-          <p className="mt-2 text-xs text-ink-3">{o.payment.mode === 'COD' ? (o.fulfilmentType === 'DELIVERY' ? t('lc.co.cod') : t('lc.co.payAtShop')) : o.payment.mode}</p>
+          <p className="mt-2 text-xs text-ink-3">
+            {o.payment.mode === 'COD' ? t('lc.pm.COD') : t('lc.ord.paidVia', { method: PAY_LABEL[o.payment.mode] ? t(PAY_LABEL[o.payment.mode]) : o.payment.mode })}
+          </p>
           {o.address && <p className="mt-3 border-t border-line pt-3 text-sm text-ink-2">{o.address}</p>}
           {o.note && <p className="mt-2 text-sm italic text-ink-2">“{o.note}”</p>}
         </section>
@@ -168,6 +178,13 @@ export default function OrderStatus() {
           <Button variant="ghost" className="w-full" onClick={() => setConfirmCancel(true)}>
             {t('lc.ord.cancel')}
           </Button>
+        )}
+        {!failed && (
+          <p className="text-center text-xs text-ink-3">
+            <Link to="/refund-policy" className="font-semibold underline underline-offset-2 hover:text-dz-red">
+              {t('lc.site.policy')}
+            </Link>
+          </p>
         )}
         {o.store.phone && (
           <a href={`tel:${o.store.phone}`} className="flex min-h-12 items-center justify-center gap-2 rounded-[10px] text-sm font-bold text-ink-2">
@@ -190,6 +207,31 @@ export default function OrderStatus() {
           </div>
         </Modal>
       )}
+    </div>
+  );
+}
+
+/** Why it ended and what it means for the customer's money (order SLA). */
+function CancelOutcome({ o }: { o: CustomerOrder }) {
+  const { t } = useI18n();
+  const c = o.cancellation;
+  const reason = c && CANCEL_REASON[c.code] ? t(CANCEL_REASON[c.code]) : o.cancelReason;
+  const prepaid = o.payment.mode !== 'COD';
+  const notOurs = c && c.fault !== 'CUSTOMER';
+  return (
+    <div className="mt-2 space-y-1.5 text-sm" data-cancel-outcome>
+      {reason && <p className="font-semibold text-ink">{reason}</p>}
+      {notOurs && <p className="text-ink-2">{t('lc.cx.sorry')}</p>}
+      {prepaid && c && c.refunded > 0 && <p className="text-ink-2">{t('lc.cx.refunded', { amount: rupees(c.refunded) })}</p>}
+      {prepaid && c && c.refunded > 0 && c.refunded < o.totals.grandTotal && <p className="text-ink-2">{t('lc.cx.partial')}</p>}
+      {prepaid && c && c.refunded === 0 && <p className="text-ink-2">{t('lc.cx.noRefund')}</p>}
+      {!prepaid && c && c.unpaid === 0 && <p className="text-ink-2">{t('lc.cx.notCharged')}</p>}
+      {!prepaid && c && c.unpaid > 0 && <p className="text-ink-2">{t('lc.cx.unpaid', { amount: rupees(c.unpaid) })}</p>}
+      <p>
+        <Link to="/refund-policy" className="text-xs font-semibold underline underline-offset-2 hover:text-dz-red">
+          {t('lc.site.policy')}
+        </Link>
+      </p>
     </div>
   );
 }

@@ -4,7 +4,7 @@ import { Link, useParams } from 'react-router-dom';
 import { api, errorText } from '../lib/api';
 import { CAN, can, type AdminRole, type StoreReview as Review, type StoreStatus } from '../lib/types';
 import { DocReview } from '../components/DocReview';
-import { Button, Card, ErrorBox, fmtDate, Modal, StatusChip, Switch } from '../components/ui';
+import { Button, Card, ErrorBox, fmtDate, inputCls, Modal, StatusChip, Switch } from '../components/ui';
 import { useMe } from './Layout';
 
 const DAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
@@ -313,6 +313,8 @@ export default function StoreReview() {
             </Card>
           )}
 
+          <AccountManagerCard storeId={storeId} current={data.store.accountManagerId ?? null} canEdit={can(role, CAN.operate)} />
+
           <Card title="Go-live checks">
             <Check title="LIVE" problems={data.approval.live} />
             <div className="mt-3" />
@@ -431,5 +433,37 @@ function Check({ title, problems }: { title: string; problems: string[] }) {
         </ul>
       )}
     </div>
+  );
+}
+
+/** Which account manager looks after this store (they see it in their mobile view). */
+function AccountManagerCard({ storeId, current, canEdit }: { storeId: string; current: string | null; canEdit: boolean }) {
+  const qc = useQueryClient();
+  const ams = useQuery({ queryKey: ['account-managers'], queryFn: () => api<{ id: string; name: string; phone: string; stores: number }[]>('/admin/account-managers') });
+  const save = useMutation({
+    mutationFn: (accountManagerId: string | null) => api(`/admin/stores/${storeId}/account-manager`, { method: 'PUT', body: { accountManagerId } }),
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: ['store', storeId] });
+      void qc.invalidateQueries({ queryKey: ['account-managers'] });
+    },
+  });
+  const who = ams.data?.find((a) => a.id === current);
+  return (
+    <Card title="Account manager">
+      {canEdit ? (
+        <select value={current ?? ''} disabled={save.isPending} onChange={(e) => save.mutate(e.target.value || null)} className={inputCls} data-am-select>
+          <option value="">Not assigned</option>
+          {ams.data?.map((a) => (
+            <option key={a.id} value={a.id}>
+              {a.name} · {a.stores} store{a.stores === 1 ? '' : 's'}
+            </option>
+          ))}
+        </select>
+      ) : (
+        <p className="text-sm">{who ? who.name : 'Not assigned'}</p>
+      )}
+      {save.error && <p className="mt-2 text-sm text-dz-red">{(save.error as Error).message}</p>}
+      {!ams.isLoading && !ams.data?.length && <p className="mt-2 text-xs text-ink-3">No account managers yet — add one in Team with the Account manager role.</p>}
+    </Card>
   );
 }

@@ -17,6 +17,13 @@ import Support from './screens/Support';
 import Reports from './screens/Reports';
 import Documents from './screens/Documents';
 import StoreReview from './screens/StoreReview';
+import AmShell from './screens/am/AmShell';
+import AmHome from './screens/am/AmHome';
+import AmStores from './screens/am/AmStores';
+import AmStore from './screens/am/AmStore';
+import AmAlerts from './screens/am/AmAlerts';
+import AmTasks from './screens/am/AmTasks';
+import AmProfile from './screens/am/AmProfile';
 
 const queryClient = new QueryClient({ defaultOptions: { queries: { staleTime: 15_000, retry: 1 } } });
 
@@ -44,6 +51,15 @@ export default function App() {
             {import.meta.env.DEV && <Route path="/dev/messages" element={<DevMessages />} />}
             <Route path="/documents" element={<Documents />} />
             <Route path="/stores/:storeId" element={<StoreReview />} />
+          </Route>
+          {/* Account manager mobile view */}
+          <Route element={<RequireAuth><AmShell /></RequireAuth>}>
+            <Route path="/am" element={<AmHome />} />
+            <Route path="/am/stores" element={<AmStores />} />
+            <Route path="/am/stores/:storeId" element={<AmStore />} />
+            <Route path="/am/alerts" element={<AmAlerts />} />
+            <Route path="/am/tasks" element={<AmTasks />} />
+            <Route path="/am/profile" element={<AmProfile />} />
           </Route>
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>

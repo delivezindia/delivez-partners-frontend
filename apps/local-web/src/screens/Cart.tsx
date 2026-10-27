@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useQueryClient } from '@tanstack/react-query';
-import { AlertTriangle, ArrowLeft, Banknote, Bike, MapPin, ShoppingBag, Store as StoreIcon } from 'lucide-react';
+import { AlertTriangle, ArrowLeft, BadgePercent, Building2, CreditCard, MapPin, Smartphone, ShoppingBag, Store as StoreIcon } from 'lucide-react';
 import { LocationSheet } from '../components/LocationSheet';
 import { TextArea } from '../components/form';
 import { Button, ErrorText, QtyStepper, VegMark } from '../components/ui';
@@ -11,13 +11,12 @@ import { cartTotal, useCart } from '../lib/cart';
 import { km, rupees } from '../lib/format';
 import { useI18n, type MsgKey } from '../lib/i18n';
 import { useDeliverTo } from '../lib/location';
-import { toItems, useQuote, type Blocker, type CustomerOrder, type Fulfilment, type Problem } from '../lib/orders';
+import { toItems, useQuote, type Blocker, type CustomerOrder, type PayMethod, type Problem, PAY_LABEL, PAY_METHODS } from '../lib/orders';
 import { messageOf } from './Login';
 
 const BLOCKER: Partial<Record<Blocker, MsgKey>> = {
   STORE_CLOSED: 'lc.co.b.closed',
   DELIVERY_NOT_OFFERED: 'lc.co.b.noDelivery',
-  PICKUP_NOT_OFFERED: 'lc.co.b.noPickup',
   OUT_OF_RANGE: 'lc.co.b.range',
   LAB_BOOKING: 'lc.co.b.lab',
   RX_REQUIRED: 'lc.co.b.rx',
@@ -31,7 +30,7 @@ const PROBLEM: Record<Problem['code'], MsgKey> = {
   OPTIONS_CHANGED: 'lc.co.p.options',
 };
 
-// L2 Cart + checkout (cash on delivery / pay at the shop).
+// L2 Cart + checkout (home delivery, paid online).
 export default function Cart() {
   const { t } = useI18n();
   const navigate = useNavigate();
@@ -39,24 +38,17 @@ export default function Cart() {
   const token = useAuth((s) => s.accessToken);
   const cart = useCart();
   const at = useDeliverTo((s) => s.at);
-  const [fulfilment, setFulfilment] = useState<Fulfilment>('DELIVERY');
   const [note, setNote] = useState('');
+  const [method, setMethod] = useState<PayMethod>('UPI');
   const [picking, setPicking] = useState(false);
   const [error, setError] = useState('');
   const [placing, setPlacing] = useState(false);
   // One key per checkout attempt, so a double tap or a retry after a timeout places one order.
   const attempt = useRef(newIdempotencyKey());
 
-  const addressId = fulfilment === 'DELIVERY' ? at?.addressId : undefined;
-  const quote = useQuote({ storeId: cart.storeId, fulfilmentType: fulfilment, addressId, lines: cart.lines }, !!token);
+  const addressId = at?.addressId;
+  const quote = useQuote({ storeId: cart.storeId, addressId, lines: cart.lines }, !!token);
   const q = quote.data;
-
-  // A shop that only does one of the two picks it for the customer.
-  useEffect(() => {
-    if (!q) return;
-    if (fulfilment === 'DELIVERY' && !q.store.supportsDelivery && q.store.supportsPickup) setFulfilment('PICKUP');
-    if (fulfilment === 'PICKUP' && !q.store.supportsPickup && q.store.supportsDelivery) setFulfilment('DELIVERY');
-  }, [q, fulfilment]);
 
   if (!cart.lines.length)
     return (
@@ -72,7 +64,13 @@ export default function Cart() {
     );
 
   const problemOf = (productId: string) => q?.problems.find((p) => p.productId === productId);
-  const totals = q?.totals ?? { items: cartTotal(cart.lines), delivery: 0, packaging: 0, discount: 0, grandTotal: cartTotal(cart.lines) };
+  const totals = q?.totals ?? {
+    items: cartTotal(cart.lines),
+    delivery: 0,
+    packaging: 0,
+    discount: 0,
+    grandTotal: cartTotal(cart.lines),
+  };
   const shortBy = q ? q.store.minOrderAmount - q.totals.items : 0;
   const blockers = (q?.blockers ?? []).filter((b) => b !== 'ADDRESS_REQUIRED' && b !== 'BELOW_MINIMUM');
 
@@ -82,7 +80,14 @@ export default function Cart() {
     try {
       const o = await api<CustomerOrder>('/local/orders', {
         method: 'POST',
-        body: { storeId: cart.storeId, fulfilmentType: fulfilment, addressId, items: toItems(cart.lines), paymentMode: 'COD', note: note.trim() || undefined },
+        body: {
+          storeId: cart.storeId,
+          fulfilmentType: 'DELIVERY',
+          addressId,
+          items: toItems(cart.lines),
+          paymentMode: method,
+          note: note.trim() || undefined,
+        },
         idempotencyKey: attempt.current,
       });
       cart.clear();
@@ -143,70 +148,68 @@ export default function Cart() {
         </section>
       ) : (
         <>
-          {q && q.store.supportsDelivery && q.store.supportsPickup && (
-            <div className="grid grid-cols-2 gap-2 rounded-2xl bg-white p-1.5 ring-1 ring-line" role="radiogroup" aria-label={t('lc.co.how')}>
-              {(['DELIVERY', 'PICKUP'] as const).map((f) => (
-                <button key={f} type="button" role="radio" aria-checked={fulfilment === f} onClick={() => setFulfilment(f)} className={`flex min-h-11 items-center justify-center gap-2 rounded-xl font-bold ${fulfilment === f ? 'bg-black text-dz-yellow' : 'text-ink-2'}`}>
-                  {f === 'DELIVERY' ? <Bike className="h-4 w-4" aria-hidden /> : <StoreIcon className="h-4 w-4" aria-hidden />}
-                  {f === 'DELIVERY' ? t('lc.co.delivery') : t('lc.co.pickup')}
-                </button>
-              ))}
-            </div>
-          )}
-
-          {fulfilment === 'DELIVERY' ? (
-            <section className="flex items-start gap-3 rounded-2xl bg-white p-4 ring-1 ring-line">
-              <MapPin className="mt-0.5 h-5 w-5 shrink-0 text-dz-red" aria-hidden />
-              <div className="min-w-0 flex-1">
-                {at?.addressId ? (
-                  <>
-                    <b className="block">{t('lc.co.deliverTo', { place: at.title })}</b>
-                    <span className="block text-sm text-ink-2">{at.line}</span>
-                    {q?.distanceKm != null && <span className="text-xs text-ink-3">{t('lc.co.away', { d: km(q.distanceKm) })}</span>}
-                  </>
-                ) : (
-                  <>
-                    <b className="block">{t('lc.co.needAddress')}</b>
-                    <span className="block text-sm text-ink-2">{t('lc.co.needAddressBody')}</span>
-                  </>
-                )}
-              </div>
+          <section className="flex items-start gap-3 rounded-2xl bg-white p-4 ring-1 ring-line">
+            <MapPin className="mt-0.5 h-5 w-5 shrink-0 text-dz-red" aria-hidden />
+            <div className="min-w-0 flex-1">
               {at?.addressId ? (
-                <button type="button" onClick={() => setPicking(true)} className="shrink-0 text-sm font-bold text-dz-red">
-                  {t('lc.change')}
-                </button>
+                <>
+                  <b className="block">{t('lc.co.deliverTo', { place: at.title })}</b>
+                  <span className="block text-sm text-ink-2">{at.line}</span>
+                  {q?.distanceKm != null && <span className="text-xs text-ink-3">{t('lc.co.away', { d: km(q.distanceKm) })}</span>}
+                </>
               ) : (
-                <Link to="/addresses/new?next=/cart" className="shrink-0 text-sm font-bold text-dz-red">
-                  {t('lc.co.addAddress')}
-                </Link>
+                <>
+                  <b className="block">{t('lc.co.needAddress')}</b>
+                  <span className="block text-sm text-ink-2">{t('lc.co.needAddressBody')}</span>
+                </>
               )}
-            </section>
-          ) : (
-            q && (
-              <section className="flex items-start gap-3 rounded-2xl bg-white p-4 ring-1 ring-line">
-                <StoreIcon className="mt-0.5 h-5 w-5 shrink-0" aria-hidden />
-                <div>
-                  <b className="block">{t('lc.co.collectFrom', { store: q.store.name })}</b>
-                  {q.store.address && <span className="block text-sm text-ink-2">{q.store.address}</span>}
-                </div>
-              </section>
-            )
-          )}
+            </div>
+            {at?.addressId ? (
+              <button type="button" onClick={() => setPicking(true)} className="shrink-0 text-sm font-bold text-dz-red">
+                {t('lc.change')}
+              </button>
+            ) : (
+              <Link to="/addresses/new?next=/cart" className="shrink-0 text-sm font-bold text-dz-red">
+                {t('lc.co.addAddress')}
+              </Link>
+            )}
+          </section>
 
           <section className="rounded-2xl bg-white p-4 ring-1 ring-line">
             <h2 className="mb-2 text-xl">{t('lc.co.bill')}</h2>
             <dl className="space-y-1.5 text-sm">
               <Row label={t('lc.co.items')} value={rupees(totals.items)} />
-              {fulfilment === 'DELIVERY' && <Row label={t('lc.co.deliveryFee')} value={q ? rupees(totals.delivery) : '—'} />}
-              {totals.packaging > 0 && <Row label={t('lc.co.packaging')} value={rupees(totals.packaging)} />}
+              <Row label={t('lc.co.deliveryFee')} value={q ? rupees(totals.delivery) : '—'} />
               <div className="flex justify-between border-t border-line pt-2 text-base font-extrabold">
                 <dt>{t('lc.co.toPay')}</dt>
                 <dd>{rupees(totals.grandTotal)}</dd>
               </div>
             </dl>
-            <p className="mt-3 flex items-center gap-2 rounded-xl bg-soft px-3 py-2 text-sm font-semibold">
-              <Banknote className="h-4 w-4 text-dz-green" aria-hidden /> {fulfilment === 'DELIVERY' ? t('lc.co.cod') : t('lc.co.payAtShop')}
+            <p className="mt-3 flex items-center gap-2 rounded-xl bg-dz-green-soft px-3 py-2 text-sm font-semibold text-dz-green" data-no-fees>
+              <BadgePercent className="h-4 w-4" aria-hidden /> {t('lc.co.noFees')}
             </p>
+          </section>
+
+          <section className="rounded-2xl bg-white p-4 ring-1 ring-line">
+            <h2 className="mb-2 text-xl">{t('lc.co.payWith')}</h2>
+            <div className="grid grid-cols-3 gap-2" role="radiogroup" aria-label={t('lc.co.payWith')}>
+              {PAY_METHODS.map((m) => {
+                const Icon = { UPI: Smartphone, CARD: CreditCard, NETBANKING: Building2 }[m];
+                return (
+                  <button
+                    key={m}
+                    type="button"
+                    role="radio"
+                    aria-checked={method === m}
+                    data-pay={m}
+                    onClick={() => setMethod(m)}
+                    className={`flex min-h-14 flex-col items-center justify-center gap-1 rounded-xl px-2 text-sm font-bold ring-1 ${method === m ? 'bg-black text-dz-yellow ring-black' : 'bg-white text-ink-2 ring-line'}`}
+                  >
+                    <Icon className="h-5 w-5" aria-hidden /> {t(PAY_LABEL[m])}
+                  </button>
+                );
+              })}
+            </div>
           </section>
 
           {shortBy > 0 && <Notice>{t('lc.co.b.min', { amount: rupees(shortBy) })}</Notice>}
@@ -215,6 +218,11 @@ export default function Cart() {
           <Button className="w-full min-h-14 text-base" disabled={!q?.canPlace || placing || quote.isFetching} onClick={() => void place()}>
             {placing ? t('lc.co.placing') : t('lc.co.place', { total: rupees(totals.grandTotal) })}
           </Button>
+          <p className="text-center text-xs text-ink-3">
+            <Link to="/refund-policy" className="font-semibold underline underline-offset-2 hover:text-dz-red">
+              {t('lc.site.policy')}
+            </Link>
+          </p>
         </>
       )}
       {picking && <LocationSheet onClose={() => setPicking(false)} />}
@@ -227,7 +235,12 @@ function Shell({ title, children }: { title: string; children: React.ReactNode }
   return (
     <div className="min-h-screen bg-soft pb-10">
       <header className="sticky top-0 z-30 flex items-center gap-3 border-b border-line bg-white px-4 py-3">
-        <Link to="/" className="grid h-10 w-10 place-items-center rounded-full hover:bg-soft" aria-label={t('lc.back')} onClick={(e) => (history.length > 1 ? (e.preventDefault(), history.back()) : undefined)}>
+        <Link
+          to="/"
+          className="grid h-10 w-10 place-items-center rounded-full hover:bg-soft"
+          aria-label={t('lc.back')}
+          onClick={(e) => (history.length > 1 ? (e.preventDefault(), history.back()) : undefined)}
+        >
           <ArrowLeft className="h-5 w-5" />
         </Link>
         <h1 className="text-2xl">{title}</h1>

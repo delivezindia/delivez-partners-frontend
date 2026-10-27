@@ -1,5 +1,5 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { NavLink, Outlet, useNavigate } from 'react-router-dom';
+import { Navigate, NavLink, Outlet, useNavigate } from 'react-router-dom';
 import { Activity, BarChart3, ClipboardList, FileCheck2, LayoutDashboard, LifeBuoy, Map, MessageSquareText, ScrollText, ShieldCheck, Store, Users, type LucideIcon } from 'lucide-react';
 import { api, useAuth } from '../lib/api';
 import { CAN, can, type AdminMe, type AdminRole } from '../lib/types';
@@ -32,6 +32,7 @@ export default function Layout() {
   const pending = useQuery({ queryKey: ['documents', 'PENDING'], queryFn: () => api<{ superseded: boolean }[]>('/admin/documents?status=PENDING'), refetchInterval: 30_000 });
   const pendingCount = pending.data?.filter((d) => !d.superseded).length ?? 0;
   const nav = NAV.filter((n) => !n.roles || can(me?.role, n.roles));
+  const isAm = me?.role === 'ACCOUNT_MANAGER';
 
   async function logout() {
     await disablePush();
@@ -55,6 +56,9 @@ export default function Layout() {
       {n.to === '/documents' && pendingCount > 0 && <span className="rounded-full bg-dz-red px-1.5 text-xs text-white">{pendingCount}</span>}
     </NavLink>
   );
+
+  // Account managers have their own phone-first view and no access to the console pages.
+  if (isAm) return <Navigate to="/am" replace />;
 
   return (
     <div className="min-h-screen bg-soft">

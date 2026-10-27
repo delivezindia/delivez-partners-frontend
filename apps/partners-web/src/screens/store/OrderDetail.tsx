@@ -125,7 +125,15 @@ export default function OrderDetail() {
           </div>
 
           <div className="space-y-5">
-            {o.returnWindow && <ReturnsCard order={o} />}
+            {o.cancellation && (
+              <section className="dz-card border-l-4 border-dz-red p-5" data-cancellation>
+                <h2 className="text-xl">{t('ord.cx.title')}</h2>
+                <p className="mt-1 font-semibold">{o.cancellation.text}</p>
+                {o.cancellation.storeCompensation > 0 && <p className="mt-2 rounded-lg bg-dz-green-soft px-3 py-2 text-sm font-semibold text-dz-green">{t('ord.cx.comp', { amount: inr(o.cancellation.storeCompensation) })}</p>}
+                {o.cancellation.fault === 'STORE' && <p className="mt-2 text-sm text-ink-2">{t('ord.cx.storeFault')}</p>}
+              </section>
+            )}
+            {(o.returnWindow || (o.returns?.length ?? 0) > 0) && <ReturnsCard order={o} />}
             {o.rx && (
               <section className="dz-card p-5" data-rx-section>
                 <h2 className="flex items-center gap-2 text-xl"><ShieldCheck className="h-5 w-5 text-dz-blue" aria-hidden /> {t('lb.rx')}</h2>
@@ -291,8 +299,8 @@ function ReturnsCard({ order: o }: { order: Order }) {
   const { storeId, role } = useStoreContext();
   const { t } = useI18n();
   const qc = useQueryClient();
-  const w = o.returnWindow!;
-  const open = w.open && new Date(w.endsAt).getTime() > Date.now();
+  const w = o.returnWindow;
+  const open = !!w && w.open && new Date(w.endsAt).getTime() > Date.now();
   const receive = useMutation({
     mutationFn: ({ id, restock }: { id: string; restock: boolean }) => api<Order>(`/partners/stores/${storeId}/orders/${o.id}/returns/${id}/receive`, { method: 'POST', body: { restock }, idempotencyKey: newIdempotencyKey() }),
     onSuccess: (r, v) => (qc.setQueryData(['order', storeId, r.orderNumber], r), void qc.invalidateQueries({ queryKey: ['orders', storeId] }), toast.success(v.restock ? t('ret.shelfToast') : t('ret.damagedToast'))),
@@ -300,9 +308,9 @@ function ReturnsCard({ order: o }: { order: Order }) {
   const returns = o.returns ?? [];
   return (
     <section className="dz-card p-5" data-returns-card>
-      <h2 className="text-xl">{t('ret.title')}</h2>
-      <p className="mt-1 text-sm text-ink-2" data-outcome={open ? 'OPEN' : w.outcome ?? 'EXPIRED'}>
-        {open ? t('ret.openNow') : w.outcome === 'NO_RETURN' ? t('ret.happy') : w.outcome === 'RETURNED' ? t('ret.returned') : t('ret.expired')}
+      <h2 className="text-xl">{t(w ? 'ret.title' : 'ret.titleBack')}</h2>
+      <p className="mt-1 text-sm text-ink-2" data-outcome={!w ? 'UNDELIVERED' : open ? 'OPEN' : w.outcome ?? 'EXPIRED'}>
+        {!w ? t('ret.undelivered') : open ? t('ret.openNow') : w.outcome === 'NO_RETURN' ? t('ret.happy') : w.outcome === 'RETURNED' ? t('ret.returned') : t('ret.expired')}
       </p>
       {returns.length > 0 && (
         <ul className="mt-3 space-y-3">
@@ -310,10 +318,10 @@ function ReturnsCard({ order: o }: { order: Order }) {
             <li key={r.id} className="rounded-xl bg-soft p-3 text-sm" data-return={r.status}>
               <div className="flex flex-wrap justify-between gap-2">
                 <b>{r.qty} × {r.name}</b>
-                <span className="tabular-nums">−{inr(r.amount)}</span>
+                {r.reason !== 'UNDELIVERED' && <span className="tabular-nums">−{inr(r.amount)}</span>}
               </div>
               <p className="text-xs text-ink-2">
-                {t(RETURN_REASON[r.reason])}{r.note ? ` — ${r.note}` : ''} · {r.refundMethod === 'CASH_AT_DOOR' ? t('ret.cashBack') : t('ret.onlineBack')}
+                {t(RETURN_REASON[r.reason])}{r.note ? ` — ${r.note}` : ''}{r.reason === 'UNDELIVERED' ? '' : ` · ${r.refundMethod === 'CASH_AT_DOOR' ? t('ret.cashBack') : t('ret.onlineBack')}`}
               </p>
               {r.status === 'WITH_RIDER' && RECEIVERS.includes(role) && (
                 <div className="mt-2 flex flex-wrap gap-2">

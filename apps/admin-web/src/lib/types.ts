@@ -1,4 +1,4 @@
-export type AdminRole = 'FOUNDER' | 'HEAD_OF_OPS' | 'REGIONAL_HEAD' | 'CITY_OPS' | 'COMPLIANCE' | 'FINANCE' | 'LEGAL' | 'SUPPORT' | 'SALES_AGENT' | 'AUDITOR';
+export type AdminRole = 'FOUNDER' | 'HEAD_OF_OPS' | 'REGIONAL_HEAD' | 'CITY_OPS' | 'COMPLIANCE' | 'FINANCE' | 'LEGAL' | 'SUPPORT' | 'SALES_AGENT' | 'AUDITOR' | 'ACCOUNT_MANAGER';
 export type StoreStatus = 'DRAFT' | 'SUBMITTED' | 'UNDER_REVIEW' | 'LIVE' | 'LIMITED' | 'PAUSED' | 'SUSPENDED' | 'REJECTED' | 'CLOSED';
 export type DocStatus = 'PENDING' | 'UNDER_REVIEW' | 'VERIFIED' | 'REJECTED' | 'EXPIRED';
 
@@ -18,7 +18,7 @@ export const CAN = {
   orderOps: ['FOUNDER', 'HEAD_OF_OPS', 'REGIONAL_HEAD', 'CITY_OPS', 'SUPPORT'] as AdminRole[],
 };
 export const can = (role: AdminRole | undefined, list: AdminRole[]) => !!role && list.includes(role);
-export const ALL_ROLES: AdminRole[] = ['FOUNDER', 'HEAD_OF_OPS', 'REGIONAL_HEAD', 'CITY_OPS', 'COMPLIANCE', 'FINANCE', 'LEGAL', 'SUPPORT', 'SALES_AGENT', 'AUDITOR'];
+export const ALL_ROLES: AdminRole[] = ['FOUNDER', 'HEAD_OF_OPS', 'REGIONAL_HEAD', 'CITY_OPS', 'COMPLIANCE', 'FINANCE', 'LEGAL', 'SUPPORT', 'SALES_AGENT', 'AUDITOR', 'ACCOUNT_MANAGER'];
 
 export interface AdminMe {
   user: { id: string; phone: string; fullName: string | null };
@@ -79,7 +79,7 @@ export interface ReadinessFactor {
 }
 
 export interface StoreReview {
-  store: { id: string; name: string; status: StoreStatus; vertical: string; storeType: string; rejectedReason: string | null; liveAt: string | null; createdAt: string };
+  store: { id: string; name: string; status: StoreStatus; vertical: string; storeType: string; rejectedReason: string | null; liveAt: string | null; createdAt: string; accountManagerId?: string | null };
   onboarding: {
     session: { flowVersion: string; status: string; channel: string; steps: { key: string; title: string; optional?: boolean; status: string }[]; progressPct: number; submittedAt: string | null; quizScore: number | null; trainingDone: boolean; stepData: Record<string, Record<string, unknown>> };
     store: Record<string, unknown> & {

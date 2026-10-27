@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { Bell, BellOff, Bike, CheckCircle2, ClipboardList, CloudOff, Plus, ScanLine, ShieldCheck, ShoppingBag, SlidersHorizontal, Sparkles, Timer, Volume2 } from 'lucide-react';
+import { Bell, BellOff, Bike, BookOpen, CheckCircle2, ClipboardList, CloudOff, Plus, ScanLine, ShieldCheck, ShoppingBag, SlidersHorizontal, Sparkles, Timer, Volume2 } from 'lucide-react';
 import { api } from '../../lib/api';
 import { inr } from '../../lib/catalog';
 import { errorMessageOf } from '../../lib/onboarding';
@@ -14,6 +14,7 @@ import { useI18n } from '../../lib/i18n';
 import { QrScanner, isHandoverQr } from '../../components/QrScanner';
 import { useStoreContext } from './StoreLayout';
 import NewOrder from './NewOrder';
+import { SlaGuide } from '../../components/SlaGuide';
 
 const KITCHEN = ['OWNER', 'MANAGER', 'KITCHEN_LEAD', 'PHARMACIST'];
 const CREATE = ['OWNER', 'MANAGER', 'COUNTER_STAFF'];
@@ -34,6 +35,7 @@ export default function Orders() {
   const list = useOrders(storeId, tab, tab !== 'NEW' && !isHistory);
   const history = useOrderHistory(storeId, tab, isHistory);
   const [soundPanel, setSoundPanel] = useState(false);
+  const [guide, setGuide] = useState(false);
   const data = tab === 'NEW' ? fresh.data : isHistory ? (history.data ? { orders: history.data.pages.flatMap((p) => p.orders) } : undefined) : list.data;
   const pending = usePendingSync(storeId);
   const qc = useQueryClient();
@@ -78,6 +80,9 @@ export default function Orders() {
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
+          <Button variant="ghost" className="min-h-11" onClick={() => setGuide(true)} data-sla-btn>
+            <BookOpen className="h-4 w-4" /> {t('sla.btn')}
+          </Button>
           {pending.length > 0 && (
             <span className="inline-flex h-9 items-center gap-1.5 rounded-full border border-amber-400 bg-amber-50 px-3 text-xs font-bold text-amber-800" title={pending.map((p) => p.label).join(', ')}>
               <CloudOff className="h-3.5 w-3.5" /> {t('ord.pendingSync', { n: pending.length })}
@@ -149,6 +154,7 @@ export default function Orders() {
 
       {dialog && <ActionDialog dialog={dialog} onClose={() => setDialog(null)} />}
       {creating && <NewOrder onClose={() => setCreating(false)} />}
+      {guide && <SlaGuide onClose={() => setGuide(false)} />}
     </div>
   );
 }
