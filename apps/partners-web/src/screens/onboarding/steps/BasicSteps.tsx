@@ -1,5 +1,5 @@
 import { useRef, useState } from 'react';
-import { Card, Chips, Field, Select, TextArea, TextInput, Toggle } from '../../../components/form';
+import { Card, Chips, CuisinePicker, Field, Select, TextArea, TextInput, Toggle } from '../../../components/form';
 import { MapPicker } from '../../../components/MapPicker';
 import { useAddressAutofill } from '../../../lib/addressAutofill';
 import { slotsFrom, slotsToTimings, TimingsEditor } from '../../../components/TimingsEditor';
@@ -45,7 +45,6 @@ export function EligibilityStep({ view, submit, errors }: StepProps) {
   );
 }
 
-const CUISINES = ['North Indian', 'South Indian', 'Biryani', 'Chinese', 'Andhra', 'Chettinad', 'Kerala', 'Street food', 'Pizza', 'Burgers', 'Desserts', 'Bakery', 'Beverages', 'Healthy'];
 const PARTNER_TYPES = [
   { value: 'INDIVIDUAL', label: 'Individual' },
   { value: 'PROPRIETORSHIP', label: 'Proprietorship' },
@@ -122,7 +121,7 @@ export function BasicDetailsStep({ view, submit, errors }: StepProps) {
       </div>
       {eat && (
         <Field label="Cuisines" hint="Pick up to 10" error={errors.cuisines}>
-          <Chips multiple options={CUISINES.map((c) => ({ value: c, label: c }))} value={cuisines} onChange={(v) => setCuisines(v.slice(0, 10))} />
+          <CuisinePicker value={cuisines} onChange={setCuisines} />
         </Field>
       )}
       <Field label="Short description (optional)" error={errors.description}>

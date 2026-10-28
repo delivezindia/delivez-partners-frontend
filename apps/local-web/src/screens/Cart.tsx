@@ -1,11 +1,13 @@
 import { useEffect, useRef, useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, Navigate, useNavigate } from 'react-router-dom';
 import { useQueryClient } from '@tanstack/react-query';
 import { AlertTriangle, ArrowLeft, BadgePercent, Building2, CreditCard, MapPin, Smartphone, ShoppingBag, Store as StoreIcon } from 'lucide-react';
 import { LocationSheet } from '../components/LocationSheet';
+import { RxUpload, type RxFile } from '../components/RxUpload';
 import { TextArea } from '../components/form';
 import { Button, ErrorText, QtyStepper, VegMark } from '../components/ui';
 import { api, ApiError, newIdempotencyKey } from '../lib/api';
+import { payWithRazorpay } from '../lib/razorpay';
 import { useAuth } from '../lib/auth-store';
 import { cartTotal, useCart } from '../lib/cart';
 import { km, rupees } from '../lib/format';
@@ -20,6 +22,7 @@ const BLOCKER: Partial<Record<Blocker, MsgKey>> = {
   OUT_OF_RANGE: 'lc.co.b.range',
   LAB_BOOKING: 'lc.co.b.lab',
   RX_REQUIRED: 'lc.co.b.rx',
+  NO_PHARMACIST: 'lc.co.b.noPharm',
   ITEMS: 'lc.co.b.items',
 };
 const PROBLEM: Record<Problem['code'], MsgKey> = {
@@ -43,12 +46,17 @@ export default function Cart() {
   const [picking, setPicking] = useState(false);
   const [error, setError] = useState('');
   const [placing, setPlacing] = useState(false);
+  const [verifying, setVerifying] = useState(false);
+  const [rxFiles, setRxFiles] = useState<RxFile[]>([]);
   // One key per checkout attempt, so a double tap or a retry after a timeout places one order.
   const attempt = useRef(newIdempotencyKey());
 
   const addressId = at?.addressId;
-  const quote = useQuote({ storeId: cart.storeId, addressId, lines: cart.lines }, !!token);
+  const quote = useQuote({ storeId: cart.storeId, addressId, lines: cart.lines, rxKeys: rxFiles.map((f) => f.key) }, !!token);
   const q = quote.data;
+
+  // Lab tests aren't delivered — they're booked into a slot.
+  if (cart.storeVertical === 'DIAGNOSTICS' && cart.lines.length) return <Navigate to="/book-lab" replace />;
 
   if (!cart.lines.length)
     return (
@@ -87,13 +95,22 @@ export default function Cart() {
           items: toItems(cart.lines),
           paymentMode: method,
           note: note.trim() || undefined,
+          prescriptionFileKeys: q?.rxItems.length ? rxFiles.map((f) => f.key) : undefined,
         },
         idempotencyKey: attempt.current,
       });
       cart.clear();
       qc.invalidateQueries({ queryKey: ['orders'] });
       qc.setQueryData(['order', o.id], o);
-      navigate(`/orders/${o.id}?placed=1`, { replace: true });
+      if (!o.checkout) return navigate(`/orders/${o.id}?placed=1`, { replace: true });
+      // Online payment: Razorpay Checkout opens over the cart; the order page takes over afterwards.
+      try {
+        const paid = await payWithRazorpay(o.id, o.checkout, () => setVerifying(true));
+        if (paid) qc.setQueryData(['order', o.id], paid);
+        navigate(paid ? `/orders/${o.id}?placed=1` : `/orders/${o.id}`, { replace: true });
+      } catch {
+        navigate(`/orders/${o.id}?payfail=1`, { replace: true });
+      }
     } catch (err) {
       attempt.current = newIdempotencyKey();
       if (err instanceof ApiError && err.code === 'CART_CHANGED') void quote.refetch();
@@ -175,6 +192,8 @@ export default function Cart() {
             )}
           </section>
 
+          {cart.storeId && !!q?.rxItems.length && <RxUpload presignPath={`/local/pharmacies/${cart.storeId}/rx-upload`} files={rxFiles} onChange={setRxFiles} items={q.rxItems} />}
+
           <section className="rounded-2xl bg-white p-4 ring-1 ring-line">
             <h2 className="mb-2 text-xl">{t('lc.co.bill')}</h2>
             <dl className="space-y-1.5 text-sm">
@@ -215,8 +234,8 @@ export default function Cart() {
           {shortBy > 0 && <Notice>{t('lc.co.b.min', { amount: rupees(shortBy) })}</Notice>}
           {blockers.map((b) => BLOCKER[b] && <Notice key={b}>{t(BLOCKER[b]!)}</Notice>)}
           <ErrorText>{error}</ErrorText>
-          <Button className="w-full min-h-14 text-base" disabled={!q?.canPlace || placing || quote.isFetching} onClick={() => void place()}>
-            {placing ? t('lc.co.placing') : t('lc.co.place', { total: rupees(totals.grandTotal) })}
+          <Button className="w-full min-h-14 text-base" disabled={!q?.canPlace || placing || quote.isFetching} onClick={() => void place()} data-place-order>
+            {verifying ? t('lc.pay.verifying') : placing ? t('lc.co.placing') : t('lc.co.place', { total: rupees(totals.grandTotal) })}
           </Button>
           <p className="text-center text-xs text-ink-3">
             <Link to="/refund-policy" className="font-semibold underline underline-offset-2 hover:text-dz-red">

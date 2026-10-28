@@ -12,7 +12,11 @@ import Cart from './screens/Cart';
 import Orders from './screens/Orders';
 import OrderStatus from './screens/OrderStatus';
 import Policy from './screens/Policy';
+import LabBook from './screens/LabBook';
+import Booking from './screens/Booking';
+import { HelpList, HelpNew, HelpTicket } from './screens/Help';
 import { useAdoptSavedAddress } from './lib/location';
+import { usePushBridge } from './lib/push';
 
 const queryClient = new QueryClient({
   defaultOptions: { queries: { staleTime: 30_000, retry: 1, refetchOnWindowFocus: false } },
@@ -33,6 +37,7 @@ function GuestOnly({ children }: { children: ReactNode }) {
 
 function SavedAddress() {
   useAdoptSavedAddress();
+  usePushBridge();
   return null;
 }
 
@@ -51,6 +56,11 @@ export default function App() {
           <Route path="/addresses/:id/edit" element={<RequireAuth><AddressEditor /></RequireAuth>} />
           <Route path="/orders" element={<RequireAuth><Orders /></RequireAuth>} />
           <Route path="/orders/:id" element={<RequireAuth><OrderStatus /></RequireAuth>} />
+          <Route path="/book-lab" element={<RequireAuth><LabBook /></RequireAuth>} />
+          <Route path="/bookings/:id" element={<RequireAuth><Booking /></RequireAuth>} />
+          <Route path="/help" element={<RequireAuth><HelpList /></RequireAuth>} />
+          <Route path="/help/new" element={<RequireAuth><HelpNew /></RequireAuth>} />
+          <Route path="/help/:id" element={<RequireAuth><HelpTicket /></RequireAuth>} />
           <Route path="/refund-policy" element={<Policy />} />
           <Route path="/account" element={<RequireAuth><Account /></RequireAuth>} />
           <Route path="*" element={<Navigate to="/" replace />} />

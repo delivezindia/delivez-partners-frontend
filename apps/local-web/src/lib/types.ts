@@ -74,6 +74,10 @@ export interface Menu {
     busy: boolean;
     opensAt: import('./format').Opening | null;
     supportsDelivery: boolean;
+    /** Labs: walk-in at the lab. */
+    supportsPickup: boolean;
+    /** Labs: home sample collection fee (paise). */
+    collectionFee: number;
     distanceKm: number | null;
     delivers: boolean | null;
     etaMinutes: number;

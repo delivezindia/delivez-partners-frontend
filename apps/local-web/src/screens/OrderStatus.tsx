@@ -1,14 +1,17 @@
 import { useState } from 'react';
 import { Link, useParams, useSearchParams } from 'react-router-dom';
 import { useQueryClient } from '@tanstack/react-query';
-import { ArrowLeft, Check, CircleCheck, Phone, XCircle } from 'lucide-react';
+import { ArrowLeft, Bike, Check, CreditCard, CircleCheck, Phone, XCircle } from 'lucide-react';
 import { Modal } from '../components/Modal';
+import { PushCard } from '../components/PushCard';
+import { DoorCheck, HelpLink, RateOrder, RxStatus, Substitutions } from '../components/OrderExtras';
 import { Button, ErrorText, Skeleton } from '../components/ui';
 import { api, newIdempotencyKey } from '../lib/api';
 import { rupees } from '../lib/format';
 import { useI18n } from '../lib/i18n';
 import { CANCEL_REASON, PAY_LABEL, STATUS_LABEL, STEPS, useOrder, type CustomerOrder } from '../lib/orders';
 import { messageOf } from './Login';
+import { payWithRazorpay, type CheckoutParams } from '../lib/razorpay';
 
 // L2/L3 Order status: where it is, the code for the door / counter, what was ordered.
 export default function OrderStatus() {
@@ -78,11 +81,15 @@ export default function OrderStatus() {
       </header>
 
       <main className="mx-auto max-w-xl space-y-3 px-4 pt-4">
-        {params.get('placed') && !failed && (
+        {o.awaitingPayment && <PayNow o={o} failed={!!params.get('payfail')} />}
+
+        {params.get('placed') && !failed && !o.awaitingPayment && (
           <p className="dz-rise flex items-center gap-2 rounded-2xl bg-dz-green px-4 py-3 font-bold text-white" role="status">
             <CircleCheck className="h-5 w-5" aria-hidden /> {t('lc.ord.placed')}
           </p>
         )}
+
+        <Substitutions o={o} />
 
         <section className={`rounded-2xl p-5 ring-1 ${failed ? 'bg-dz-red-soft ring-dz-red/20' : 'bg-white ring-line'}`} aria-live="polite">
           <p className="text-xs font-extrabold uppercase tracking-wider text-ink-3">{t('lc.ord.status')}</p>
@@ -113,6 +120,10 @@ export default function OrderStatus() {
           )}
         </section>
 
+        <RxStatus o={o} />
+        <DoorCheck o={o} />
+        <RateOrder o={o} />
+
         {code && (
           <section className="rounded-2xl bg-dz-yellow p-5 text-center ring-1 ring-black/10">
             <p className="text-sm font-bold">{t('lc.ord.codeDelivery')}</p>
@@ -122,10 +133,12 @@ export default function OrderStatus() {
           </section>
         )}
 
+        {o.active && <PushCard compact />}
+
         {o.rider && o.active && (
           <section className="flex items-center gap-3 rounded-2xl bg-white p-4 ring-1 ring-line">
-            <span className="grid h-10 w-10 place-items-center rounded-full bg-dz-yellow text-lg" aria-hidden>
-              🛵
+            <span className="grid h-10 w-10 place-items-center rounded-full bg-dz-yellow" aria-hidden>
+              <Bike className="h-5 w-5" />
             </span>
             <div className="flex-1">
               <b>{t('lc.ord.rider', { name: o.rider.name ?? '' })}</b>
@@ -186,6 +199,7 @@ export default function OrderStatus() {
             </Link>
           </p>
         )}
+        {!o.awaitingPayment && <HelpLink o={o} />}
         {o.store.phone && (
           <a href={`tel:${o.store.phone}`} className="flex min-h-12 items-center justify-center gap-2 rounded-[10px] text-sm font-bold text-ink-2">
             <Phone className="h-4 w-4" aria-hidden /> {t('lc.ord.callStore')}
@@ -233,5 +247,48 @@ function CancelOutcome({ o }: { o: CustomerOrder }) {
         </Link>
       </p>
     </div>
+  );
+}
+
+/** Placed but unpaid: pay (again) with Razorpay, or cancel with the button below. */
+function PayNow({ o, failed }: { o: CustomerOrder; failed: boolean }) {
+  const { t } = useI18n();
+  const qc = useQueryClient();
+  const [busy, setBusy] = useState(false);
+  const [verifying, setVerifying] = useState(false);
+  const [error, setError] = useState(failed ? t('lc.pay.failed') : '');
+  const [test, setTest] = useState(false);
+  const holdUntil = new Date(new Date(o.placedAt).getTime() + 15 * 60_000).toLocaleTimeString('en-IN', { hour: 'numeric', minute: '2-digit', timeZone: 'Asia/Kolkata' });
+  async function pay() {
+    setError('');
+    setBusy(true);
+    try {
+      const params = await api<CheckoutParams>(`/local/orders/${o.id}/payment`, { method: 'POST', idempotencyKey: newIdempotencyKey() });
+      setTest(params.testMode);
+      const paid = await payWithRazorpay(o.id, params, () => setVerifying(true));
+      if (paid) {
+        qc.setQueryData(['order', o.id], paid);
+        qc.invalidateQueries({ queryKey: ['orders'] });
+      }
+    } catch (err) {
+      setError(messageOf(err, t('lc.pay.failed')));
+      void qc.invalidateQueries({ queryKey: ['order', o.id] });
+    } finally {
+      setBusy(false);
+      setVerifying(false);
+    }
+  }
+  return (
+    <section className="rounded-2xl bg-dz-yellow-soft p-5 ring-1 ring-dz-yellow" data-pay-now>
+      <h2 className="flex items-center gap-2 text-2xl">
+        <CreditCard className="h-6 w-6" aria-hidden /> {t('lc.pay.pending')}
+      </h2>
+      <p className="mt-1 text-sm text-ink-2">{t('lc.pay.pendingBody', { time: holdUntil })}</p>
+      <ErrorText>{error}</ErrorText>
+      <Button className="mt-3 w-full" disabled={busy} onClick={() => void pay()} data-pay-btn>
+        {verifying ? t('lc.pay.verifying') : t('lc.pay.payNow', { total: rupees(o.totals.grandTotal) })}
+      </Button>
+      {test && <p className="mt-2 text-center text-xs font-bold text-ink-3">{t('lc.pay.test')}</p>}
+    </section>
   );
 }

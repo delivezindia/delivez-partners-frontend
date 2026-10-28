@@ -15,6 +15,8 @@ interface Row {
   subject: string;
   status: Status;
   priority: string;
+  /** PARTNER (a shop) or CUSTOMER (customer app). */
+  raisedByType: string;
   order: { id: string; orderNumber: string } | null;
   lastMessageAt: string;
   lastFromAdmin: boolean;
@@ -31,22 +33,23 @@ interface Ticket extends Omit<Row, 'store'> {
 const STATUS_LABEL: Record<Status, { label: string; cls: string }> = {
   OPEN: { label: 'Open', cls: 'border-dz-blue bg-dz-blue-soft text-dz-blue' },
   IN_PROGRESS: { label: 'In progress', cls: 'border-dz-yellow-strong bg-dz-yellow-soft text-ink' },
-  WAITING_ON_USER: { label: 'Waiting on shop', cls: 'border-line bg-soft text-ink-2' },
+  WAITING_ON_USER: { label: 'Waiting on them', cls: 'border-line bg-soft text-ink-2' },
   RESOLVED: { label: 'Resolved', cls: 'border-dz-green bg-dz-green-soft text-dz-green' },
   CLOSED: { label: 'Closed', cls: 'border-line bg-soft text-ink-3' },
 };
-const CATEGORY: Record<string, string> = { ORDER_ISSUE: 'Order', PAYOUT: 'Payments', MENU: 'Menu', ACCOUNT: 'Account', TECH: 'App problem', OTHER: 'Other' };
+const CATEGORY: Record<string, string> = { ORDER_ISSUE: 'Order', PAYOUT: 'Payments', MENU: 'Menu', ACCOUNT: 'Account', TECH: 'App problem', OTHER: 'Other', MISSING_ITEM: 'Missing / wrong item', PAYMENT_REFUND: 'Payment / refund', MEDICINE: 'Medicine', LAB_BOOKING: 'Lab test' };
+const Who = ({ type }: { type: string }) => (type === 'CUSTOMER' ? <span className="mr-1 rounded bg-dz-yellow-soft px-1.5 py-0.5 text-[10px] font-extrabold uppercase text-ink">Customer</span> : <span className="mr-1 rounded bg-soft px-1.5 py-0.5 text-[10px] font-extrabold uppercase text-ink-2">Shop</span>);
 const FILTERS = [
   { value: 'ACTIVE', label: 'Needs work' },
   { value: 'OPEN', label: 'Open' },
-  { value: 'WAITING_ON_USER', label: 'Waiting on shop' },
+  { value: 'WAITING_ON_USER', label: 'Waiting on them' },
   { value: 'RESOLVED', label: 'Resolved' },
   { value: 'ALL', label: 'All' },
 ];
 const SUPPORT = ['FOUNDER', 'HEAD_OF_OPS', 'REGIONAL_HEAD', 'CITY_OPS', 'SUPPORT'] as typeof CAN.orderOps;
 const when = (iso: string) => new Date(iso).toLocaleString('en-IN', { day: 'numeric', month: 'short', hour: 'numeric', minute: '2-digit', timeZone: 'Asia/Kolkata' });
 
-// Help requests from shops (P26). City-scoped like everything else.
+// Help requests from shops (P26) and customers (customer app). City-scoped like everything else.
 export default function Support() {
   const [params, setParams] = useSearchParams();
   const openId = params.get('ticket');
@@ -60,7 +63,7 @@ export default function Support() {
   const active = (list.data?.counts.OPEN ?? 0) + (list.data?.counts.IN_PROGRESS ?? 0);
   return (
     <div className="space-y-5">
-      <PageHead title="Support" sub={`Requests from shops · ${active} need work`} />
+      <PageHead title="Support" sub={`Requests from shops and customers · ${active} need work`} />
       <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_minmax(0,1.2fr)]">
         <div className="space-y-3">
           <div className="flex flex-wrap gap-2">
@@ -80,9 +83,10 @@ export default function Support() {
                     <span className={`shrink-0 rounded-full border px-2 py-0.5 text-xs font-bold ${STATUS_LABEL[t.status].cls}`}>{STATUS_LABEL[t.status].label}</span>
                   </div>
                   <p className="mt-0.5 text-xs text-ink-3">
+                    <Who type={t.raisedByType} />
                     {t.number} · {CATEGORY[t.category] ?? t.category} · {t.store?.name}{t.store?.city ? `, ${t.store.city}` : ''} · {when(t.lastMessageAt)}
                     {t.priority === 'HIGH' && <b className="ml-1 text-dz-red">· High</b>}
-                    {!t.lastFromAdmin && t.status !== 'RESOLVED' && t.status !== 'CLOSED' && <b className="ml-1 text-dz-blue">· Shop waiting</b>}
+                    {!t.lastFromAdmin && t.status !== 'RESOLVED' && t.status !== 'CLOSED' && <b className="ml-1 text-dz-blue">· {t.raisedByType === 'CUSTOMER' ? 'Customer' : 'Shop'} waiting</b>}
                   </p>
                   {t.assignedTo && <p className="text-xs text-ink-3">With {t.assignedTo}</p>}
                 </button>
@@ -118,7 +122,7 @@ function TicketPanel({ id }: { id: string }) {
       <div className="space-y-4">
         <dl className="grid gap-x-4 gap-y-1 text-sm sm:grid-cols-2">
           <div><dt className="text-xs text-ink-3">Store</dt><dd>{d.store ? <Link className="font-bold underline" to={`/stores/${d.store.id}`}>{d.store.name}</Link> : '—'}{d.store?.city ? `, ${d.store.city}` : ''}</dd></div>
-          <div><dt className="text-xs text-ink-3">Raised by</dt><dd>{d.raisedBy.name ?? '—'} · <a className="inline-flex items-center gap-1 underline" href={`tel:${d.raisedBy.phone}`}><Phone className="h-3 w-3" aria-hidden />{d.raisedBy.phone}</a></dd></div>
+          <div><dt className="text-xs text-ink-3">Raised by</dt><dd><Who type={d.raisedByType} />{d.raisedBy.name ?? '—'} · <a className="inline-flex items-center gap-1 underline" href={`tel:${d.raisedBy.phone}`}><Phone className="h-3 w-3" aria-hidden />{d.raisedBy.phone}</a></dd></div>
           <div><dt className="text-xs text-ink-3">About</dt><dd>{CATEGORY[d.category] ?? d.category}{d.order && <> · <Link className="underline" to="/orders">{d.order.orderNumber}</Link></>}</dd></div>
           <div><dt className="text-xs text-ink-3">Handled by</dt><dd>{d.assignedTo ?? 'Nobody yet'}</dd></div>
         </dl>

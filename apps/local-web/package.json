@@ -13,6 +13,7 @@
     "@delivez/i18n": "workspace:*",
     "@googlemaps/js-api-loader": "1.16.8",
     "@tanstack/react-query": "^5",
+    "firebase": "10.14.1",
     "leaflet": "^1.9.4",
     "lucide-react": "0.460.0",
     "react": "^18.3.1",

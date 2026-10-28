@@ -1,6 +1,8 @@
 import { useEffect, useRef, useState, type FormEvent } from 'react';
 import { Link, useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import { ArrowRight, Banknote, Check, ShieldCheck, Smartphone, Store as StoreIcon, Truck } from 'lucide-react';
+import { VerticalIcon } from '../components/VerticalIcon';
+import { SITE_VERTICALS } from '../components/site';
 import { useQueryClient } from '@tanstack/react-query';
 import { api, ApiError, newIdempotencyKey } from '../lib/api';
 import { useAuth, type SessionUser } from '../lib/auth-store';
@@ -134,7 +136,7 @@ export default function Login() {
         <aside className="relative hidden overflow-hidden rounded-[20px] bg-black p-10 text-white lg:flex lg:flex-col">
           <span className="pointer-events-none absolute -right-24 -top-24 h-72 w-72 rounded-full bg-dz-yellow/90" aria-hidden />
           <span className="pointer-events-none absolute -right-10 top-28 h-24 w-24 rounded-full border-[10px] border-dz-red" aria-hidden />
-          <p className="relative text-xs font-extrabold uppercase tracking-[0.16em] text-dz-yellow">Delivez Local</p>
+          <p className="relative text-xs font-extrabold uppercase tracking-[0.16em] text-dz-yellow">Delivez</p>
           <h2 className="relative mt-3 max-w-md text-[clamp(40px,4.4vw,56px)] leading-tight [html:lang(en)_&]:leading-[0.95]">{signup ? t('lc.auth.signupPitch') : t('lc.auth.loginPitch')}</h2>
           <ul className="relative mt-8 grid gap-4 sm:grid-cols-2">
             {PERKS.map((p) => (
@@ -145,8 +147,10 @@ export default function Login() {
                 <b className="mt-3 block text-sm">{t(p.text)}</b>
               </li>
             ))}
-            <li className="rounded-2xl border border-white/10 bg-white/[0.04] p-4 text-3xl" aria-hidden>
-              🍛 🛒 💊 🧪
+            <li className="flex flex-wrap content-center gap-2 rounded-2xl border border-white/10 bg-white/[0.04] p-4" aria-hidden>
+              {SITE_VERTICALS.map((v) => (
+                <VerticalIcon key={v} v={v} />
+              ))}
             </li>
           </ul>
         </aside>

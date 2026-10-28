@@ -5,7 +5,7 @@ import { api } from '../../lib/api';
 import { useAuth } from '../../lib/auth-store';
 import { errorMessageOf, fieldErrorsOf, rupees, type OnboardingView } from '../../lib/onboarding';
 import type { PartnerRole } from '../../lib/types';
-import { Card, Chips, Field, Stepper, TextArea, TextInput, Toggle } from '../../components/form';
+import { Card, Chips, CuisinePicker, Field, Stepper, TextArea, TextInput, Toggle } from '../../components/form';
 import { DocumentUpload } from '../../components/DocumentUpload';
 import { Button, ErrorText } from '../../components/ui';
 import { useStoreContext } from './StoreLayout';
@@ -14,7 +14,6 @@ import { useI18n, type LanguageCode } from '../../lib/i18n';
 import { PinForm } from './SwitchUser';
 
 const DAYS = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
-const CUISINES = ['North Indian', 'South Indian', 'Biryani', 'Chinese', 'Andhra', 'Chettinad', 'Kerala', 'Street food', 'Pizza', 'Burgers', 'Desserts', 'Bakery', 'Beverages', 'Healthy'];
 
 interface Timing {
   dayOfWeek: number;
@@ -134,7 +133,7 @@ function ProfileSection({ s }: { s: SettingsResponse['store'] }) {
         </div>
         {s.vertical === 'EAT' && (
           <Field label="Cuisines" className="mt-4">
-            <Chips multiple options={CUISINES.map((c) => ({ value: c, label: c }))} value={cuisines} onChange={(v) => setCuisines(v.slice(0, 10))} />
+            <CuisinePicker value={cuisines} onChange={setCuisines} />
           </Field>
         )}
       </Card>

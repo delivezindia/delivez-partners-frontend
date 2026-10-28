@@ -5,7 +5,8 @@ import { Brand } from './ui';
 import { PARTNERS_URL } from '../lib/config';
 import { useAuth } from '../lib/auth-store';
 import { useI18n, type MsgKey } from '../lib/i18n';
-import { VERTICAL_EMOJI, VERTICAL_LABEL } from '../lib/labels';
+import { VERTICAL_LABEL } from '../lib/labels';
+import { VerticalIcon } from './VerticalIcon';
 import type { Vertical } from '../lib/types';
 
 /* Public-site building blocks, matching the Delivez Partners site (apps/partners-web/src/site). */
@@ -155,9 +156,7 @@ export function SiteNavbar({ onCategory }: { onCategory?: (v: Vertical) => void 
                   <div className="grid grid-cols-2 gap-1">
                     {SITE_VERTICALS.map((v) => (
                       <Link key={v} to={`/?v=${v}`} onClick={() => pickCategory(v)} className="flex items-center gap-3 rounded-xl p-3 transition hover:bg-dz-yellow-soft">
-                        <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border-[1.5px] border-line text-xl" aria-hidden>
-                          {VERTICAL_EMOJI[v]}
-                        </span>
+                        <VerticalIcon v={v} />
                         <span className="text-sm font-bold">{t(VERTICAL_LABEL[v])}</span>
                       </Link>
                     ))}
@@ -239,7 +238,7 @@ export function SiteNavbar({ onCategory }: { onCategory?: (v: Vertical) => void 
               {SITE_VERTICALS.map((v) => (
                 <li key={v}>
                   <Link to={`/?v=${v}`} onClick={() => pickCategory(v)} className="flex items-center gap-3 rounded-xl px-2 py-2.5 font-bold hover:bg-dz-yellow-soft">
-                    <span aria-hidden>{VERTICAL_EMOJI[v]}</span> {t(VERTICAL_LABEL[v])}
+                    <VerticalIcon v={v} size="sm" bare /> {t(VERTICAL_LABEL[v])}
                   </Link>
                 </li>
               ))}
@@ -297,7 +296,6 @@ export function SiteFooter() {
             <b className="text-[30px] font-black italic leading-none tracking-tight text-dz-yellow" style={{ fontStretch: '72%' }}>
               DELIVEZ
             </b>
-            <span className="rounded-md border-[1.5px] border-white px-2 py-0.5 text-xs font-bold text-white">Local</span>
           </p>
           <p className="mt-3 text-sm text-neutral-400">{t('lc.site.footerAbout')}</p>
         </div>
@@ -371,7 +369,7 @@ export function SiteFooter() {
       <div className="border-t border-white/10">
         <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-2 px-4 py-5 text-xs text-neutral-500 sm:px-6">
           <span>© {new Date().getFullYear()} Delivez. {t('lc.site.rights')}</span>
-          <span>Delivez One · Delivez Local · Delivez Partners</span>
+          <span>Delivez One · Delivez Customer App · Delivez Partners</span>
         </div>
       </div>
     </footer>

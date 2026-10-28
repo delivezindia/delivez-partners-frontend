@@ -1,13 +1,13 @@
 # Delivez Partners — Frontend
 
-Partners web app (restaurants, pharmacies, labs, stores), the Delivez admin console and the customer app (Delivez Local). React + Vite + Tailwind.
+Partners web app (restaurants, pharmacies, labs, stores), the Delivez admin console and the Delivez customer app. React + Vite + Tailwind.
 The API lives in [delivez-partners-backend](https://github.com/delivezindia/delivez-partners-backend).
 
 | App | Path | Local URL | Built files (served by nginx) |
 |---|---|---|---|
 | Partners web | `apps/partners-web` | http://localhost:5173 | `apps/partners-web/dist` → `partners.delivez.com` |
 | Admin console | `apps/admin-web` | http://localhost:5174 | `apps/admin-web/dist` → `partners.admin.delivez.com` |
-| Customer app (Local) | `apps/local-web` | http://localhost:5175 | `apps/local-web/dist` → `local.delivez.com` |
+| Customer app | `apps/local-web` | http://localhost:5175 | `apps/local-web/dist` → `local.delivez.com` |
 | Translations (8 languages) | `packages/i18n` | | |
 | Design tokens | `packages/ui/src/tokens.css` | | |
 

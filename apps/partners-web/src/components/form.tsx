@@ -1,4 +1,4 @@
-import { forwardRef, type InputHTMLAttributes, type ReactNode, type SelectHTMLAttributes, type TextareaHTMLAttributes } from 'react';
+import { forwardRef, useState, type InputHTMLAttributes, type ReactNode, type SelectHTMLAttributes, type TextareaHTMLAttributes } from 'react';
 
 export function Field({ label, hint, error, children, className = '' }: { label: string; hint?: string; error?: string; children: ReactNode; className?: string }) {
   return (
@@ -82,6 +82,70 @@ export function Chips<T extends string>({ options, value, onChange, multiple = f
           </button>
         );
       })}
+    </div>
+  );
+}
+
+export const CUISINES = ['North Indian', 'South Indian', 'Biryani', 'Chinese', 'Andhra', 'Chettinad', 'Kerala', 'Street food', 'Pizza', 'Burgers', 'Desserts', 'Bakery', 'Beverages', 'Healthy'];
+const MAX_CUISINES = 10;
+
+/** Preset cuisine chips plus "+ Add more" for the partner's own (2–40 characters, up to 10 in total). */
+export function CuisinePicker({ value, onChange }: { value: string[]; onChange: (v: string[]) => void }) {
+  const [adding, setAdding] = useState(false);
+  const [text, setText] = useState('');
+  const [error, setError] = useState('');
+  const custom = value.filter((v) => !CUISINES.includes(v));
+  const full = value.length >= MAX_CUISINES;
+  const add = () => {
+    const name = text.trim().replace(/\s+/g, ' ');
+    if (name.length < 2 || name.length > 40) return setError('Use 2 to 40 characters');
+    const known = [...CUISINES, ...value].find((c) => c.toLowerCase() === name.toLowerCase());
+    if (known && value.includes(known)) return setError('Already added');
+    if (full) return setError(`You can pick up to ${MAX_CUISINES}`);
+    onChange([...value, known ?? name]);
+    setText('');
+    setError('');
+    setAdding(false);
+  };
+  const chip = 'min-h-10 rounded-full border px-4 text-sm font-medium transition';
+  return (
+    <div>
+      <Chips multiple options={[...CUISINES, ...custom].map((c) => ({ value: c, label: c }))} value={value} onChange={(v) => onChange(v.slice(0, MAX_CUISINES))} />
+      {adding ? (
+        <div className="mt-2 flex gap-2">
+          <TextInput
+            autoFocus
+            value={text}
+            maxLength={40}
+            placeholder="e.g. Mughlai, Tibetan, Coastal"
+            onChange={(e) => {
+              setText(e.target.value);
+              setError('');
+            }}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') {
+                e.preventDefault();
+                add();
+              }
+              if (e.key === 'Escape') setAdding(false);
+            }}
+            aria-label="Your cuisine"
+          />
+          <button type="button" onClick={add} className={`${chip} shrink-0 border-dz-black bg-dz-black text-dz-yellow`}>
+            Add
+          </button>
+          <button type="button" onClick={() => setAdding(false)} className={`${chip} shrink-0 border-neutral-300 bg-white`}>
+            Cancel
+          </button>
+        </div>
+      ) : (
+        !full && (
+          <button type="button" onClick={() => setAdding(true)} className={`${chip} mt-2 border-dashed border-neutral-400 bg-white hover:border-dz-black`} data-add-cuisine>
+            + Add more
+          </button>
+        )
+      )}
+      {error && <span className="mt-1 block text-xs font-medium text-state-delayed">{error}</span>}
     </div>
   );
 }

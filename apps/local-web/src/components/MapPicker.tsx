@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { MapContainer, Marker, TileLayer, useMap, useMapEvents } from 'react-leaflet';
 import L from 'leaflet';
+import { LocateFixed } from 'lucide-react';
 import 'leaflet/dist/leaflet.css';
 import { api } from '../lib/api';
 import { MAPS_KEY, mapsAuthFailed } from '../lib/googleMaps';
@@ -167,8 +168,8 @@ function OsmMapPicker({
         <button type="button" onClick={() => void search()} disabled={busy} className="h-12 rounded-xl bg-dz-black px-4 text-sm font-semibold text-dz-yellow disabled:opacity-50">
           {busy ? '…' : 'Search'}
         </button>
-        <button type="button" onClick={useMyLocation} className="h-12 rounded-xl border border-neutral-300 px-3 text-sm font-semibold hover:border-dz-black" title="Use my current location">
-          📍
+        <button type="button" onClick={useMyLocation} className="h-12 rounded-xl border border-neutral-300 px-3 text-sm font-semibold hover:border-dz-black" title="Use my current location" aria-label="Use my current location">
+          <LocateFixed className="h-5 w-5" />
         </button>
       </div>
       {message && <p className="text-xs text-neutral-500">{message}</p>}

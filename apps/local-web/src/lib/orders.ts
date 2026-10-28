@@ -1,10 +1,11 @@
+import type { CheckoutParams } from './razorpay';
 import { useQuery } from '@tanstack/react-query';
 import { api, newIdempotencyKey } from './api';
 import type { CartLine } from './cart';
 import type { MsgKey } from './i18n';
 import type { Vertical } from './types';
 
-export type Blocker = 'STORE_CLOSED' | 'DELIVERY_NOT_OFFERED' | 'ADDRESS_REQUIRED' | 'OUT_OF_RANGE' | 'BELOW_MINIMUM' | 'LAB_BOOKING' | 'RX_REQUIRED' | 'ITEMS';
+export type Blocker = 'STORE_CLOSED' | 'DELIVERY_NOT_OFFERED' | 'ADDRESS_REQUIRED' | 'OUT_OF_RANGE' | 'BELOW_MINIMUM' | 'LAB_BOOKING' | 'RX_REQUIRED' | 'NO_PHARMACIST' | 'ITEMS';
 export type Problem = {
   productId: string;
   code: 'GONE' | 'UNAVAILABLE' | 'OUT_OF_STOCK' | 'FEW_LEFT' | 'OPTIONS_CHANGED';
@@ -34,6 +35,8 @@ export interface Quote {
     isRx: boolean;
   }[];
   problems: Problem[];
+  /** Medicines in the basket that need the doctor's prescription. */
+  rxItems: string[];
   distanceKm: number | null;
   totals: Totals;
   blockers: Blocker[];
@@ -54,6 +57,7 @@ export interface Totals {
 }
 
 export type OrderStatus =
+  | 'DRAFT'
   | 'AWAITING_RX_REVIEW'
   | 'PLACED'
   | 'ACCEPTED'
@@ -104,6 +108,10 @@ export interface CustomerOrder {
   placedAt: string;
   deliveredAt: string | null;
   canCancel: boolean;
+  /** Placed but not paid yet (Razorpay) — the shop hasn't seen it. */
+  awaitingPayment?: boolean;
+  /** Returned once, when an order is placed: open Razorpay Checkout with this. */
+  checkout?: CheckoutParams;
   cancelReason: string | null;
   /** Order SLA outcome: why (code), whose fault, and the money back. */
   cancellation: {
@@ -115,7 +123,32 @@ export interface CustomerOrder {
   note: string | null;
   rider: { name: string | null; phone: string; status: string } | null;
   timeline?: { status: OrderStatus; at: string }[];
+  rx: { status: string; rejectionReason: string | null } | null;
+  substitutions: Substitution[];
+  returnWindow: { state: 'NONE' | 'OPEN' | 'CLOSED'; endsAt: string; outcome: string | null } | null;
+  returns: { id: string; name: string; qty: number; amount: number; reason: ReturnReason; status: string }[];
+  review: { rating: number; comment: string | null; tags: string[]; reply: string | null; createdAt: string } | null;
+  canRate: boolean;
 }
+
+/** A replacement the shop offered for an item that ran out. */
+export interface Substitution {
+  id: string;
+  status: 'PROPOSED' | 'ACCEPTED' | 'DECLINED' | 'EXPIRED';
+  forItem: string;
+  forQty: number;
+  forTotal: number;
+  name: string;
+  variant: string | null;
+  qty: number;
+  lineTotal: number;
+  note: string | null;
+  respondBy: string;
+}
+
+export const RETURN_REASONS = ['DAMAGED', 'WRONG_ITEM', 'EXPIRED', 'POOR_QUALITY', 'MISSING'] as const;
+export type ReturnReason = (typeof RETURN_REASONS)[number];
+export const REVIEW_TAGS = ['ON_TIME', 'LATE', 'GOOD_PACKING', 'POOR_PACKING', 'FRESH', 'WRONG_ITEM', 'FRIENDLY', 'COLD_FOOD'] as const;
 
 export const toItems = (lines: CartLine[]) =>
   lines.map((l) => ({
@@ -126,10 +159,11 @@ export const toItems = (lines: CartLine[]) =>
   }));
 
 /** Home delivery only — customers don't collect from the shop. */
-export function useQuote(input: { storeId: string | null; addressId?: string; lines: CartLine[] }, enabled: boolean) {
+export function useQuote(input: { storeId: string | null; addressId?: string; lines: CartLine[]; rxKeys?: string[] }, enabled: boolean) {
   const items = toItems(input.lines);
+  const rx = input.rxKeys?.length ? input.rxKeys : undefined;
   return useQuery({
-    queryKey: ['quote', input.storeId, input.addressId, items],
+    queryKey: ['quote', input.storeId, input.addressId, items, rx],
     queryFn: () =>
       api<Quote>('/local/cart/quote', {
         method: 'POST',
@@ -138,6 +172,7 @@ export function useQuote(input: { storeId: string | null; addressId?: string; li
           fulfilmentType: 'DELIVERY',
           addressId: input.addressId,
           items,
+          prescriptionFileKeys: rx,
         },
         idempotencyKey: newIdempotencyKey(),
       }),
@@ -152,6 +187,7 @@ export function useOrder(id: string) {
   return useQuery({
     queryKey: ['order', id],
     queryFn: () => api<CustomerOrder>(`/local/orders/${encodeURIComponent(id)}`),
+    enabled: !!id,
     refetchInterval: (q) => (q.state.data && !q.state.data.active ? false : 8_000),
   });
 }
@@ -190,6 +226,7 @@ export const CANCEL_REASON: Record<string, MsgKey> = {
 
 /** The customer's view of each state. */
 export const STATUS_LABEL: Record<OrderStatus, MsgKey> = {
+  DRAFT: 'lc.os.DRAFT',
   AWAITING_RX_REVIEW: 'lc.os.AWAITING_RX_REVIEW',
   PLACED: 'lc.os.PLACED',
   ACCEPTED: 'lc.os.ACCEPTED',
@@ -209,7 +246,7 @@ export const STATUS_LABEL: Record<OrderStatus, MsgKey> = {
 
 /** Progress steps shown on the tracking screen. */
 export const STEPS: { key: MsgKey; states: OrderStatus[] }[] = [
-  { key: 'lc.step.placed', states: ['AWAITING_RX_REVIEW', 'PLACED'] },
+  { key: 'lc.step.placed', states: ['DRAFT', 'AWAITING_RX_REVIEW', 'PLACED'] },
   {
     key: 'lc.step.preparing',
     states: ['ACCEPTED', 'PREPARING', 'READY_SOON', 'READY'],

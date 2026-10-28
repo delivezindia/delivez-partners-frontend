@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState, type FormEvent } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { useQueryClient } from '@tanstack/react-query';
-import { ArrowLeft, Briefcase, Home, LogOut, MapPin, Pencil, Plus, Trash2 } from 'lucide-react';
+import { ArrowLeft, Briefcase, FlaskConical, Home, LifeBuoy, LogOut, MapPin, Pencil, Plus, Receipt, Trash2 } from 'lucide-react';
 import { Field, Select, TextInput, Toggle } from '../components/form';
 import { Button, ErrorText } from '../components/ui';
 import { api } from '../lib/api';
@@ -12,6 +12,8 @@ import { useDeliverTo } from '../lib/location';
 import { useAddresses, useDeleteAddress, useMe } from '../lib/queries';
 import type { Me } from '../lib/types';
 import { messageOf, safeNext } from './Login';
+import { PushCard } from '../components/PushCard';
+import { disablePush } from '../lib/push';
 
 const ICON = { HOME: Home, WORK: Briefcase, OTHER: MapPin };
 
@@ -68,6 +70,7 @@ export default function Account() {
     const { refreshToken, clear } = useAuth.getState();
     // Leave this signed-in page first, or it would bounce to the login page once the session is gone.
     navigate('/', { replace: true });
+    await disablePush();
     await api('/auth/logout', { method: 'POST', body: { refreshToken } }).catch(() => undefined);
     clear();
     qc.clear();
@@ -104,11 +107,25 @@ export default function Account() {
           </Button>
         </form>
 
+        {!welcome && <PushCard />}
+
         {!welcome && (
           <>
-            <Link to="/orders" className="flex items-center justify-between rounded-2xl bg-white p-4 font-bold ring-1 ring-line hover:ring-black">
-              {t('lc.ord.all')} <span aria-hidden>→</span>
-            </Link>
+            <nav className="divide-y divide-line overflow-hidden rounded-2xl bg-white ring-1 ring-line">
+              {(
+                [
+                  ['/orders', Receipt, t('lc.ord.all')],
+                  ['/orders?tab=labs', FlaskConical, t('lc.lb.mine')],
+                  ['/help', LifeBuoy, t('lc.help.title')],
+                ] as const
+              ).map(([to, Icon, label]) => (
+                <Link key={to} to={to} className="flex items-center gap-3 p-4 font-bold hover:bg-soft">
+                  <Icon className="h-5 w-5 text-ink-2" aria-hidden />
+                  <span className="flex-1">{label}</span>
+                  <span aria-hidden>→</span>
+                </Link>
+              ))}
+            </nav>
             <section className="rounded-2xl bg-white p-4 ring-1 ring-line">
               <div className="mb-2 flex items-center justify-between">
                 <h2 className="text-xl">{t('lc.acc.addresses')}</h2>

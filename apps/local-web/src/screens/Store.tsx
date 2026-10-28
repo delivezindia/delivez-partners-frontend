@@ -7,7 +7,8 @@ import { Button, QtyStepper, Skeleton, VegMark } from '../components/ui';
 import { needsOptions, simpleLine, useCart, type CartLine } from '../lib/cart';
 import { km, opensAtLabel, rupees } from '../lib/format';
 import { useI18n } from '../lib/i18n';
-import { VERTICAL_EMOJI, VERTICAL_LABEL } from '../lib/labels';
+import { VERTICAL_LABEL } from '../lib/labels';
+import { VerticalIcon } from '../components/VerticalIcon';
 import { useDeliverTo } from '../lib/location';
 import { useMenu } from '../lib/queries';
 import type { Menu, Product } from '../lib/types';
@@ -68,8 +69,8 @@ export default function Store() {
         {s.coverUrl ? (
           <img src={s.coverUrl} alt="" className="h-full w-full object-cover" />
         ) : (
-          <span className="grid h-full place-items-center text-7xl" aria-hidden>
-            {VERTICAL_EMOJI[s.vertical]}
+          <span className="grid h-full place-items-center">
+            <VerticalIcon v={s.vertical} size="xl" />
           </span>
         )}
         <Link to="/" className="absolute left-4 top-4 grid h-10 w-10 place-items-center rounded-full bg-white shadow" aria-label={t('lc.back')}>

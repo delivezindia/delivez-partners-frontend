@@ -9,14 +9,6 @@ export const VERTICAL_LABEL: Record<Vertical, MsgKey> = {
   LOCAL_STORES: 'lc.v.LOCAL_STORES',
 };
 
-export const VERTICAL_EMOJI: Record<Vertical, string> = {
-  EAT: '🍛',
-  GROCERY: '🛒',
-  PHARMACY: '💊',
-  DIAGNOSTICS: '🧪',
-  LOCAL_STORES: '🏪',
-};
-
 export const ADDRESS_LABEL: Record<AddressLabel, MsgKey> = {
   HOME: 'lc.addr.HOME',
   WORK: 'lc.addr.WORK',

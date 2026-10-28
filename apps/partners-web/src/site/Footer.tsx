@@ -48,7 +48,7 @@ export function Footer() {
       <div className="border-t border-white/10">
         <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-2 px-4 py-5 text-xs text-neutral-500 sm:px-6">
           <span>© {new Date().getFullYear()} Delivez. All rights reserved.</span>
-          <span>Delivez One · Delivez Local · Delivez Partners</span>
+          <span>Delivez One · Delivez Customer App · Delivez Partners</span>
         </div>
       </div>
     </footer>

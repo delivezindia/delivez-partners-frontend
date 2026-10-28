@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { createJSONStorage, persist } from 'zustand/middleware';
-import type { Menu, Product } from './types';
+import type { Menu, Product, Vertical } from './types';
 
 /** One line in the basket. The same dish with different options is a separate line. */
 export interface CartLine {
@@ -23,6 +23,8 @@ interface CartState {
   storeId: string | null;
   storeName: string | null;
   storeSlug: string | null;
+  /** Lab tests are booked into a slot instead of checked out. */
+  storeVertical: Vertical | null;
   lines: CartLine[];
   add: (store: Menu['store'], line: Omit<CartLine, 'key' | 'qty'>, qty?: number) => void;
   setQty: (key: string, qty: number) => void;
@@ -38,6 +40,7 @@ export const useCart = create<CartState>()(
       storeId: null,
       storeName: null,
       storeSlug: null,
+      storeVertical: null,
       lines: [],
       add: (store, line, qty = 1) =>
         set((s) => {
@@ -47,14 +50,14 @@ export const useCart = create<CartState>()(
           const lines = found
             ? base.map((l) => (l.key === key ? { ...l, qty: Math.min(l.maxQty, l.qty + qty) } : l))
             : [...base, { ...line, key, qty: Math.min(line.maxQty, qty) }];
-          return { storeId: store.id, storeName: store.name, storeSlug: store.slug, lines };
+          return { storeId: store.id, storeName: store.name, storeSlug: store.slug, storeVertical: store.vertical, lines };
         }),
       setQty: (key, qty) =>
         set((s) => {
           const lines = qty <= 0 ? s.lines.filter((l) => l.key !== key) : s.lines.map((l) => (l.key === key ? { ...l, qty: Math.min(l.maxQty, qty) } : l));
-          return lines.length ? { lines } : { lines, storeId: null, storeName: null, storeSlug: null };
+          return lines.length ? { lines } : { lines, storeId: null, storeName: null, storeSlug: null, storeVertical: null };
         }),
-      clear: () => set({ storeId: null, storeName: null, storeSlug: null, lines: [] }),
+      clear: () => set({ storeId: null, storeName: null, storeSlug: null, storeVertical: null, lines: [] }),
     }),
     { name: 'dz-local-cart', storage: createJSONStorage(() => localStorage) },
   ),
