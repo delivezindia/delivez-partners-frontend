@@ -19,6 +19,7 @@ import Prescriptions from './screens/store/Prescriptions';
 import Help from './screens/store/Help';
 import Import from './screens/store/Import';
 import Inventory from './screens/store/Inventory';
+import Reviews from './screens/store/Reviews';
 import StartOnboarding from './screens/onboarding/StartOnboarding';
 import OnboardingWizard from './screens/onboarding/OnboardingWizard';
 import { PublicLayout } from './site/PublicLayout';
@@ -78,6 +79,7 @@ export default function App() {
             <Route path="help" element={<Help />} />
             <Route path="menu/import" element={<Import />} />
             <Route path="inventory" element={<Inventory />} />
+            <Route path="reviews" element={<Reviews />} />
           </Route>
           <Route path="/onboarding/new" element={<RequireAuth><StartOnboarding /></RequireAuth>} />
           <Route path="/onboarding/:storeId" element={<RequireAuth><OnboardingWizard /></RequireAuth>} />

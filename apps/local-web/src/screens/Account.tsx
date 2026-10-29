@@ -82,7 +82,7 @@ export default function Account() {
     <div className="min-h-screen bg-soft pb-16">
       <header className="sticky top-0 z-30 flex items-center gap-3 border-b border-line bg-white px-4 py-3">
         {!welcome && (
-          <Link to="/" className="grid h-10 w-10 place-items-center rounded-full hover:bg-soft" aria-label={t('lc.back')}>
+          <Link to="/shops" className="grid h-10 w-10 place-items-center rounded-full hover:bg-soft" aria-label={t('lc.back')}>
             <ArrowLeft className="h-5 w-5" />
           </Link>
         )}

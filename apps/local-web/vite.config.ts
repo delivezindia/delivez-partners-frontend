@@ -8,6 +8,6 @@ export default defineConfig({
   envDir: '../..',
   server: {
     port: 5175,
-    proxy: { '/v1': 'http://localhost:4000' },
+    proxy: { '/v1': 'http://localhost:4000', '/socket.io': { target: 'http://localhost:4000', ws: true } },
   },
 });

@@ -17,6 +17,38 @@ export function useNearby(at: { lat: number; lng: number } | null, vertical: Ver
   });
 }
 
+/** What's live right now (public page): cities with running shops, shops per kind and what they sell. */
+export interface Overview {
+  cities: { id: string; name: string; state: string; lat: number; lng: number; shops: number }[];
+  verticals: Record<Vertical, { shops: number; types: { name: string; shops: number }[] }>;
+  shops: number;
+  deliveryFee: number;
+  doorCheckMinutes: number;
+}
+export function useOverview() {
+  return useQuery({ queryKey: ['overview'], queryFn: () => api<Overview>('/local/overview'), staleTime: 60_000 });
+}
+/** Offers running now (admin panel → Coupons, listed ones only). */
+export interface PublicOffer {
+  code: string;
+  headline: string;
+  description: string | null;
+  kind: 'FLAT' | 'PERCENT' | 'FREE_DELIVERY';
+  value: number;
+  maxDiscount: number | null;
+  minOrder: number;
+  vertical: Vertical | null;
+  firstOrderOnly: boolean;
+  endsAt: string;
+  city: string | null;
+  shop: string | null;
+}
+export function useOffers() {
+  return useQuery({ queryKey: ['offers'], queryFn: () => api<PublicOffer[]>('/local/offers'), staleTime: 60_000 });
+}
+/** "Main city, Second city" — for copy like "Now in …". */
+export const cityList = (o: Overview | undefined) => (o?.cities.length ? o.cities.map((c) => c.name).join(', ') : null);
+
 export function useMenu(idOrSlug: string, at: { lat: number; lng: number } | null) {
   return useQuery({
     queryKey: ['menu', idOrSlug, at?.lat, at?.lng],

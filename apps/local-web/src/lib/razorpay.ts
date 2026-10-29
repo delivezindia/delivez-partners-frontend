@@ -14,7 +14,7 @@ export interface CheckoutParams {
   payBy: string;
   testMode: boolean;
 }
-interface Success {
+export interface Success {
   razorpay_order_id: string;
   razorpay_payment_id: string;
   razorpay_signature: string;
@@ -39,13 +39,10 @@ function loadCheckout() {
   return loading;
 }
 
-/**
- * Opens Razorpay Checkout and, on success, has the API verify the payment.
- * Resolves with the updated order, or null if the customer closed the window without paying.
- */
-export async function payWithRazorpay(orderId: string, p: CheckoutParams, onVerifying?: () => void): Promise<CustomerOrder | null> {
+/** Opens Razorpay Checkout. Resolves with the signed result, or null if the customer closed it without paying. */
+export async function openCheckout(p: CheckoutParams): Promise<Success | null> {
   const Razorpay = await loadCheckout();
-  const result = await new Promise<Success | null>((resolve) => {
+  return new Promise<Success | null>((resolve) => {
     const rzp = new Razorpay({
       key: p.keyId,
       order_id: p.orderId,
@@ -61,6 +58,14 @@ export async function payWithRazorpay(orderId: string, p: CheckoutParams, onVeri
     });
     rzp.open();
   });
+}
+
+/**
+ * Opens Razorpay Checkout and, on success, has the API verify the payment.
+ * Resolves with the updated order, or null if the customer closed the window without paying.
+ */
+export async function payWithRazorpay(orderId: string, p: CheckoutParams, onVerifying?: () => void): Promise<CustomerOrder | null> {
+  const result = await openCheckout(p);
   if (!result) return null;
   onVerifying?.();
   return api<CustomerOrder>(`/local/orders/${orderId}/payment/verify`, { method: 'POST', body: result });

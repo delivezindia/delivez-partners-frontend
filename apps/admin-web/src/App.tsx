@@ -15,6 +15,7 @@ import System from './screens/System';
 import Orders from './screens/Orders';
 import Support from './screens/Support';
 import Reports from './screens/Reports';
+import Coupons from './screens/Coupons';
 import Documents from './screens/Documents';
 import StoreReview from './screens/StoreReview';
 import AmShell from './screens/am/AmShell';
@@ -48,6 +49,7 @@ export default function App() {
             <Route path="/orders" element={<Orders />} />
             <Route path="/support" element={<Support />} />
             <Route path="/reports" element={<Reports />} />
+            <Route path="/coupons" element={<Coupons />} />
             {import.meta.env.DEV && <Route path="/dev/messages" element={<DevMessages />} />}
             <Route path="/documents" element={<Documents />} />
             <Route path="/stores/:storeId" element={<StoreReview />} />

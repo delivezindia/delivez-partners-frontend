@@ -69,13 +69,16 @@ import {
 import { PARTNERS_URL } from '../lib/config';
 import { Section } from './site';
 import type { StoreCard, Vertical } from '../lib/types';
-import { useNearby } from '../lib/queries';
+import { api, ApiError } from '../lib/api';
+import { useDeliverTo } from '../lib/location';
+import { cityList, useNearby, useOffers, useOverview, type PublicOffer } from '../lib/queries';
 import { km, rupees } from '../lib/format';
 import { VERTICAL_LOOK } from './VerticalIcon';
 
 /*
  * Delivez Now home-page sections (from the Delivez Now page design).
- * Honest by rule: no invented store counts, prices or coupon codes; anything the app does not do yet says "Coming soon".
+ * Honest by rule: counts, cities and shop types come from /local/overview (real running shops); coupon codes only from
+ * /local/offers (made in the admin panel), never invented; anything the app does not do yet — or a kind of shop with none live — says "Coming soon".
  * English for now — move to @delivez/i18n when the copy is final.
  */
 
@@ -90,14 +93,28 @@ const Chip = ({ icon: Icon, label, dark = false }: Item & { dark?: boolean }) =>
 );
 
 // ---------------------------------------------------------------- Check your area
+type AreaAnswer = { pincode: string; live: boolean; city: string | null; liveCities: string[] };
 export function AreaCheck({ onStart }: { onStart: () => void }) {
   const [pin, setPin] = useState('');
-  const [res, setRes] = useState<null | 'yes' | 'soon' | 'bad'>(null);
-  function check(e: FormEvent) {
+  const [res, setRes] = useState<null | 'yes' | 'soon' | 'bad' | 'error'>(null);
+  const [answer, setAnswer] = useState<AreaAnswer | null>(null);
+  const [busy, setBusy] = useState(false);
+  async function check(e: FormEvent) {
     e.preventDefault();
     const p = pin.trim();
-    setRes(!/^[1-8]\d{5}$/.test(p) ? 'bad' : p.startsWith('560') ? 'yes' : 'soon');
+    if (!/^[1-9]\d{5}$/.test(p)) return setRes('bad');
+    setBusy(true);
+    try {
+      const a = await api<AreaAnswer>(`/local/serviceable/${p}`);
+      setAnswer(a);
+      setRes(a.live ? 'yes' : 'soon');
+    } catch (err) {
+      setRes(err instanceof ApiError && err.status === 400 ? 'bad' : 'error');
+    } finally {
+      setBusy(false);
+    }
   }
+  const live = answer?.liveCities.join(', ');
   return (
     <section id="serviceability" className="scroll-mt-20 bg-neutral-50 px-4 py-12 sm:px-6">
       <div className="mx-auto grid max-w-7xl items-center gap-6 rounded-[22px] bg-[#07090D] p-6 text-white sm:p-8 lg:grid-cols-[1fr_1.1fr]">
@@ -118,7 +135,7 @@ export function AreaCheck({ onStart }: { onStart: () => void }) {
               className="min-h-12 min-w-0 flex-1 rounded-[10px] border-[1.5px] border-[#2A3140] bg-[#11151D] px-4 font-mono text-white placeholder:text-neutral-500"
               data-pin
             />
-            <button type="submit" className="dz-btn-yellow">
+            <button type="submit" className="dz-btn-yellow" disabled={busy}>
               <MapPin className="h-5 w-5" aria-hidden /> Check your area
             </button>
           </form>
@@ -126,13 +143,14 @@ export function AreaCheck({ onStart }: { onStart: () => void }) {
             {res === 'bad' && <p className="font-bold text-[#FF7D84]">Enter a valid 6-digit PIN code.</p>}
             {res === 'yes' && (
               <div className="flex flex-wrap items-center gap-3">
-                <p className="font-bold text-[#2BD463]">Yes, we deliver in Bengaluru. Set your exact location to see the shops near you.</p>
+                <p className="font-bold text-[#2BD463]">Yes, we deliver{answer?.city ? ` in ${answer.city}` : ' there'}. Set your exact location to see the shops near you.</p>
                 <button type="button" onClick={onStart} className="dz-btn-red">
                   Set my location
                 </button>
               </div>
             )}
-            {res === 'soon' && <p className="font-bold text-dz-yellow">Not yet. Delivez is live in Bengaluru first, and more cities are coming soon.</p>}
+            {res === 'soon' && <p className="font-bold text-dz-yellow">Not yet{answer?.city ? ` in ${answer.city}` : ''}. {live ? `Delivez is live in ${live} right now` : 'Delivez is not live anywhere yet'}, and more cities are coming soon.</p>}
+            {res === 'error' && <p className="font-bold text-[#FF7D84]">Couldn’t check right now. Try again in a moment.</p>}
           </div>
         </div>
       </div>
@@ -159,6 +177,7 @@ const TYPE_BLURB: Record<Vertical, string> = {
 const ORDER: Vertical[] = ['EAT', 'GROCERY', 'PHARMACY', 'DIAGNOSTICS', 'LOCAL_STORES'];
 
 export function ShopByType() {
+  const overview = useOverview();
   const [v, setV] = useState<Vertical>('EAT');
   const [auto, setAuto] = useState(true);
   useEffect(() => {
@@ -167,6 +186,9 @@ export function ShopByType() {
     return () => clearInterval(id);
   }, [auto]);
   const L = VERTICAL_LOOK[v];
+  const live = overview.data?.verticals[v];
+  // What shops here really sell (most common menu sections / cuisines); the general list until any are live.
+  const types = live?.types.length ? live.types.map((x) => x.name) : TYPES[v];
   return (
     <Section id="shop-by-type" eyebrow="Shop by category" title="Everything around you, in one place.">
       <div className="flex gap-2 overflow-x-auto pb-1" role="tablist" aria-label="Kinds of shops">
@@ -195,15 +217,23 @@ export function ShopByType() {
           </span>
           <h3 className="text-[28px] leading-none">{TYPE_TITLE[v]}</h3>
           <p className="text-ink-2">{TYPE_BLURB[v]}</p>
-          <Link to={`/?v=${v}`} className="mt-auto inline-flex w-fit items-center gap-2 rounded-full px-5 py-3 font-extrabold text-white" style={{ background: L.accent }}>
+          {live &&
+            (live.shops ? (
+              <p className="text-sm font-extrabold" style={{ color: L.accent }} data-type-shops={live.shops}>
+                {live.shops === 1 ? '1 shop live' : `${live.shops} shops live`}
+              </p>
+            ) : (
+              <Soon />
+            ))}
+          <Link to={`/shops?v=${v}`} className="mt-auto inline-flex w-fit items-center gap-2 rounded-full px-5 py-3 font-extrabold text-white" style={{ background: L.accent }}>
             Shop {TYPE_TITLE[v].toLowerCase()} <ArrowRight className="h-4 w-4" aria-hidden />
           </Link>
         </div>
         <div className="p-6">
           <p className="mb-3 text-xs font-extrabold uppercase tracking-[0.1em] text-ink-3">Shop {TYPE_TITLE[v].toLowerCase()} by type</p>
           <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 xl:grid-cols-3">
-            {TYPES[v].map((t) => (
-              <Link key={t} to={`/?v=${v}`} className="group flex items-center gap-2.5 rounded-2xl border border-[#ECE8DF] bg-[#FBFAF7] px-3 py-3 text-sm font-bold transition hover:-translate-y-0.5 hover:bg-white" style={{ ['--a' as string]: L.accent }}>
+            {types.map((t) => (
+              <Link key={t} to={`/shops?v=${v}`} className="group flex items-center gap-2.5 rounded-2xl border border-[#ECE8DF] bg-[#FBFAF7] px-3 py-3 text-sm font-bold transition hover:-translate-y-0.5 hover:bg-white" style={{ ['--a' as string]: L.accent }}>
                 <span className="grid h-8 w-8 shrink-0 place-items-center rounded-lg" style={{ background: L.tint, color: L.accent }} aria-hidden>
                   <L.icon className="h-4 w-4" />
                 </span>
@@ -437,7 +467,7 @@ function FeatureBlock({ id, eyebrow, title, intro, items, v, cta, soon = false, 
         ))}
       </div>
       {v && cta && (
-        <Link to={`/?v=${v}`} className="dz-btn-red mt-6 inline-flex">
+        <Link to={`/shops?v=${v}`} className="dz-btn-red mt-6 inline-flex">
           {cta} <ArrowRight className="h-4 w-4" aria-hidden />
         </Link>
       )}
@@ -502,6 +532,21 @@ const OFFERS: (Item & { body: string; bg: string })[] = [
   { icon: Timer, label: 'Flash deals', body: 'Short-time deals near you', bg: 'linear-gradient(135deg,#E0A800,#7A5A0A)' },
 ];
 export function OffersSection() {
+  const live = useOffers().data ?? [];
+  // Real coupons running now (made in the admin panel); the kinds of offer to come only while there are none.
+  if (live.length)
+    return (
+      <Section id="offers" className="bg-neutral-50" eyebrow="Offers & promotions" title="Offers near you." intro="Use these codes at checkout. Every order also has no platform fee and no packaging fee.">
+        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3" data-live-offers>
+          {live.map((o, i) => (
+            <OfferCard key={o.code} o={o} bg={OFFERS[i % OFFERS.length].bg} />
+          ))}
+        </div>
+        <Link to="/shops" className="mt-5 inline-flex min-h-12 items-center rounded-xl bg-black px-5 font-extrabold text-dz-yellow">
+          Order now
+        </Link>
+      </Section>
+    );
   return (
     <Section id="offers" className="bg-neutral-50" eyebrow="Offers & promotions" title="Offers near you." intro="Coupons and deals are on the way. Today every order has no platform fee and no packaging fee.">
       <div className="-mt-6 mb-4">
@@ -517,6 +562,36 @@ export function OffersSection() {
         ))}
       </div>
     </Section>
+  );
+}
+
+const VERTICAL_WORD: Record<Vertical, string> = { EAT: 'food', GROCERY: 'grocery', PHARMACY: 'pharmacy', DIAGNOSTICS: 'lab', LOCAL_STORES: 'local shop' };
+function OfferCard({ o, bg }: { o: PublicOffer; bg: string }) {
+  const [copied, setCopied] = useState(false);
+  const where = o.shop ? `At ${o.shop}` : o.vertical ? `On ${VERTICAL_WORD[o.vertical]} orders` : 'On any shop';
+  const terms = [where + (o.city ? ` in ${o.city}` : ''), o.minOrder > 0 && `orders above ${rupees(o.minOrder)}`, o.firstOrderOnly && 'first order only'].filter(Boolean).join(' · ');
+  const ends = new Date(o.endsAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' });
+  const Icon = o.kind === 'FREE_DELIVERY' ? Truck : o.firstOrderOnly ? Sparkles : Gift;
+  return (
+    <div className="grid content-start gap-2 rounded-[18px] p-4 text-white" style={{ background: bg }} data-offer-card={o.code}>
+      <Icon className="h-6 w-6" aria-hidden />
+      <b className="font-display text-2xl leading-tight">{o.headline}</b>
+      {o.description && <span className="text-sm opacity-95">{o.description}</span>}
+      <small className="opacity-90">{terms}</small>
+      <div className="mt-1 flex items-center gap-2">
+        <span className="rounded-lg border border-dashed border-white/70 px-2.5 py-1 font-extrabold tracking-wider">{o.code}</span>
+        <button
+          type="button"
+          className="rounded-lg bg-white/15 px-2.5 py-1 text-xs font-bold hover:bg-white/25"
+          onClick={() => {
+            void navigator.clipboard?.writeText(o.code).then(() => setCopied(true), () => undefined);
+          }}
+        >
+          {copied ? 'Copied' : 'Copy'}
+        </button>
+        <small className="ml-auto opacity-80">Ends {ends}</small>
+      </div>
+    </div>
   );
 }
 
@@ -608,6 +683,8 @@ const NET: (Item & { body: string })[] = [
   { icon: MapPin, label: 'Serviceable areas', body: 'Bengaluru first; more cities soon.' },
 ];
 export function NetworkSection() {
+  const cities = cityList(useOverview().data);
+  const items = NET.map((n) => (n.label === 'Serviceable areas' && cities ? { ...n, body: `Live in ${cities}; more cities soon.` } : n));
   return (
     <section id="network" className="scroll-mt-20 bg-black px-4 py-16 text-white sm:px-6 sm:py-20">
       <div className="mx-auto max-w-7xl">
@@ -615,7 +692,7 @@ export function NetworkSection() {
         <h2 className="mt-2 text-[clamp(30px,4vw,44px)] leading-none">Local delivery powered by Delivez.</h2>
         <p className="mt-3 max-w-2xl text-lg text-neutral-300">You shop from the stores near you; Delivez riders handle the delivery from shop to door.</p>
         <div className="mt-8 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-          {NET.map((n) => (
+          {items.map((n) => (
             <div key={n.label} className="flex gap-3 rounded-2xl border border-white/10 bg-white/[0.04] p-4">
               <span className="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-dz-yellow text-black">
                 <n.icon className="h-5 w-5" aria-hidden />
@@ -788,6 +865,8 @@ const FAMILY: { icon: LucideIcon; name: string; body: string; accent: string; v?
   { icon: Bell, name: 'Delivez Now Street Cart', body: 'Street vendors and carts, now deliverable', accent: '#C2410C', soon: true },
 ];
 export function FamilySection() {
+  const overview = useOverview();
+  const none = (v?: Vertical) => !!v && !!overview.data && !overview.data.verticals[v]?.shops;
   return (
     <Section id="now-family" className="bg-neutral-50" eyebrow="The Delivez Now family" title="Six ways to get it now." intro="Food, groceries, medicines, local shops, quick-commerce and street carts, all on one Delivez account.">
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
@@ -804,7 +883,7 @@ export function FamilySection() {
                 </b>
                 <span className="text-sm text-ink-2">{f.body}</span>
               </span>
-              {f.soon && (
+              {(f.soon || none(f.v)) && (
                 <span className="absolute right-3 top-3">
                   <Soon />
                 </span>
@@ -813,7 +892,7 @@ export function FamilySection() {
           );
           const cls = 'relative flex items-center gap-4 overflow-hidden rounded-[18px] border border-line bg-white p-5 transition hover:-translate-y-1 hover:shadow-[0_18px_34px_-22px_rgba(0,0,0,.45)]';
           return f.v ? (
-            <Link key={f.name} to={`/?v=${f.v}`} className={cls}>
+            <Link key={f.name} to={`/shops?v=${f.v}`} className={cls}>
               {body}
             </Link>
           ) : (
@@ -829,8 +908,6 @@ export function FamilySection() {
 
 
 // ---------------------------------------------------------------- Nearby stores (live data)
-/** Before a location is set, show real shops around central Bengaluru (Indiranagar). */
-const PREVIEW_AT = { lat: 12.9719, lng: 77.6412 };
 const FILTERS = ['Nearby', 'Fastest', 'Top rated', 'Open now', 'Free delivery'] as const;
 type Filter = (typeof FILTERS)[number];
 const FILTER_ICON: Record<Filter, LucideIcon> = { Nearby: MapPin, Fastest: Timer, 'Top rated': Star, 'Open now': Clock, 'Free delivery': Truck };
@@ -839,7 +916,12 @@ export function NearbyStores({ onStart }: { onStart: () => void }) {
   const [filter, setFilter] = useState<Filter>('Nearby');
   const [cat, setCat] = useState<Vertical | null>(null);
   const [all, setAll] = useState(false);
-  const q = useNearby(PREVIEW_AT, cat, '');
+  // Real shops around the location this browser remembers, or the centre of the city with the most live shops.
+  const saved = useDeliverTo((s) => s.at);
+  const city = useOverview().data?.cities[0];
+  const at = saved ?? (city ? { lat: city.lat, lng: city.lng } : null);
+  const where = saved?.title ?? (city ? `central ${city.name}` : null);
+  const q = useNearby(at, cat, '');
   let list: StoreCard[] = [...(q.data?.stores ?? [])];
   if (filter === 'Open now') list = list.filter((s) => s.open);
   if (filter === 'Free delivery') list = list.filter((s) => s.deliveryFee === 0);
@@ -854,7 +936,7 @@ export function NearbyStores({ onStart }: { onStart: () => void }) {
   const shown = all ? list : list.slice(0, 8);
   const pill = (on: boolean) => `inline-flex shrink-0 items-center gap-1.5 rounded-full border-[1.5px] px-3.5 py-2 text-[13px] font-extrabold transition ${on ? 'border-black bg-black text-dz-yellow' : 'border-line bg-white hover:border-black'}`;
   return (
-    <Section id="stores" className="bg-neutral-50" eyebrow="Nearby stores" title="Stores near you" intro="Real shops around Indiranagar, Bengaluru. Set your location to see the shops that deliver to you.">
+    <Section id="stores" className="bg-neutral-50" eyebrow="Nearby stores" title="Stores near you" intro={`Real shops${where ? ` around ${where}` : ' near you'}. Set your location to see the shops that deliver to you.`}>
       <div className="flex gap-2 overflow-x-auto pb-1" role="group" aria-label="Store filters">
         {FILTERS.map((f) => {
           const I = FILTER_ICON[f];
@@ -879,7 +961,7 @@ export function NearbyStores({ onStart }: { onStart: () => void }) {
         })}
       </div>
       <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-4" data-nearby>
-        {q.isLoading
+        {q.isLoading || !at
           ? Array.from({ length: 4 }, (_, i) => <div key={i} className="h-60 animate-pulse rounded-[18px] bg-white" />)
           : shown.map((s) => <NearbyCard key={s.id} s={s} />)}
       </div>

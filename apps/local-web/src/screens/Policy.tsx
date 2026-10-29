@@ -3,6 +3,8 @@ import { Link } from 'react-router-dom';
 import { BadgePercent, Ban, CheckCircle2, CreditCard, Clock, CloudRain, FileText, HeartHandshake, LifeBuoy, PackageCheck, Pill, ReceiptText, RefreshCw, Store, Truck, XCircle } from 'lucide-react';
 import { SiteFooter, SiteNavbar } from '../components/site';
 import { useI18n } from '../lib/i18n';
+import { rupees } from '../lib/format';
+import { useOverview } from '../lib/queries';
 
 /**
  * The policy text is legal wording (English). It must say what the app does — the rules live in
@@ -127,6 +129,9 @@ const TOC = [
 // Refund & Cancellation Policy — home delivery from restaurants, grocery, pharmacy and local shops.
 export default function Policy() {
   const { t, lang } = useI18n();
+  const overview = useOverview().data;
+  const fee = rupees(overview?.deliveryFee ?? 3000);
+  const doorMin = overview?.doorCheckMinutes ?? 5;
   useEffect(() => {
     document.title = 'Refund & Cancellation Policy · Delivez';
     window.scrollTo({ top: 0 });
@@ -220,7 +225,7 @@ export default function Policy() {
                   [
                     'You weren’t reachable at the address, refused the order, or the address was wrong or incomplete',
                     'Not refunded — the food can’t be resold',
-                    'Items go back to the shop. Refunded except the ₹30 delivery fee',
+                    `Items go back to the shop. Refunded except the ${fee} delivery fee`,
                   ],
                   ['Rider problem, damage on the way, or a Delivez issue', full, full],
                   ['Weather, strike or emergency', full, full],
@@ -230,10 +235,10 @@ export default function Policy() {
             </Block>
 
             <Block id="doorstep" icon={PackageCheck} title="Problems With What Arrived">
-              <p className="font-semibold text-ink">Groceries and local shops — 5-minute doorstep check</p>
+              <p className="font-semibold text-ink">Groceries and local shops — {doorMin}-minute doorstep check</p>
               <List
                 items={[
-                  'After handing over, the rider waits up to 5 minutes while you check the items',
+                  `After handing over, the rider waits up to ${doorMin} minutes while you check the items`,
                   'Damaged, wrong, expired or poor-quality items go back with the rider; missing items are noted',
                   'You are refunded for those items to the way you paid',
                 ]}
@@ -254,7 +259,7 @@ export default function Policy() {
                 head={['Charge', 'What it is', 'When it’s refunded']}
                 rows={[
                   ['Item total', 'The shop’s price for your items', 'Whenever the order is cancelled or fails through no fault of yours'],
-                  ['Delivery fee', 'Flat ₹30 per order', 'Refunded unless a delivery failed because of you'],
+                  ['Delivery fee', `Flat ${fee} per order`, 'Refunded unless a delivery failed because of you'],
                 ]}
               />
               <div className="flex items-start gap-3 rounded-xl bg-dz-green-soft/60 p-4">

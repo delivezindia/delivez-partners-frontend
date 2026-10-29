@@ -1,5 +1,7 @@
+import { useRef } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { api } from './api';
+import { useLiveRoom } from './live';
 import type { MsgKey } from './i18n';
 
 export type LabStatus = 'BOOKED' | 'RX_REVIEW' | 'CONFIRMED' | 'COLLECTOR_ASSIGNED' | 'SAMPLE_COLLECTED' | 'PROCESSING' | 'REPORT_READY' | 'CANCELLED' | 'REJECTED';
@@ -73,11 +75,16 @@ export function useLabSlots(store: string | null, date: string, type: Collection
 }
 
 export function useLabBooking(id: string) {
-  return useQuery({
+  // Read by refetchInterval, so it is set before the query runs (the socket state comes after).
+  const live = useRef(false);
+  const q = useQuery({
     queryKey: ['lab-booking', id],
     queryFn: () => api<LabBooking>(`/local/lab-bookings/${encodeURIComponent(id)}`),
-    refetchInterval: (q) => (q.state.data && !q.state.data.active ? false : 15_000),
+    refetchInterval: (q) => (q.state.data && !q.state.data.active ? false : live.current ? 60_000 : 15_000),
   });
+  const bookingId = q.data?.active ? q.data.id : null;
+  live.current = useLiveRoom(bookingId && `booking:${bookingId}`, ['lab-booking', id]);
+  return q;
 }
 
 export function useLabBookings() {

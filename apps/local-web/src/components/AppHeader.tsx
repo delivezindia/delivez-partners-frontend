@@ -16,7 +16,7 @@ export function AppHeader({ wide = false }: { wide?: boolean }) {
   return (
     <header className="dz-header sticky top-0 z-30">
       <div className={`mx-auto flex h-16 items-center gap-3 px-4 ${wide ? 'max-w-5xl' : 'max-w-3xl'}`}>
-        <Brand />
+        <Brand to="/shops" />
         <button type="button" onClick={() => setPicking(true)} className="min-w-0 flex-1 rounded-lg px-2 py-1 text-left hover:bg-black/5" aria-label={t('lc.loc.change')}>
           <span className="flex items-center gap-1 text-sm font-extrabold">
             <MapPin className="h-4 w-4 shrink-0 text-dz-red" aria-hidden />

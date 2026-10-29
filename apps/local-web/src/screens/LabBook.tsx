@@ -1,15 +1,18 @@
 import { useEffect, useRef, useState } from 'react';
 import { Link, Navigate, useNavigate } from 'react-router-dom';
 import { useQueryClient } from '@tanstack/react-query';
-import { ArrowLeft, FlaskConical, Home, MapPin, Store as StoreIcon, Trash2, Wallet } from 'lucide-react';
+import { ArrowLeft, Building2, CreditCard, FlaskConical, Home, MapPin, Smartphone, Store as StoreIcon, Trash2, Wallet } from 'lucide-react';
 import { Field, TextInput } from '../components/form';
 import { LocationSheet } from '../components/LocationSheet';
 import { RxUpload, type RxFile } from '../components/RxUpload';
 import { SlotPicker } from '../components/SlotPicker';
+import { ReorderNotice } from '../components/ReorderNotice';
 import { Button, ErrorText, Skeleton } from '../components/ui';
 import { api, newIdempotencyKey } from '../lib/api';
 import { useAuth } from '../lib/auth-store';
 import { useCart } from '../lib/cart';
+import { PAY_LABEL, PAY_METHODS, type PayMethod } from '../lib/orders';
+import { openCheckout, type CheckoutParams } from '../lib/razorpay';
 import { rupees } from '../lib/format';
 import { useI18n } from '../lib/i18n';
 import { nextDays, type CollectionType, type LabBooking } from '../lib/labs';
@@ -18,8 +21,10 @@ import { useMe, useMenu } from '../lib/queries';
 import { messageOf } from './Login';
 
 const GENDER = { F: 'lc.lb.gF', M: 'lc.lb.gM', O: 'lc.lb.gO' } as const;
+const PAY_ICON = { UPI: Smartphone, CARD: CreditCard, NETBANKING: Building2 } as const;
+type Started = { awaitingPayment: true; paymentId: string; checkout: CheckoutParams };
 
-/** Lab tests from the basket → home collection or walk-in → a slot → patient → book (pay at collection). */
+/** Lab tests from the basket → home collection or walk-in → a slot → patient → pay online now or at collection → book. */
 export default function LabBook() {
   const { t } = useI18n();
   const navigate = useNavigate();
@@ -39,6 +44,9 @@ export default function LabBook() {
   const [picking, setPicking] = useState(false);
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
+  const [verifying, setVerifying] = useState(false);
+  // Pay at collection by default; online payment books only once the money is in.
+  const [pay, setPay] = useState<PayMethod | 'COD'>('COD');
   const attempt = useRef(newIdempotencyKey());
   // Set once booked, so emptying the basket doesn't bounce to the cart on the way to the booking.
   const booked = useRef(false);
@@ -71,7 +79,7 @@ export default function LabBook() {
     setError('');
     setBusy(true);
     try {
-      const b = await api<LabBooking>('/local/lab-bookings', {
+      const res = await api<LabBooking | Started>('/local/lab-bookings', {
         method: 'POST',
         body: {
           storeId: cart.storeId,
@@ -81,9 +89,24 @@ export default function LabBook() {
           patient: { name: name.trim(), age: age ? Number(age) : undefined, gender: gender || undefined },
           addressId: type === 'HOME' ? at?.addressId : undefined,
           prescriptionFileKeys: rxTests.length ? rxFiles.map((f) => f.key) : undefined,
+          paymentMode: pay,
         },
         idempotencyKey: attempt.current,
       });
+      let b: LabBooking;
+      if ('awaitingPayment' in res) {
+        // Nothing is booked until the payment is in; closing Checkout leaves the basket as it was.
+        attempt.current = newIdempotencyKey();
+        const result = await openCheckout(res.checkout);
+        if (!result) {
+          const out = await api<{ booked: boolean; booking?: LabBooking }>(`/local/lab-bookings/payments/${res.paymentId}/abandon`, { method: 'POST', body: {} });
+          if (!out.booked || !out.booking) return setError(t('lc.lb.payCancelled'));
+          b = out.booking;
+        } else {
+          setVerifying(true);
+          b = await api<LabBooking>(`/local/lab-bookings/payments/${res.paymentId}/verify`, { method: 'POST', body: result });
+        }
+      } else b = res;
       booked.current = true;
       qc.setQueryData(['lab-booking', b.id], b);
       qc.invalidateQueries({ queryKey: ['lab-bookings'] });
@@ -95,6 +118,7 @@ export default function LabBook() {
       void qc.invalidateQueries({ queryKey: ['lab-slots'] });
     } finally {
       setBusy(false);
+      setVerifying(false);
     }
   }
 
@@ -110,6 +134,7 @@ export default function LabBook() {
         </div>
       </header>
       <main className="mx-auto max-w-xl space-y-3 px-4 pt-4">
+        <ReorderNotice />
         {menu.isLoading || !data ? (
           <Skeleton className="h-40" />
         ) : (
@@ -251,14 +276,36 @@ export default function LabBook() {
                   <dd>{rupees(testsTotal + fee)}</dd>
                 </div>
               </dl>
+            </section>
+
+            <section className="rounded-2xl bg-white p-4 ring-1 ring-line">
+              <h2 className="mb-2 text-lg">{t('lc.co.payWith')}</h2>
+              <div className="grid grid-cols-2 gap-2 sm:grid-cols-4" role="radiogroup" aria-label={t('lc.co.payWith')}>
+                {[...PAY_METHODS, 'COD' as const].map((m) => {
+                  const Icon = m === 'COD' ? Wallet : PAY_ICON[m];
+                  return (
+                    <button
+                      key={m}
+                      type="button"
+                      role="radio"
+                      aria-checked={pay === m}
+                      data-pay={m}
+                      onClick={() => setPay(m)}
+                      className={`flex min-h-14 flex-col items-center justify-center gap-1 rounded-xl px-2 text-center text-sm font-bold ring-1 ${pay === m ? 'bg-black text-dz-yellow ring-black' : 'bg-white text-ink-2 ring-line'}`}
+                    >
+                      <Icon className="h-5 w-5" aria-hidden /> {m === 'COD' ? t('lc.lb.payLater') : t(PAY_LABEL[m])}
+                    </button>
+                  );
+                })}
+              </div>
               <p className="mt-3 flex items-center gap-2 rounded-xl bg-dz-green-soft px-3 py-2 text-sm font-semibold text-dz-green">
-                <Wallet className="h-4 w-4 shrink-0" aria-hidden /> {type === 'WALK_IN' ? t('lc.lb.payDesk') : t('lc.lb.payCollector')}
+                <Wallet className="h-4 w-4 shrink-0" aria-hidden /> {pay !== 'COD' ? t('lc.lb.payNowNote') : type === 'WALK_IN' ? t('lc.lb.payDesk') : t('lc.lb.payCollector')}
               </p>
             </section>
 
             <ErrorText>{error}</ErrorText>
             <Button className="min-h-14 w-full text-base" disabled={!ready || busy} onClick={() => void book()} data-book-lab>
-              {busy ? t('lc.lb.booking') : slot ? t('lc.lb.book') : t('lc.lb.pickSlot')}
+              {verifying ? t('lc.pay.verifying') : busy ? t('lc.lb.booking') : !slot ? t('lc.lb.pickSlot') : pay !== 'COD' ? t('lc.lb.payBook', { total: rupees(testsTotal + fee) }) : t('lc.lb.book')}
             </Button>
           </>
         )}

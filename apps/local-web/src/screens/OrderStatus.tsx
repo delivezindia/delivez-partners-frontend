@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Link, useParams, useSearchParams } from 'react-router-dom';
 import { useQueryClient } from '@tanstack/react-query';
-import { ArrowLeft, Bike, Check, CreditCard, CircleCheck, Phone, XCircle } from 'lucide-react';
+import { ArrowLeft, Bike, Check, CreditCard, CircleCheck, Phone, RotateCcw, XCircle } from 'lucide-react';
 import { Modal } from '../components/Modal';
 import { PushCard } from '../components/PushCard';
 import { DoorCheck, HelpLink, RateOrder, RxStatus, Substitutions } from '../components/OrderExtras';
@@ -11,6 +11,7 @@ import { rupees } from '../lib/format';
 import { useI18n } from '../lib/i18n';
 import { CANCEL_REASON, PAY_LABEL, STATUS_LABEL, STEPS, useOrder, type CustomerOrder } from '../lib/orders';
 import { messageOf } from './Login';
+import { useReorder } from '../lib/reorder';
 import { payWithRazorpay, type CheckoutParams } from '../lib/razorpay';
 
 // L2/L3 Order status: where it is, the code for the door / counter, what was ordered.
@@ -169,10 +170,22 @@ export default function OrderStatus() {
                 <dd>{rupees(o.totals.delivery)}</dd>
               </div>
             )}
+            {o.coupon?.freeDelivery && (
+              <div className="flex justify-between">
+                <dt className="text-ink-2">{t('lc.co.deliveryFee')}</dt>
+                <dd className="font-semibold text-dz-green">{t('lc.cp.free')}</dd>
+              </div>
+            )}
             {o.totals.packaging > 0 && (
               <div className="flex justify-between">
                 <dt className="text-ink-2">{t('lc.co.packaging')}</dt>
                 <dd>{rupees(o.totals.packaging)}</dd>
+              </div>
+            )}
+            {o.totals.discount > 0 && o.coupon && (
+              <div className="flex justify-between text-dz-green">
+                <dt>{t('lc.cp.line', { code: o.coupon.code })}</dt>
+                <dd className="font-semibold">−{rupees(o.totals.discount)}</dd>
               </div>
             )}
             <div className="flex justify-between text-base font-extrabold">
@@ -180,6 +193,11 @@ export default function OrderStatus() {
               <dd>{rupees(o.totals.grandTotal)}</dd>
             </div>
           </dl>
+          {o.coupon && (
+            <p className="mt-2 rounded-lg bg-dz-green-soft px-3 py-1.5 text-sm font-semibold text-dz-green" data-order-saved>
+              {t('lc.cp.saved', { amount: rupees(o.coupon.saved), code: o.coupon.code })}
+            </p>
+          )}
           <p className="mt-2 text-xs text-ink-3">
             {o.payment.mode === 'COD' ? t('lc.pm.COD') : t('lc.ord.paidVia', { method: PAY_LABEL[o.payment.mode] ? t(PAY_LABEL[o.payment.mode]) : o.payment.mode })}
           </p>
@@ -187,6 +205,7 @@ export default function OrderStatus() {
           {o.note && <p className="mt-2 text-sm italic text-ink-2">“{o.note}”</p>}
         </section>
 
+        {['DELIVERED', 'COMPLETED'].includes(o.status) && <ReorderButton o={o} />}
         {o.canCancel && (
           <Button variant="ghost" className="w-full" onClick={() => setConfirmCancel(true)}>
             {t('lc.ord.cancel')}
@@ -290,5 +309,19 @@ function PayNow({ o, failed }: { o: CustomerOrder; failed: boolean }) {
       </Button>
       {test && <p className="mt-2 text-center text-xs font-bold text-ink-3">{t('lc.pay.test')}</p>}
     </section>
+  );
+}
+
+/** Same basket again, at today's prices — anything unavailable is listed on the basket page. */
+function ReorderButton({ o }: { o: CustomerOrder }) {
+  const { t } = useI18n();
+  const reorder = useReorder();
+  return (
+    <>
+      <Button className="w-full" onClick={() => void reorder.run(o)} disabled={!!reorder.busy} data-reorder={o.id}>
+        <RotateCcw className={`h-4 w-4 ${reorder.busy ? 'animate-spin' : ''}`} aria-hidden /> {reorder.busy ? t('lc.ro.busy') : t('lc.ro.cta')}
+      </Button>
+      {reorder.failed && <ErrorText>{t('lc.ro.fail')}</ErrorText>}
+    </>
   );
 }

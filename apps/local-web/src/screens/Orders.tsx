@@ -15,7 +15,7 @@ export default function Orders() {
     <div className="min-h-screen bg-soft pb-12">
       <header className="sticky top-0 z-30 border-b border-line bg-white px-4 pt-3">
         <div className="flex items-center gap-3">
-          <Link to="/" className="grid h-10 w-10 place-items-center rounded-full hover:bg-soft" aria-label={t('lc.back')}>
+          <Link to="/shops" className="grid h-10 w-10 place-items-center rounded-full hover:bg-soft" aria-label={t('lc.back')}>
             <ArrowLeft className="h-5 w-5" />
           </Link>
           <h1 className="text-2xl">{t('lc.ord.all')}</h1>
@@ -49,7 +49,7 @@ function OrderList() {
         <div className="rounded-2xl bg-white p-10 text-center ring-1 ring-line">
           <Receipt className="mx-auto h-10 w-10 text-ink-3" aria-hidden />
           <p className="mt-3 font-bold">{t('lc.ord.none')}</p>
-          <Link to="/" className="mt-3 inline-block font-bold text-dz-red underline">
+          <Link to="/shops" className="mt-3 inline-block font-bold text-dz-red underline">
             {t('lc.cart.browse')}
           </Link>
         </div>
@@ -85,7 +85,7 @@ function LabList() {
         <div className="rounded-2xl bg-white p-10 text-center ring-1 ring-line">
           <FlaskConical className="mx-auto h-10 w-10 text-ink-3" aria-hidden />
           <p className="mt-3 font-bold">{t('lc.lb.none')}</p>
-          <Link to="/?v=DIAGNOSTICS" className="mt-3 inline-block font-bold text-dz-red underline">
+          <Link to="/shops?v=DIAGNOSTICS" className="mt-3 inline-block font-bold text-dz-red underline">
             {t('lc.lb.find')}
           </Link>
         </div>

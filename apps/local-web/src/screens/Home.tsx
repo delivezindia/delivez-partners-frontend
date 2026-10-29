@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Link, useSearchParams } from 'react-router-dom';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { ArrowRight, Bike, CalendarClock, Clock, LayoutGrid, MapPin, RotateCcw, Search, Star, Store as StoreIcon, X } from 'lucide-react';
 import { AppHeader } from '../components/AppHeader';
 import Landing from './Landing';
@@ -12,6 +12,7 @@ import { useAuth } from '../lib/auth-store';
 import { useDeliverTo } from '../lib/location';
 import { useNearby } from '../lib/queries';
 import { STATUS_LABEL, useOrders, type CustomerOrder } from '../lib/orders';
+import { useReorder } from '../lib/reorder';
 import type { StoreCard, Vertical } from '../lib/types';
 
 const ALL_VERTICALS: Vertical[] = ['EAT', 'GROCERY', 'PHARMACY', 'DIAGNOSTICS', 'LOCAL_STORES'];
@@ -50,6 +51,7 @@ export default function Home() {
     setParams(p, { replace: true });
   };
 
+  // No location yet: the welcome page asks for one (a category in ?v= opens once it's set).
   if (!at) return <Landing />;
 
   return (
@@ -68,6 +70,7 @@ export default function Home() {
           </div>
         </section>
 
+        {token && !searching && <RateLast />}
         {token && !searching && <OrderAgain />}
 
         <div className="mb-4 mt-8 flex items-end justify-between gap-3">
@@ -215,10 +218,38 @@ function CategoryTile({ v, on, onClick, label }: { v?: Vertical; on: boolean; on
   );
 }
 
-/** Shops the customer has ordered from before (latest first). */
+/** "How was it?" for the latest delivered order not yet rated (last 3 days): a star opens the rating with it picked. */
+function RateLast() {
+  const { t } = useI18n();
+  const navigate = useNavigate();
+  const { data } = useOrders();
+  const o = data?.orders.find((x) => x.canRate && x.deliveredAt && Date.now() - new Date(x.deliveredAt).getTime() < 3 * 86400_000);
+  if (!o) return null;
+  return (
+    <section className="mt-6 flex flex-wrap items-center gap-3 rounded-2xl bg-white p-4 ring-1 ring-line" data-rate-last={o.id}>
+      <VerticalIcon v={o.store.vertical} size="md" />
+      <div className="min-w-0 flex-1">
+        <b className="block">{t('lc.rate.title', { store: o.store.name })}</b>
+        <span className="block text-xs text-ink-2">
+          {o.orderNumber} · {t('lc.rate.tapStar')}
+        </span>
+      </div>
+      <div className="flex w-full justify-between sm:w-auto sm:justify-start" role="group" aria-label={t('lc.rate.stars')}>
+        {[1, 2, 3, 4, 5].map((n) => (
+          <button key={n} type="button" aria-label={t('lc.rate.nStars', { n })} onClick={() => navigate(`/orders/${o.id}`, { state: { rate: n } })} className="grid h-11 w-11 place-items-center rounded-full hover:bg-dz-yellow-soft" data-rate-star={n}>
+            <Star className="h-8 w-8 text-ink-3 hover:fill-dz-yellow hover:text-[#d4a106]" aria-hidden />
+          </button>
+        ))}
+      </div>
+    </section>
+  );
+}
+
+/** One tap rebuilds the last order from the shop's menu today and opens checkout. */
 function OrderAgain() {
   const { t } = useI18n();
   const { data } = useOrders();
+  const reorder = useReorder();
   const shops = useMemo(() => {
     const seen = new Map<string, CustomerOrder>();
     for (const o of data?.orders ?? []) if (['DELIVERED', 'COMPLETED'].includes(o.status) && !seen.has(o.store.id)) seen.set(o.store.id, o);
@@ -232,13 +263,26 @@ function OrderAgain() {
       </h2>
       <div className="-mx-4 flex gap-3 overflow-x-auto px-4 pb-2">
         {shops.map((o) => (
-          <Link key={o.store.id} to={`/s/${o.store.slug ?? o.store.id}`} className="flex w-60 shrink-0 items-center gap-3 rounded-2xl bg-white p-3 ring-1 ring-line transition hover:ring-black">
-            <VerticalIcon v={o.store.vertical} size="md" />
-            <span className="min-w-0">
-              <b className="block truncate text-sm">{o.store.name}</b>
-              <span className="block truncate text-xs text-ink-2">{o.items.map((i) => i.name).join(', ')}</span>
-            </span>
-          </Link>
+          <div key={o.store.id} className="flex w-64 shrink-0 flex-col gap-3 rounded-2xl bg-white p-3 ring-1 ring-line">
+            <Link to={`/s/${o.store.slug ?? o.store.id}`} className="flex min-w-0 items-center gap-3 hover:text-dz-red">
+              <VerticalIcon v={o.store.vertical} size="md" />
+              <span className="min-w-0">
+                <b className="block truncate text-sm">{o.store.name}</b>
+                <span className="block truncate text-xs text-ink-2">{o.items.map((i) => `${i.qty} × ${i.name}`).join(', ')}</span>
+              </span>
+            </Link>
+            <button
+              type="button"
+              onClick={() => void reorder.run(o)}
+              disabled={!!reorder.busy}
+              data-reorder={o.id}
+              className="flex min-h-10 items-center justify-center gap-1.5 rounded-xl bg-black px-3 text-sm font-bold text-dz-yellow transition hover:bg-ink-2 disabled:opacity-60"
+            >
+              <RotateCcw className={`h-4 w-4 ${reorder.busy === o.id ? 'animate-spin' : ''}`} aria-hidden />
+              {reorder.busy === o.id ? t('lc.ro.busy') : t('lc.ro.cta')}
+            </button>
+            {reorder.failed === o.id && <p className="text-xs font-semibold text-dz-red">{t('lc.ro.fail')}</p>}
+          </div>
         ))}
       </div>
     </section>

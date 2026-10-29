@@ -2,9 +2,9 @@ import type { ButtonHTMLAttributes, ReactNode } from 'react';
 import { Link } from 'react-router-dom';
 
 /** DELIVEZ wordmark (italic, condensed, red) — the customer app has no product pill. */
-export function Brand({ size = 'sm' }: { size?: 'sm' | 'lg' }) {
+export function Brand({ size = 'sm', to = '/' }: { size?: 'sm' | 'lg'; to?: string }) {
   return (
-    <Link to="/" className="flex shrink-0 items-center gap-2.5 text-dz-red no-underline" aria-label="Delivez home">
+    <Link to={to} className="flex shrink-0 items-center gap-2.5 text-dz-red no-underline" aria-label="Delivez home">
       <b className={`font-black italic leading-none tracking-tight ${size === 'lg' ? 'text-5xl' : 'text-[30px]'}`} style={{ fontStretch: '72%' }}>
         DELIVEZ
       </b>

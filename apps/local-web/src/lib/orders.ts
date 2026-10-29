@@ -1,9 +1,11 @@
 import type { CheckoutParams } from './razorpay';
+import { useRef } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { api, newIdempotencyKey } from './api';
 import type { CartLine } from './cart';
 import type { MsgKey } from './i18n';
 import type { Vertical } from './types';
+import { useLiveRoom } from './live';
 
 export type Blocker = 'STORE_CLOSED' | 'DELIVERY_NOT_OFFERED' | 'ADDRESS_REQUIRED' | 'OUT_OF_RANGE' | 'BELOW_MINIMUM' | 'LAB_BOOKING' | 'RX_REQUIRED' | 'NO_PHARMACIST' | 'ITEMS';
 export type Problem = {
@@ -39,8 +41,30 @@ export interface Quote {
   rxItems: string[];
   distanceKm: number | null;
   totals: Totals;
+  /** The applied coupon (null when none, or when the code doesn't fit — see couponError). */
+  coupon: { code: string; headline: string; description: string | null; saved: number; itemsOff: number; deliveryOff: number } | null;
+  couponError: { problem: CouponProblem; message: string; short?: number } | null;
+  /** Listed offers for this shop: ok = usable now, otherwise short = paise still to add. */
+  offers: Offer[];
   blockers: Blocker[];
   canPlace: boolean;
+}
+
+export type CouponKind = 'FLAT' | 'PERCENT' | 'FREE_DELIVERY';
+export type CouponProblem = 'NOT_FOUND' | 'PAUSED' | 'NOT_STARTED' | 'EXPIRED' | 'USED_UP' | 'ALREADY_USED' | 'FIRST_ORDER_ONLY' | 'OTHER_SHOP' | 'OTHER_CITY' | 'OTHER_KIND' | 'BELOW_MINIMUM' | 'NOTHING_OFF';
+export interface Offer {
+  code: string;
+  headline: string;
+  description: string | null;
+  kind: CouponKind;
+  value: number;
+  maxDiscount: number | null;
+  minOrder: number;
+  firstOrderOnly: boolean;
+  endsAt: string;
+  ok?: boolean;
+  saved?: number;
+  short?: number;
 }
 
 /** App orders are paid online — no cash on delivery. */
@@ -102,6 +126,7 @@ export interface CustomerOrder {
     returnedQty: number;
   }[];
   totals: Totals;
+  coupon: { code: string; saved: number; freeDelivery: boolean } | null;
   payment: { mode: string; status: string };
   codes: { delivery: string | null } | null;
   etaAt: string | null;
@@ -159,11 +184,11 @@ export const toItems = (lines: CartLine[]) =>
   }));
 
 /** Home delivery only — customers don't collect from the shop. */
-export function useQuote(input: { storeId: string | null; addressId?: string; lines: CartLine[]; rxKeys?: string[] }, enabled: boolean) {
+export function useQuote(input: { storeId: string | null; addressId?: string; lines: CartLine[]; rxKeys?: string[]; couponCode?: string }, enabled: boolean) {
   const items = toItems(input.lines);
   const rx = input.rxKeys?.length ? input.rxKeys : undefined;
   return useQuery({
-    queryKey: ['quote', input.storeId, input.addressId, items, rx],
+    queryKey: ['quote', input.storeId, input.addressId, items, rx, input.couponCode],
     queryFn: () =>
       api<Quote>('/local/cart/quote', {
         method: 'POST',
@@ -173,6 +198,7 @@ export function useQuote(input: { storeId: string | null; addressId?: string; li
           addressId: input.addressId,
           items,
           prescriptionFileKeys: rx,
+          couponCode: input.couponCode,
         },
         idempotencyKey: newIdempotencyKey(),
       }),
@@ -182,14 +208,19 @@ export function useQuote(input: { storeId: string | null; addressId?: string; li
   });
 }
 
-/** Live while the order is moving; the shop's actions show up within a few seconds. */
+/** Live while the order is moving: socket pushes refetch it at once; slow polling is the safety net. */
 export function useOrder(id: string) {
-  return useQuery({
+  // Read by refetchInterval, so it is set before the query runs (the socket state comes after).
+  const live = useRef(false);
+  const q = useQuery({
     queryKey: ['order', id],
     queryFn: () => api<CustomerOrder>(`/local/orders/${encodeURIComponent(id)}`),
     enabled: !!id,
-    refetchInterval: (q) => (q.state.data && !q.state.data.active ? false : 8_000),
+    refetchInterval: (q) => (q.state.data && !q.state.data.active ? false : live.current ? 60_000 : 8_000),
   });
+  const orderId = q.data?.active ? q.data.id : null;
+  live.current = useLiveRoom(orderId && `order:${orderId}`, ['order', id]);
+  return q;
 }
 
 export function useOrders() {

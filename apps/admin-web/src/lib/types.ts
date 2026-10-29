@@ -13,6 +13,10 @@ export const CAN = {
   team: ['FOUNDER', 'HEAD_OF_OPS'] as AdminRole[],
   geo: ['FOUNDER', 'HEAD_OF_OPS', 'REGIONAL_HEAD'] as AdminRole[],
   legal: ['FOUNDER', 'LEGAL'] as AdminRole[],
+  /** Customer coupons (mirrors MANAGE_COUPONS on the API). */
+  coupons: ['FOUNDER', 'HEAD_OF_OPS', 'FINANCE'] as AdminRole[],
+  /** Who sees the coupon list (the API's READ group). */
+  couponsView: ['FOUNDER', 'HEAD_OF_OPS', 'REGIONAL_HEAD', 'CITY_OPS', 'COMPLIANCE', 'FINANCE', 'LEGAL', 'SUPPORT', 'AUDITOR'] as AdminRole[],
   audit: ['FOUNDER', 'HEAD_OF_OPS', 'COMPLIANCE', 'LEGAL', 'AUDITOR'] as AdminRole[],
   /** Cancel orders (mirrors ORDER_OPS on the API). */
   orderOps: ['FOUNDER', 'HEAD_OF_OPS', 'REGIONAL_HEAD', 'CITY_OPS', 'SUPPORT'] as AdminRole[],

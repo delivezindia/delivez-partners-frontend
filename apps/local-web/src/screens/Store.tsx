@@ -3,6 +3,7 @@ import { Link, useParams } from 'react-router-dom';
 import { ArrowLeft, Bike, Clock, FileText, MapPin, Search, Star } from 'lucide-react';
 import { Modal } from '../components/Modal';
 import { ProductSheet } from '../components/ProductSheet';
+import { ReorderNotice } from '../components/ReorderNotice';
 import { Button, QtyStepper, Skeleton, VegMark } from '../components/ui';
 import { needsOptions, simpleLine, useCart, type CartLine } from '../lib/cart';
 import { km, opensAtLabel, rupees } from '../lib/format';
@@ -47,7 +48,7 @@ export default function Store() {
     return (
       <div className="mx-auto max-w-md p-10 text-center">
         <p className="text-lg font-bold">{t('lc.store.notFound')}</p>
-        <Link to="/" className="mt-4 inline-block font-bold text-dz-red underline">
+        <Link to="/shops" className="mt-4 inline-block font-bold text-dz-red underline">
           {t('lc.backHome')}
         </Link>
       </div>
@@ -73,7 +74,7 @@ export default function Store() {
             <VerticalIcon v={s.vertical} size="xl" />
           </span>
         )}
-        <Link to="/" className="absolute left-4 top-4 grid h-10 w-10 place-items-center rounded-full bg-white shadow" aria-label={t('lc.back')}>
+        <Link to="/shops" className="absolute left-4 top-4 grid h-10 w-10 place-items-center rounded-full bg-white shadow" aria-label={t('lc.back')}>
           <ArrowLeft className="h-5 w-5" />
         </Link>
       </div>
@@ -122,6 +123,9 @@ export default function Store() {
           </div>
           {s.description && <p className="mt-3 text-sm text-ink-2">{s.description}</p>}
         </section>
+        <div className="mt-3">
+          <ReorderNotice />
+        </div>
 
         <div className="sticky top-0 z-10 -mx-4 mt-3 bg-soft/95 px-4 pb-2 pt-2 backdrop-blur">
           <div className="flex gap-2">

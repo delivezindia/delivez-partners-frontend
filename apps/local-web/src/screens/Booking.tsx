@@ -3,11 +3,13 @@ import { Link, useParams, useSearchParams } from 'react-router-dom';
 import { useQueryClient } from '@tanstack/react-query';
 import { ArrowLeft, CalendarClock, Check, CircleCheck, Download, FileText, FlaskConical, Home, LifeBuoy, MapPin, Phone, Store as StoreIcon, UserRound, XCircle } from 'lucide-react';
 import { Modal } from '../components/Modal';
+import { PushCard } from '../components/PushCard';
 import { SlotPicker } from '../components/SlotPicker';
 import { Button, ErrorText, Skeleton } from '../components/ui';
 import { api, newIdempotencyKey } from '../lib/api';
 import { rupees } from '../lib/format';
 import { useI18n } from '../lib/i18n';
+import { PAY_LABEL } from '../lib/orders';
 import { LAB_STATUS, LAB_STEPS, nextDays, useLabBooking, type LabBooking } from '../lib/labs';
 import { messageOf } from './Login';
 
@@ -169,6 +171,8 @@ export default function Booking() {
           {b.rx?.status === 'REJECTED' && b.rx.rejectionReason && <p className="rounded-xl bg-dz-red-soft p-3 text-dz-red">{b.rx.rejectionReason}</p>}
         </section>
 
+        {b.active && <PushCard compact />}
+
         <section className="rounded-2xl bg-white p-4 ring-1 ring-line">
           <h2 className="mb-2 flex items-center gap-2 text-xl">
             <FlaskConical className="h-5 w-5" aria-hidden /> {t('lc.lb.tests', { n: b.tests.length })}
@@ -194,6 +198,13 @@ export default function Booking() {
             </div>
           </dl>
           {b.payment.status === 'COD_PENDING' && !ended && <p className="mt-2 text-xs text-ink-3">{b.collectionType === 'HOME' ? t('lc.lb.payCollector') : t('lc.lb.payDesk')}</p>}
+          {b.payment.mode !== 'COD' && (
+            <p className="mt-2 text-xs text-ink-3" data-lab-payment={b.payment.status}>
+              {t('lc.ord.paidVia', { method: PAY_LABEL[b.payment.mode] ? t(PAY_LABEL[b.payment.mode]) : b.payment.mode })}
+              {b.payment.status === 'REFUND_PENDING' && <> · {t('lc.ord.refund')}</>}
+              {b.payment.status === 'REFUNDED' && <> · {t('lc.os.REFUNDED')}</>}
+            </p>
+          )}
         </section>
 
         <ErrorText>{error}</ErrorText>

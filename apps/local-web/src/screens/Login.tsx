@@ -13,7 +13,7 @@ import type { Me } from '../lib/types';
 
 /** Only same-app paths are allowed as a post-login destination. */
 export function safeNext(next: string | null) {
-  return next && next.startsWith('/') && !next.startsWith('//') ? next : '/';
+  return next && next.startsWith('/') && !next.startsWith('//') ? next : '/shops';
 }
 
 interface OtpRequestResponse {

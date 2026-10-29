@@ -155,7 +155,7 @@ export function SiteNavbar({ onCategory }: { onCategory?: (v: Vertical) => void 
                 <div className="absolute left-0 top-full mt-3 w-[440px] rounded-[14px] border border-line bg-white p-3 text-ink shadow-xl">
                   <div className="grid grid-cols-2 gap-1">
                     {SITE_VERTICALS.map((v) => (
-                      <Link key={v} to={`/?v=${v}`} onClick={() => pickCategory(v)} className="flex items-center gap-3 rounded-xl p-3 transition hover:bg-dz-yellow-soft">
+                      <Link key={v} to={`/shops?v=${v}`} onClick={() => pickCategory(v)} className="flex items-center gap-3 rounded-xl p-3 transition hover:bg-dz-yellow-soft">
                         <VerticalIcon v={v} />
                         <span className="text-sm font-bold">{t(VERTICAL_LABEL[v])}</span>
                       </Link>
@@ -237,7 +237,7 @@ export function SiteNavbar({ onCategory }: { onCategory?: (v: Vertical) => void 
             <ul className="mt-2 space-y-1">
               {SITE_VERTICALS.map((v) => (
                 <li key={v}>
-                  <Link to={`/?v=${v}`} onClick={() => pickCategory(v)} className="flex items-center gap-3 rounded-xl px-2 py-2.5 font-bold hover:bg-dz-yellow-soft">
+                  <Link to={`/shops?v=${v}`} onClick={() => pickCategory(v)} className="flex items-center gap-3 rounded-xl px-2 py-2.5 font-bold hover:bg-dz-yellow-soft">
                     <VerticalIcon v={v} size="sm" bare /> {t(VERTICAL_LABEL[v])}
                   </Link>
                 </li>
@@ -304,7 +304,7 @@ export function SiteFooter() {
           <ul className="space-y-2 text-sm">
             {SITE_VERTICALS.map((v) => (
               <li key={v}>
-                <Link to={`/?v=${v}`} className="hover:text-dz-yellow">
+                <Link to={`/shops?v=${v}`} className="hover:text-dz-yellow">
                   {t(VERTICAL_LABEL[v])}
                 </Link>
               </li>

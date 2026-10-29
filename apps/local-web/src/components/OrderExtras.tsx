@@ -1,5 +1,5 @@
-import { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { useEffect, useRef, useState } from 'react';
+import { Link, useLocation } from 'react-router-dom';
 import { useQueryClient } from '@tanstack/react-query';
 import { ArrowRight, FileCheck2, FileText, FileX2, LifeBuoy, PackageCheck, Repeat2, Star, Undo2 } from 'lucide-react';
 import { Modal } from './Modal';
@@ -276,9 +276,14 @@ const TAG_LABEL: Record<(typeof REVIEW_TAGS)[number], MsgKey> = {
 export function RateOrder({ o }: { o: CustomerOrder }) {
   const { t } = useI18n();
   const { run, busy, error } = useOrderAction(o);
-  const [stars, setStars] = useState(0);
+  const tapped = (useLocation().state as { rate?: number } | null)?.rate;
+  const [stars, setStars] = useState(tapped && tapped >= 1 && tapped <= 5 ? tapped : 0);
   const [tags, setTags] = useState<string[]>([]);
   const [comment, setComment] = useState('');
+  const box = useRef<HTMLElement>(null);
+  useEffect(() => {
+    if (tapped) box.current?.scrollIntoView({ block: 'center' });
+  }, [tapped]);
   if (o.review)
     return (
       <section className="rounded-2xl bg-white p-4 text-sm ring-1 ring-line" data-rated>
@@ -300,7 +305,7 @@ export function RateOrder({ o }: { o: CustomerOrder }) {
   if (!o.canRate) return null;
   const tagList = REVIEW_TAGS.filter((x) => (o.store.vertical === 'EAT' ? x !== 'FRESH' : x !== 'COLD_FOOD'));
   return (
-    <section className="rounded-2xl bg-white p-4 ring-1 ring-line" data-rate>
+    <section ref={box} className="rounded-2xl bg-white p-4 ring-1 ring-line" data-rate>
       <h2 className="text-xl">{t('lc.rate.title', { store: o.store.name })}</h2>
       <div className="mt-3 flex gap-1" role="radiogroup" aria-label={t('lc.rate.stars')}>
         {[1, 2, 3, 4, 5].map((n) => (

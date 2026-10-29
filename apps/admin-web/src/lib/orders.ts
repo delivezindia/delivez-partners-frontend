@@ -1,7 +1,7 @@
 // Admin view of orders (Delivez team). Mirrors GET /v1/admin/orders and /v1/admin/orders/:id.
 
 export type OrderStatus =
-  | 'AWAITING_RX_REVIEW' | 'PLACED' | 'ACCEPTED' | 'PREPARING' | 'READY_SOON' | 'READY' | 'PICKED_UP' | 'OUT_FOR_DELIVERY' | 'ARRIVED'
+  | 'DRAFT' | 'AWAITING_RX_REVIEW' | 'PLACED' | 'ACCEPTED' | 'PREPARING' | 'READY_SOON' | 'READY' | 'PICKED_UP' | 'OUT_FOR_DELIVERY' | 'ARRIVED'
   | 'DELIVERED' | 'COMPLETED' | 'REJECTED' | 'CANCELLED' | 'DELIVERY_FAILED' | 'REFUNDED';
 
 export interface AdminOrderRow {
@@ -84,6 +84,8 @@ export const CANCELLABLE: OrderStatus[] = ['AWAITING_RX_REVIEW', 'PLACED', 'ACCE
 export const ACTIVE: OrderStatus[] = ['AWAITING_RX_REVIEW', 'PLACED', 'ACCEPTED', 'PREPARING', 'READY_SOON', 'READY', 'PICKED_UP', 'OUT_FOR_DELIVERY', 'ARRIVED'];
 
 export const STATUS_LABEL: Record<OrderStatus, { label: string; cls: string }> = {
+  // Customer-app order waiting for its online payment (the shop doesn't see it yet).
+  DRAFT: { label: 'Awaiting payment', cls: 'border-line bg-soft text-ink-3' },
   AWAITING_RX_REVIEW: { label: 'Prescription check', cls: 'border-dz-blue bg-dz-blue-soft text-dz-blue' },
   PLACED: { label: 'New', cls: 'border-dz-red bg-dz-red-soft text-dz-red' },
   ACCEPTED: { label: 'Accepted', cls: 'border-dz-blue bg-dz-blue-soft text-dz-blue' },

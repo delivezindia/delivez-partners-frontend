@@ -2,7 +2,9 @@ import { useEffect, useRef, useState } from 'react';
 import { Link, Navigate, useNavigate } from 'react-router-dom';
 import { useQueryClient } from '@tanstack/react-query';
 import { AlertTriangle, ArrowLeft, BadgePercent, Building2, CreditCard, MapPin, Smartphone, ShoppingBag, Store as StoreIcon } from 'lucide-react';
+import { CouponBox, problemText } from '../components/CouponBox';
 import { LocationSheet } from '../components/LocationSheet';
+import { ReorderNotice } from '../components/ReorderNotice';
 import { RxUpload, type RxFile } from '../components/RxUpload';
 import { TextArea } from '../components/form';
 import { Button, ErrorText, QtyStepper, VegMark } from '../components/ui';
@@ -13,7 +15,7 @@ import { cartTotal, useCart } from '../lib/cart';
 import { km, rupees } from '../lib/format';
 import { useI18n, type MsgKey } from '../lib/i18n';
 import { useDeliverTo } from '../lib/location';
-import { toItems, useQuote, type Blocker, type CustomerOrder, type PayMethod, type Problem, PAY_LABEL, PAY_METHODS } from '../lib/orders';
+import { toItems, useQuote, type Blocker, type CouponProblem, type CustomerOrder, type PayMethod, type Problem, PAY_LABEL, PAY_METHODS } from '../lib/orders';
 import { messageOf } from './Login';
 
 const BLOCKER: Partial<Record<Blocker, MsgKey>> = {
@@ -48,11 +50,12 @@ export default function Cart() {
   const [placing, setPlacing] = useState(false);
   const [verifying, setVerifying] = useState(false);
   const [rxFiles, setRxFiles] = useState<RxFile[]>([]);
+  const [couponCode, setCouponCode] = useState<string>();
   // One key per checkout attempt, so a double tap or a retry after a timeout places one order.
   const attempt = useRef(newIdempotencyKey());
 
   const addressId = at?.addressId;
-  const quote = useQuote({ storeId: cart.storeId, addressId, lines: cart.lines, rxKeys: rxFiles.map((f) => f.key) }, !!token);
+  const quote = useQuote({ storeId: cart.storeId, addressId, lines: cart.lines, rxKeys: rxFiles.map((f) => f.key), couponCode }, !!token);
   const q = quote.data;
 
   // Lab tests aren't delivered — they're booked into a slot.
@@ -64,7 +67,7 @@ export default function Cart() {
         <div className="rounded-2xl bg-white p-10 text-center ring-1 ring-line">
           <ShoppingBag className="mx-auto h-12 w-12 text-ink-3" aria-hidden />
           <p className="mt-3 text-lg font-bold">{t('lc.cart.empty')}</p>
-          <Link to="/" className="mt-4 inline-block font-bold text-dz-red underline">
+          <Link to="/shops" className="mt-4 inline-block font-bold text-dz-red underline">
             {t('lc.cart.browse')}
           </Link>
         </div>
@@ -96,6 +99,8 @@ export default function Cart() {
           paymentMode: method,
           note: note.trim() || undefined,
           prescriptionFileKeys: q?.rxItems.length ? rxFiles.map((f) => f.key) : undefined,
+          // Only a coupon the bill was shown with; the server checks it again.
+          couponCode: q?.coupon?.code,
         },
         idempotencyKey: attempt.current,
       });
@@ -114,7 +119,11 @@ export default function Cart() {
     } catch (err) {
       attempt.current = newIdempotencyKey();
       if (err instanceof ApiError && err.code === 'CART_CHANGED') void quote.refetch();
-      setError(messageOf(err, t('lc.err.network')));
+      // The coupon stopped fitting between the bill and the tap (last use taken, ended…): show the new bill.
+      if (err instanceof ApiError && err.code.startsWith('COUPON_')) {
+        void quote.refetch();
+        setError(problemText(t, err.code.slice(7) as CouponProblem, (err.details as { short?: number })?.short));
+      } else setError(messageOf(err, t('lc.err.network')));
     } finally {
       setPlacing(false);
     }
@@ -122,6 +131,7 @@ export default function Cart() {
 
   return (
     <Shell title={t('lc.cart.title')}>
+      <ReorderNotice />
       <section className="rounded-2xl bg-white ring-1 ring-line">
         <Link to={cart.storeSlug ? `/s/${cart.storeSlug}` : `/s/${cart.storeId}`} className="flex items-center gap-2 border-b border-line px-4 py-3 font-extrabold">
           <StoreIcon className="h-4 w-4" aria-hidden /> {cart.storeName}
@@ -194,11 +204,29 @@ export default function Cart() {
 
           {cart.storeId && !!q?.rxItems.length && <RxUpload presignPath={`/local/pharmacies/${cart.storeId}/rx-upload`} files={rxFiles} onChange={setRxFiles} items={q.rxItems} />}
 
-          <section className="rounded-2xl bg-white p-4 ring-1 ring-line">
+          {q && <CouponBox q={q} code={couponCode} onApply={setCouponCode} onRemove={() => setCouponCode(undefined)} busy={quote.isFetching} />}
+
+          <section className="rounded-2xl bg-white p-4 ring-1 ring-line" data-bill>
             <h2 className="mb-2 text-xl">{t('lc.co.bill')}</h2>
             <dl className="space-y-1.5 text-sm">
               <Row label={t('lc.co.items')} value={rupees(totals.items)} />
-              <Row label={t('lc.co.deliveryFee')} value={q ? rupees(totals.delivery) : '—'} />
+              {q?.coupon?.deliveryOff ? (
+                <div className="flex justify-between" data-free-delivery>
+                  <dt className="text-ink-2">{t('lc.co.deliveryFee')}</dt>
+                  <dd className="font-semibold">
+                    <s className="mr-1.5 font-normal text-ink-3">{rupees(q.coupon.deliveryOff)}</s>
+                    <span className="text-dz-green">{t('lc.cp.free')}</span>
+                  </dd>
+                </div>
+              ) : (
+                <Row label={t('lc.co.deliveryFee')} value={q ? rupees(totals.delivery) : '—'} />
+              )}
+              {totals.discount > 0 && q?.coupon && (
+                <div className="flex justify-between text-dz-green" data-bill-discount>
+                  <dt>{t('lc.cp.line', { code: q.coupon.code })}</dt>
+                  <dd className="font-semibold">−{rupees(totals.discount)}</dd>
+                </div>
+              )}
               <div className="flex justify-between border-t border-line pt-2 text-base font-extrabold">
                 <dt>{t('lc.co.toPay')}</dt>
                 <dd>{rupees(totals.grandTotal)}</dd>
@@ -255,7 +283,7 @@ function Shell({ title, children }: { title: string; children: React.ReactNode }
     <div className="min-h-screen bg-soft pb-10">
       <header className="sticky top-0 z-30 flex items-center gap-3 border-b border-line bg-white px-4 py-3">
         <Link
-          to="/"
+          to="/shops"
           className="grid h-10 w-10 place-items-center rounded-full hover:bg-soft"
           aria-label={t('lc.back')}
           onClick={(e) => (history.length > 1 ? (e.preventDefault(), history.back()) : undefined)}

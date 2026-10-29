@@ -1,6 +1,6 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Navigate, NavLink, Outlet, useNavigate } from 'react-router-dom';
-import { Activity, BarChart3, ClipboardList, FileCheck2, LayoutDashboard, LifeBuoy, Map, MessageSquareText, ScrollText, ShieldCheck, Store, Users, type LucideIcon } from 'lucide-react';
+import { Activity, BadgePercent, BarChart3, ClipboardList, FileCheck2, LayoutDashboard, LifeBuoy, Map, MessageSquareText, ScrollText, ShieldCheck, Store, Users, type LucideIcon } from 'lucide-react';
 import { api, useAuth } from '../lib/api';
 import { CAN, can, type AdminMe, type AdminRole } from '../lib/types';
 import { Brand } from '../components/ui';
@@ -15,6 +15,7 @@ const NAV: { to: string; label: string; icon: LucideIcon; end?: boolean; roles?:
   { to: '/orders', label: 'Orders', icon: ClipboardList },
   { to: '/support', label: 'Support', icon: LifeBuoy },
   { to: '/reports', label: 'Reports', icon: BarChart3 },
+  { to: '/coupons', label: 'Coupons', icon: BadgePercent, roles: CAN.couponsView },
   { to: '/documents', label: 'Documents', icon: FileCheck2 },
   { to: '/team', label: 'Team', icon: Users, roles: CAN.team },
   { to: '/cities', label: 'Cities', icon: Map },

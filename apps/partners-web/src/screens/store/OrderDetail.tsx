@@ -168,7 +168,8 @@ export default function OrderDetail() {
             <section className="dz-card p-5">
               <h2 className="text-xl">{t('od.timeline')}</h2>
               <ol className="mt-3 space-y-3">
-                {o.timeline?.map((ev, i) => (
+                {/* App orders start as DRAFT (waiting for payment) — the shop never saw that step, so it isn't shown. */}
+                {o.timeline?.filter((ev) => STATUS[ev.to]).map((ev, i) => (
                   <li key={i} className="relative border-l-2 border-line pl-4">
                     <span className={`absolute -left-[7px] top-1 h-3 w-3 rounded-full ${STATUS[ev.to].bar}`} />
                     <b>{t(STATUS[ev.to].t)}</b>

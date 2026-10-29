@@ -4,12 +4,13 @@ import { ArrowRight, BadgePercent, Banknote, Bike, KeyRound, Languages, LayoutGr
 import { useGps } from '../components/LocationSheet';
 import { CheckList, FaqList, Section, ShopCtaBand, SITE_VERTICALS, SiteFooter, SiteNavbar } from '../components/site';
 import { useAuth } from '../lib/auth-store';
+import { rupees } from '../lib/format';
 import { useI18n, type MsgKey } from '../lib/i18n';
 import { ADDRESS_LABEL, VERTICAL_LABEL } from '../lib/labels';
 import { VERTICAL_LOOK, VerticalIcon } from '../components/VerticalIcon';
 import { AiSection, AppSection, AreaCheck, NearbyStores, EcosystemSection, FamilySection, FoodSection, GiftsSection, LocalSection, MerchantsSection, NetworkSection, OffersSection, PharmacySection, RushSection, SearchSection, ShopByType, SpecialtySection, SupportSection, WhyNowSection } from '../components/NowSections';
 import { fromAddress, useDeliverTo } from '../lib/location';
-import { useAddresses } from '../lib/queries';
+import { cityList, useAddresses, useOverview } from '../lib/queries';
 import type { Vertical } from '../lib/types';
 
 const CATEGORY: Record<Vertical, { blurb: MsgKey; examples: MsgKey }> = {
@@ -74,12 +75,17 @@ export default function Landing() {
   const [params] = useSearchParams();
   const token = useAuth((s) => s.accessToken);
   const set = useDeliverTo((s) => s.set);
+  const at = useDeliverTo((s) => s.at);
   const addresses = useAddresses();
+  const overview = useOverview();
+  const cities = cityList(overview.data);
+  // Fee and door-check time from the API (the copy has {fee} / {n}); the launch values until it answers.
+  const facts = { fee: rupees(overview.data?.deliveryFee ?? 3000), n: overview.data?.doorCheckMinutes ?? 5 };
   const [message, setMessage] = useState('');
   const card = useRef<HTMLDivElement>(null);
   // A category picked before the location is known (?v=…) opens once the location is set.
   const want = SITE_VERTICALS.find((v) => v === params.get('v')) ?? null;
-  const gps = useGps(() => navigate(want ? `/?v=${want}` : '/', { replace: true }), setMessage);
+  const gps = useGps(() => navigate(want ? `/shops?v=${want}` : '/shops'), setMessage);
 
   useEffect(() => {
     document.title = 'Delivez — food, groceries and medicines from shops near you';
@@ -102,7 +108,7 @@ export default function Landing() {
     return () => clearInterval(id);
   }, []);
 
-  const mapHref = want ? `/addresses/new?next=${encodeURIComponent(`/?v=${want}`)}` : '/addresses/new';
+  const mapHref = want ? `/addresses/new?next=${encodeURIComponent(`/shops?v=${want}`)}` : '/addresses/new';
 
   return (
     <div className="flex min-h-screen flex-col bg-white">
@@ -119,7 +125,7 @@ export default function Landing() {
           <div className="relative mx-auto grid max-w-7xl items-center gap-10 py-12 sm:py-16 lg:grid-cols-[1.05fr_0.95fr] lg:py-20">
             <div>
               <p className="inline-flex items-center gap-2 text-sm font-extrabold uppercase tracking-[0.14em] text-dz-yellow">
-                <MapPin className="h-4 w-4" aria-hidden /> {t('lc.site.badge')}
+                <MapPin className="h-4 w-4" aria-hidden /> <span data-live-cities>{cities ? t('lc.site.badgeIn', { cities }) : t('lc.site.badge')}</span>
               </p>
               <h1 className="mt-4 text-[clamp(42px,6.4vw,84px)] leading-[0.92]">
                 {t('lc.site.heroA')} <span className="text-dz-yellow">{t('lc.site.heroB')}</span>
@@ -128,12 +134,14 @@ export default function Landing() {
               <div className="mt-6 flex flex-wrap gap-2" data-hero-cats>
                 {SITE_VERTICALS.map((v) => {
                   const L = VERTICAL_LOOK[v];
+                  const n = overview.data?.verticals[v]?.shops;
                   return (
-                    <Link key={v} to={`/?v=${v}`} className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/[0.06] py-1.5 pl-1.5 pr-3.5 text-sm font-bold text-white transition hover:border-dz-yellow hover:text-dz-yellow">
+                    <Link key={v} to={`/shops?v=${v}`} className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/[0.06] py-1.5 pl-1.5 pr-3.5 text-sm font-bold text-white transition hover:border-dz-yellow hover:text-dz-yellow">
                       <span className="grid h-7 w-7 place-items-center rounded-full" style={{ background: L.accent }} aria-hidden>
                         <L.icon className="h-4 w-4 text-white" />
                       </span>
                       {t(VERTICAL_LABEL[v])}
+                      {!!n && <span className="rounded-full bg-white/10 px-1.5 text-xs tabular-nums text-neutral-300" data-cat-count={v}>{n}</span>}
                     </Link>
                   );
                 })}
@@ -152,6 +160,11 @@ export default function Landing() {
                 <h2 className="text-[28px] leading-none">{t('lc.home.whereTitle')}</h2>
                 <p className="mt-2 text-sm text-ink-2">{t('lc.site.whereSub')}</p>
                 <div className="mt-5 space-y-2.5">
+                  {at && (
+                    <Link to={want ? `/shops?v=${want}` : '/shops'} className="dz-btn-yellow w-full" data-continue>
+                      <MapPin className="h-5 w-5" aria-hidden /> <span className="truncate">{t('lc.land.continue', { place: at.title })}</span> <ArrowRight className="h-4 w-4 shrink-0" aria-hidden />
+                    </Link>
+                  )}
                   <button type="button" onClick={gps} className="dz-btn-red w-full">
                     <LocateFixed className="h-5 w-5" aria-hidden /> {t('lc.loc.useGps')}
                   </button>
@@ -170,7 +183,7 @@ export default function Landing() {
                     <ul className="mt-1 divide-y divide-line">
                       {addresses.data!.slice(0, 3).map((a) => (
                         <li key={a.id}>
-                          <button type="button" onClick={() => set(fromAddress(a, t(ADDRESS_LABEL[a.label])))} className="flex w-full items-start gap-2 py-3 text-left hover:text-dz-red">
+                          <button type="button" onClick={() => (set(fromAddress(a, t(ADDRESS_LABEL[a.label]))), navigate(want ? `/shops?v=${want}` : '/shops'))} className="flex w-full items-start gap-2 py-3 text-left hover:text-dz-red">
                             <MapPin className="mt-0.5 h-4 w-4 shrink-0" aria-hidden />
                             <span className="min-w-0">
                               <b className="block text-sm">{t(ADDRESS_LABEL[a.label])}</b>
@@ -204,7 +217,7 @@ export default function Landing() {
                   <h.icon className="h-5 w-5" aria-hidden />
                 </span>
                 <div className="min-w-0">
-                  <p className="font-display text-[clamp(24px,3vw,36px)] leading-none">{t(h.value)}</p>
+                  <p className="font-display text-[clamp(24px,3vw,36px)] leading-none">{t(h.value, facts)}</p>
                   <p className="text-[13px] font-semibold">{t(h.label)}</p>
                 </div>
               </div>
@@ -223,7 +236,7 @@ export default function Landing() {
               return (
                 <Link
                   key={v}
-                  to={`/?v=${v}`}
+                  to={`/shops?v=${v}`}
                   data-cat={v}
                   className="group relative isolate flex min-h-[230px] flex-col overflow-hidden rounded-3xl border-[1.5px] border-[#ECE8DF] p-5 transition duration-300 hover:-translate-y-1.5 hover:shadow-[0_30px_50px_-34px_rgba(0,0,0,.45)]"
                   style={{ background: `linear-gradient(165deg, ${L.tint} 0%, #fff 62%)` }}
@@ -275,7 +288,7 @@ export default function Landing() {
                   <f.icon className="h-[22px] w-[22px]" aria-hidden />
                 </span>
                 <h3 className="mt-4 text-xl text-dz-yellow">{t(f.title)}</h3>
-                <p className="mt-1 text-sm text-neutral-300">{t(f.body)}</p>
+                <p className="mt-1 text-sm text-neutral-300">{t(f.body, facts)}</p>
               </div>
             ))}
           </div>
@@ -359,7 +372,7 @@ export default function Landing() {
         {/* FAQ */}
         <Section id="faq" className="bg-neutral-50" eyebrow={t('lc.site.faqEyebrow')} title={t('lc.site.faqTitle')}>
           <div className="max-w-3xl">
-            <FaqList items={FAQ.map((f) => ({ q: t(f.q), a: t(f.a) }))} />
+            <FaqList items={FAQ.map((f) => ({ q: t(f.q), a: t(f.a, facts) }))} />
           </div>
         </Section>
 

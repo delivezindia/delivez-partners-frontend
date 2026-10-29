@@ -4,6 +4,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { useAuth } from './lib/auth-store';
 import { CartBar } from './components/CartBar';
 import Home from './screens/Home';
+import Landing from './screens/Landing';
 import Store from './screens/Store';
 import Login, { safeNext } from './screens/Login';
 import Account from './screens/Account';
@@ -47,7 +48,8 @@ export default function App() {
       <BrowserRouter>
         <SavedAddress />
         <Routes>
-          <Route path="/" element={<Home />} />
+          <Route path="/" element={<Landing />} />
+          <Route path="/shops" element={<Home />} />
           <Route path="/s/:slug" element={<Store />} />
           <Route path="/login" element={<GuestOnly><Login /></GuestOnly>} />
           <Route path="/signup" element={<GuestOnly><Login /></GuestOnly>} />
