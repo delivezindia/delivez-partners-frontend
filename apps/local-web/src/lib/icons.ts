@@ -1,0 +1,191 @@
+import {
+  Apple,
+  Baby,
+  Bandage,
+  Banana,
+  Bath,
+  Battery,
+  Beef,
+  Bike,
+  BookOpen,
+  Cable,
+  CakeSlice,
+  Candy,
+  Carrot,
+  ChefHat,
+  Cherry,
+  Citrus,
+  Coffee,
+  Cookie,
+  CookingPot,
+  Croissant,
+  CupSoda,
+  Drumstick,
+  Egg,
+  EggFried,
+  FlaskConical,
+  Fish,
+  Flame,
+  Flashlight,
+  Flower2,
+  Gift,
+  GlassWater,
+  Grape,
+  Headphones,
+  HeartPulse,
+  IceCreamCone,
+  Lamp,
+  Leaf,
+  Lightbulb,
+  Milk,
+  Nut,
+  PawPrint,
+  Pill,
+  Pizza,
+  Popcorn,
+  Printer,
+  Salad,
+  Sandwich,
+  Shirt,
+  ShoppingBasket,
+  ShoppingCart,
+  Smartphone,
+  Soup,
+  Sparkles,
+  SprayCan,
+  Sprout,
+  Store,
+  Syringe,
+  TestTube,
+  Thermometer,
+  UtensilsCrossed,
+  Wheat,
+  type LucideIcon,
+} from 'lucide-react';
+import type { StoreCard, Vertical } from './types';
+
+/*
+ * Icons for shops and products while they have no photos (one icon set, lucide): picked from the shop's type, or words
+ * in the dish, product or aisle name. First match wins. The emoji in lib/emoji.ts are for the category pages.
+ */
+
+/** A colour and icon per kind of shop (store type), for the coloured band on store cards. */
+const TYPE: Record<string, { icon: LucideIcon; bg: string }> = {
+  RESTAURANT: { icon: UtensilsCrossed, bg: '#9A3412' },
+  CLOUD_KITCHEN: { icon: ChefHat, bg: '#B45309' },
+  CAFE: { icon: Coffee, bg: '#57341A' },
+  BAKERY: { icon: Croissant, bg: '#92580F' },
+  SWEETS: { icon: Candy, bg: '#9D174D' },
+  SUPERMARKET: { icon: ShoppingCart, bg: '#15803D' },
+  KIRANA: { icon: Store, bg: '#166534' },
+  GROCERY: { icon: ShoppingBasket, bg: '#17803A' },
+  PHARMACY_RETAIL: { icon: Pill, bg: '#1E5BB8' },
+  DIAGNOSTIC_LAB: { icon: FlaskConical, bg: '#0E7490' },
+  BABY_CARE: { icon: Baby, bg: '#C2410C' },
+  PET_CARE: { icon: PawPrint, bg: '#8A4B12' },
+  ELECTRONICS: { icon: Smartphone, bg: '#1E3A8A' },
+  BEAUTY_WELLNESS: { icon: Sparkles, bg: '#9D174D' },
+  MEAT_FISH: { icon: Fish, bg: '#9F1239' },
+  CLOTHING: { icon: Shirt, bg: '#6D28D9' },
+  FLOWER: { icon: Flower2, bg: '#BE185D' },
+  PRINTING: { icon: Printer, bg: '#334155' },
+  HOUSEHOLD_LIFESTYLE: { icon: Lamp, bg: '#0F766E' },
+  STREET_VENDOR: { icon: Bike, bg: '#C2470B' },
+  SOCIETY_VENDOR: { icon: Milk, bg: '#1D4ED8' },
+  OTHER: { icon: Gift, bg: '#7A1E5A' },
+};
+const VERTICAL: Record<Vertical, { icon: LucideIcon; bg: string }> = {
+  EAT: TYPE.RESTAURANT,
+  GROCERY: TYPE.GROCERY,
+  PHARMACY: TYPE.PHARMACY_RETAIL,
+  DIAGNOSTICS: TYPE.DIAGNOSTIC_LAB,
+  LOCAL_STORES: { icon: Store, bg: '#7A3FC0' },
+};
+
+/** Restaurants: the dish or cuisine they are known for. */
+const DISH: [RegExp, LucideIcon][] = [
+  [/pizza/i, Pizza],
+  [/biri?y?ani|pulao|curry|north indian|mughlai|andhra|chettinad|thali/i, CookingPot],
+  [/dosa|idli|south indian|udupi|breakfast/i, EggFried],
+  [/burger|sandwich|roll|wrap|fast food/i, Sandwich],
+  [/chicken|tandoor|kebab|kabab|grill/i, Drumstick],
+  [/fish|seafood|coastal/i, Fish],
+  [/noodle|chinese|soup|momo/i, Soup],
+  [/salad|healthy/i, Salad],
+  [/chaat|snack|samosa/i, Popcorn],
+  [/ice ?cream|kulfi|dessert/i, IceCreamCone],
+  [/cake|bakery|pastry|sweet/i, CakeSlice],
+  // Drinks last: most kitchens list beverages next to what they cook.
+  [/coffee|caf[eé]|chai|\btea\b/i, Coffee],
+  [/shake|juice|beverage|soda|lassi/i, CupSoda],
+];
+
+/** Icon and band colour for a shop: its type, then (for restaurants) what it cooks. */
+export function storeLook(s: Pick<StoreCard, 'storeType' | 'vertical' | 'name' | 'cuisines' | 'description'>): { icon: LucideIcon; bg: string } {
+  const base = TYPE[s.storeType] ?? VERTICAL[s.vertical];
+  if (s.vertical !== 'EAT') return base;
+  const text = [s.name, ...s.cuisines, s.description ?? ''].join(' ');
+  const dish = DISH.find(([re]) => re.test(text))?.[1];
+  return dish ? { ...base, icon: dish } : base;
+}
+
+const PRODUCTS: [RegExp, LucideIcon][] = [
+  // Lab tests before food words ("blood sugar").
+  [/\btest|blood|thyroid|diabet|hba1c|cbc|lipid|urine|profile|panel|vitamin/i, TestTube],
+  [/heart|\bbp\b|pressure|ecg/i, HeartPulse],
+  [/banana/i, Banana],
+  [/apple/i, Apple],
+  [/grape/i, Grape],
+  [/orange|mosambi|lemon|lime|citrus/i, Citrus],
+  [/cherr|berr|pomegranate|watermelon|mango|papaya|guava|fruit/i, Cherry],
+  [/carrot|tomato|onion|potato|veg|palak|spinach|bhindi|okra|cucumber|coriander/i, Carrot],
+  [/milk|curd|dahi|yogurt|yoghurt|paneer|cheese|butter|ghee|dairy/i, Milk],
+  [/\begg/i, Egg],
+  [/bread|bun|pav|croissant|rusk|bakery/i, Croissant],
+  [/cake|pastry|brownie/i, CakeSlice],
+  [/biscuit|cookie/i, Cookie],
+  [/chips|namkeen|bhujia|popcorn|snack|chaat|puri|tikki|samosa|pakora/i, Popcorn],
+  [/chocolate|candy|sweet|sugar|jaggery|mithai/i, Candy],
+  [/ice ?cream|kulfi/i, IceCreamCone],
+  [/atta|flour|maida|wheat|suji|rava|rice|basmati|poha|dal\b|lentil|grain|staple/i, Wheat],
+  [/almond|cashew|dry ?fruit|peanut|nut/i, Nut],
+  [/coffee|\btea\b|chai/i, Coffee],
+  [/juice|cola|soda|soft drink|beverage|drink/i, CupSoda],
+  [/water/i, GlassWater],
+  [/chicken|mutton|meat|kebab/i, Drumstick],
+  [/beef|pork/i, Beef],
+  [/fish|prawn|seafood/i, Fish],
+  [/pizza/i, Pizza],
+  [/biri?y?ani|curry|thali|pulao|dal makhani|chole|rajma/i, CookingPot],
+  [/sandwich|burger|roll|wrap/i, Sandwich],
+  [/soup|noodle|maggi|pasta/i, Soup],
+  [/salad/i, Salad],
+  [/dosa|idli|uttapam|omelette/i, EggFried],
+  [/masala|spice|chill?i/i, Flame],
+  [/organic|herb|leaf|tulsi/i, Leaf],
+  [/seed|sprout/i, Sprout],
+  [/thermometer/i, Thermometer],
+  [/syringe|injection|insulin/i, Syringe],
+  [/bandage|plaster|first ?aid/i, Bandage],
+  [/tablet|capsule|syrup|paracetamol|ors|cetirizine|medicine|pill|drops/i, Pill],
+  [/diaper|wipes|baby/i, Baby],
+  [/dog|cat|pet/i, PawPrint],
+  [/soap|shampoo|lotion|cream|face ?wash|tooth|bath|body/i, Bath],
+  [/detergent|cleaner|phenyl|dishwash|disinfect|spray/i, SprayCan],
+  [/flower|rose|bouquet|garland|mala/i, Flower2],
+  [/gift|hamper/i, Gift],
+  [/power ?bank|batter(y|ies)/i, Battery],
+  [/torch|flashlight/i, Flashlight],
+  [/bulb|batten|\bled\b|lamp/i, Lightbulb],
+  [/earphone|headphone|earbud/i, Headphones],
+  [/cable|charger|adapter|extension|plug/i, Cable],
+  [/phone|mobile/i, Smartphone],
+  [/shirt|kurta|dress|saree|t-?shirt|jeans/i, Shirt],
+  [/print|xerox|copy|lamination/i, Printer],
+  [/book|notebook|pen\b|pencil|stationery/i, BookOpen],
+];
+
+/** Icon for a product: its name first, then the aisle it is in. */
+export function itemIcon(name: string, aisle = '', fallback: LucideIcon = ShoppingBasket): LucideIcon {
+  return PRODUCTS.find(([re]) => re.test(name))?.[1] ?? PRODUCTS.find(([re]) => re.test(aisle))?.[1] ?? fallback;
+}

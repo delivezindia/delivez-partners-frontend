@@ -1,18 +1,22 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
-import { ArrowRight, Bike, CalendarClock, Clock, LayoutGrid, MapPin, RotateCcw, Search, Star, Store as StoreIcon, X } from 'lucide-react';
+import { Bike, CalendarClock, Clock, LayoutGrid, MapPin, Search, Star, Store as StoreIcon, X } from 'lucide-react';
 import { AppHeader } from '../components/AppHeader';
 import Landing from './Landing';
+import Food from './Food';
+import Grocery from './Grocery';
+import Rush from './Rush';
+import Street from './Street';
+import { LiveOrders, OrderAgain } from '../components/OrderStrips';
 import { Skeleton } from '../components/ui';
 import { km, opensAtLabel, rupees } from '../lib/format';
 import { useI18n } from '../lib/i18n';
-import { VERTICAL_LABEL } from '../lib/labels';
-import { VERTICAL_LOOK, VerticalIcon } from '../components/VerticalIcon';
+import { KIND_LABEL, SHOP_PAGES, VERTICAL_LABEL, type ShopPage } from '../lib/labels';
+import { KIND_LOOK, VERTICAL_LOOK, VerticalIcon } from '../components/VerticalIcon';
 import { useAuth } from '../lib/auth-store';
 import { useDeliverTo } from '../lib/location';
 import { useNearby } from '../lib/queries';
-import { STATUS_LABEL, useOrders, type CustomerOrder } from '../lib/orders';
-import { useReorder } from '../lib/reorder';
+import { useOrders } from '../lib/orders';
 import type { StoreCard, Vertical } from '../lib/types';
 
 const ALL_VERTICALS: Vertical[] = ['EAT', 'GROCERY', 'PHARMACY', 'DIAGNOSTICS', 'LOCAL_STORES'];
@@ -24,6 +28,7 @@ export default function Home() {
   const token = useAuth((s) => s.accessToken);
   const [params, setParams] = useSearchParams();
   const vertical = (ALL_VERTICALS.find((v) => v === params.get('v')) ?? null) as Vertical | null;
+  const page = SHOP_PAGES.find((v) => v === params.get('v')) ?? null;
   const [typed, setTyped] = useState(params.get('q') ?? '');
   const [q, setQ] = useState(typed);
 
@@ -44,7 +49,7 @@ export default function Home() {
     for (let i = 0; mixed.length < list.length; i++) by.forEach((g) => g[i] && mixed.push(g[i]));
     return mixed;
   }, [nearby.data, vertical, searching]);
-  const setVertical = (v: Vertical | null) => {
+  const setVertical = (v: Vertical | ShopPage | null) => {
     const p = new URLSearchParams(params);
     if (v) p.set('v', v);
     else p.delete('v');
@@ -53,6 +58,11 @@ export default function Home() {
 
   // No location yet: the welcome page asks for one (a category in ?v= opens once it's set).
   if (!at) return <Landing />;
+  // Food, groceries, Rush and Street Cart have their own pages; the other kinds of shop use the list below.
+  if (vertical === 'EAT') return <Food at={at} />;
+  if (vertical === 'GROCERY') return <Grocery at={at} />;
+  if (page === 'RUSH') return <Rush at={at} />;
+  if (page === 'STREET') return <Street at={at} />;
 
   return (
     <div className="min-h-screen bg-soft pb-28">
@@ -62,10 +72,13 @@ export default function Home() {
         {token && <LiveOrders />}
 
         <section aria-label={t('lc.home.categories')} className="mt-5">
-          <div className="-mx-4 flex gap-3 overflow-x-auto px-4 pb-2 sm:mx-0 sm:grid sm:grid-cols-6 sm:overflow-visible sm:px-0">
+          <div className="-mx-4 flex gap-3 overflow-x-auto px-4 pb-2 sm:mx-0 sm:grid sm:grid-cols-4 sm:overflow-visible lg:grid-cols-8 sm:px-0">
             <CategoryTile on={!vertical} onClick={() => setVertical(null)} label={t('lc.home.all')} />
             {ALL_VERTICALS.map((v) => (
               <CategoryTile key={v} v={v} on={vertical === v} onClick={() => setVertical(vertical === v ? null : v)} label={t(VERTICAL_LABEL[v])} />
+            ))}
+            {SHOP_PAGES.map((v) => (
+              <CategoryTile key={v} v={v} on={false} onClick={() => setVertical(v)} label={t(KIND_LABEL[v])} />
             ))}
           </div>
         </section>
@@ -157,47 +170,8 @@ function Hero({ typed, setTyped, area }: { typed: string; setTyped: (v: string) 
   );
 }
 
-/** Orders in progress — one tap to track. */
-function LiveOrders() {
-  const { t } = useI18n();
-  const { data } = useOrders();
-  const live = (data?.orders ?? []).filter((o) => o.active).slice(0, 2);
-  if (!live.length) return null;
-  return (
-    <section aria-label={t('lc.dash.live')} className="relative z-10 space-y-3">
-      {live.map((o) => (
-        <LiveOrderCard key={o.id} o={o} />
-      ))}
-    </section>
-  );
-}
-
-function LiveOrderCard({ o }: { o: CustomerOrder }) {
-  const { t, locale } = useI18n();
-  const eta = o.etaAt ? new Date(o.etaAt).toLocaleTimeString(locale, { hour: 'numeric', minute: '2-digit' }) : null;
-  const unpaid = o.status === 'DRAFT';
-  return (
-    <Link to={`/orders/${o.id}`} className="group flex items-center gap-4 rounded-3xl bg-white p-4 shadow-[0_18px_50px_-20px_rgba(0,0,0,0.35)] ring-1 ring-line transition hover:-translate-y-0.5 hover:ring-black">
-      <span className="relative">
-        <VerticalIcon v={o.store.vertical} size="lg" />
-        <span className={`absolute -right-1 -top-1 h-3.5 w-3.5 rounded-full ring-2 ring-white ${unpaid ? 'bg-amber-500' : 'bg-dz-green'}`}>
-          <span className={`absolute inset-0 animate-ping rounded-full ${unpaid ? 'bg-amber-500' : 'bg-dz-green'} opacity-60`} />
-        </span>
-      </span>
-      <span className="min-w-0 flex-1">
-        <span className="block text-xs font-extrabold uppercase tracking-wider text-dz-red">{t(STATUS_LABEL[o.status])}</span>
-        <b className="block truncate text-[17px]">{o.store.name}</b>
-        <span className="block truncate text-sm text-ink-2">{eta ? t('lc.ord.arrivesBy', { time: eta }) : `#${o.orderNumber} · ${rupees(o.totals.grandTotal)}`}</span>
-      </span>
-      <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-black px-4 py-2 text-sm font-extrabold text-dz-yellow transition group-hover:gap-2">
-        {unpaid ? t('lc.dash.pay') : t('lc.dash.track')} <ArrowRight className="h-4 w-4" aria-hidden />
-      </span>
-    </Link>
-  );
-}
-
-function CategoryTile({ v, on, onClick, label }: { v?: Vertical; on: boolean; onClick: () => void; label: string }) {
-  const look = v ? VERTICAL_LOOK[v] : null;
+function CategoryTile({ v, on, onClick, label }: { v?: Vertical | ShopPage; on: boolean; onClick: () => void; label: string }) {
+  const look = v ? KIND_LOOK[v] : null;
   const Icon = look?.icon ?? LayoutGrid;
   return (
     <button
@@ -239,50 +213,6 @@ function RateLast() {
           <button key={n} type="button" aria-label={t('lc.rate.nStars', { n })} onClick={() => navigate(`/orders/${o.id}`, { state: { rate: n } })} className="grid h-11 w-11 place-items-center rounded-full hover:bg-dz-yellow-soft" data-rate-star={n}>
             <Star className="h-8 w-8 text-ink-3 hover:fill-dz-yellow hover:text-[#d4a106]" aria-hidden />
           </button>
-        ))}
-      </div>
-    </section>
-  );
-}
-
-/** One tap rebuilds the last order from the shop's menu today and opens checkout. */
-function OrderAgain() {
-  const { t } = useI18n();
-  const { data } = useOrders();
-  const reorder = useReorder();
-  const shops = useMemo(() => {
-    const seen = new Map<string, CustomerOrder>();
-    for (const o of data?.orders ?? []) if (['DELIVERED', 'COMPLETED'].includes(o.status) && !seen.has(o.store.id)) seen.set(o.store.id, o);
-    return [...seen.values()].slice(0, 8);
-  }, [data]);
-  if (!shops.length) return null;
-  return (
-    <section className="mt-8" aria-label={t('lc.dash.again')}>
-      <h2 className="mb-3 flex items-center gap-2 text-lg font-extrabold">
-        <RotateCcw className="h-5 w-5 text-dz-red" aria-hidden /> {t('lc.dash.again')}
-      </h2>
-      <div className="-mx-4 flex gap-3 overflow-x-auto px-4 pb-2">
-        {shops.map((o) => (
-          <div key={o.store.id} className="flex w-64 shrink-0 flex-col gap-3 rounded-2xl bg-white p-3 ring-1 ring-line">
-            <Link to={`/s/${o.store.slug ?? o.store.id}`} className="flex min-w-0 items-center gap-3 hover:text-dz-red">
-              <VerticalIcon v={o.store.vertical} size="md" />
-              <span className="min-w-0">
-                <b className="block truncate text-sm">{o.store.name}</b>
-                <span className="block truncate text-xs text-ink-2">{o.items.map((i) => `${i.qty} × ${i.name}`).join(', ')}</span>
-              </span>
-            </Link>
-            <button
-              type="button"
-              onClick={() => void reorder.run(o)}
-              disabled={!!reorder.busy}
-              data-reorder={o.id}
-              className="flex min-h-10 items-center justify-center gap-1.5 rounded-xl bg-black px-3 text-sm font-bold text-dz-yellow transition hover:bg-ink-2 disabled:opacity-60"
-            >
-              <RotateCcw className={`h-4 w-4 ${reorder.busy === o.id ? 'animate-spin' : ''}`} aria-hidden />
-              {reorder.busy === o.id ? t('lc.ro.busy') : t('lc.ro.cta')}
-            </button>
-            {reorder.failed === o.id && <p className="text-xs font-semibold text-dz-red">{t('lc.ro.fail')}</p>}
-          </div>
         ))}
       </div>
     </section>

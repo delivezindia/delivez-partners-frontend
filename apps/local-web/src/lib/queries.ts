@@ -3,18 +3,20 @@ import { api } from './api';
 import { useAuth } from './auth-store';
 import type { Address, AddressLabel, Me, Menu, StoreCard, Vertical } from './types';
 
+/** Shops around a point (for useQueries over several points; useNearby is the one-point hook). */
+export const nearbyQuery = (at: { lat: number; lng: number } | null, vertical: Vertical | null, q: string) => ({
+  queryKey: ['nearby', at?.lat, at?.lng, vertical, q],
+  queryFn: () => {
+    const p = new URLSearchParams({ lat: String(at!.lat), lng: String(at!.lng) });
+    if (vertical) p.set('vertical', vertical);
+    if (q.trim().length >= 2) p.set('q', q.trim());
+    return api<{ stores: StoreCard[]; verticals: Vertical[] }>(`/local/stores?${p}`);
+  },
+  enabled: !!at,
+});
+
 export function useNearby(at: { lat: number; lng: number } | null, vertical: Vertical | null, q: string) {
-  return useQuery({
-    queryKey: ['nearby', at?.lat, at?.lng, vertical, q],
-    queryFn: () => {
-      const p = new URLSearchParams({ lat: String(at!.lat), lng: String(at!.lng) });
-      if (vertical) p.set('vertical', vertical);
-      if (q.trim().length >= 2) p.set('q', q.trim());
-      return api<{ stores: StoreCard[]; verticals: Vertical[] }>(`/local/stores?${p}`);
-    },
-    enabled: !!at,
-    placeholderData: (prev) => prev,
-  });
+  return useQuery({ ...nearbyQuery(at, vertical, q), placeholderData: (prev) => prev });
 }
 
 /** What's live right now (public page): cities with running shops, shops per kind and what they sell. */
@@ -49,11 +51,14 @@ export function useOffers() {
 /** "Main city, Second city" — for copy like "Now in …". */
 export const cityList = (o: Overview | undefined) => (o?.cities.length ? o.cities.map((c) => c.name).join(', ') : null);
 
+/** One shop's menu; shared by the shop page and the pages that show dishes from several shops. */
+export const menuQuery = (idOrSlug: string, at: { lat: number; lng: number } | null) => ({
+  queryKey: ['menu', idOrSlug, at?.lat, at?.lng],
+  queryFn: () => api<Menu>(`/local/stores/${encodeURIComponent(idOrSlug)}${at ? `?lat=${at.lat}&lng=${at.lng}` : ''}`),
+});
+
 export function useMenu(idOrSlug: string, at: { lat: number; lng: number } | null) {
-  return useQuery({
-    queryKey: ['menu', idOrSlug, at?.lat, at?.lng],
-    queryFn: () => api<Menu>(`/local/stores/${encodeURIComponent(idOrSlug)}${at ? `?lat=${at.lat}&lng=${at.lng}` : ''}`),
-  });
+  return useQuery(menuQuery(idOrSlug, at));
 }
 
 export function useMe() {

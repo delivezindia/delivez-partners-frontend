@@ -1,2 +1,187 @@
 @import 'tailwindcss';
 @import '../../../packages/ui/src/tokens.css';
+
+/*
+ * Food and Grocery pages: the small motions from the Delivez Now design (all off for reduced motion, see tokens.css).
+ * Entrances fill backwards only: hidden until they start, then let go of the element once done.
+ */
+@layer components {
+  .vp-up {
+    animation: vp-up 0.5s cubic-bezier(0.2, 0.8, 0.2, 1) backwards;
+  }
+  .vp-pop {
+    animation: vp-pop 0.6s cubic-bezier(0.2, 0.8, 0.2, 1) backwards;
+  }
+  .vp-drop {
+    animation: vp-drop 0.6s cubic-bezier(0.2, 0.8, 0.2, 1) backwards;
+  }
+  .vp-ping {
+    animation: vp-ping 1.4s infinite;
+  }
+  .vp-spin {
+    animation: vp-spin 12s linear infinite;
+  }
+  /* A rider crossing the street art, left to right. */
+  .vp-ride {
+    animation: vp-ride 7s linear infinite;
+  }
+  .vp-pill {
+    animation: vp-pill 4.5s ease-in-out infinite;
+  }
+  /* Pins on the "what's around you" maps float a little. */
+  .vp-bob {
+    animation: vp-bob 3.2s ease-in-out infinite;
+  }
+  /* Display type: tight in English; Indian scripts need room for marks above and below the line. */
+  .vp-tight {
+    line-height: 0.92;
+  }
+  html:not(:lang(en)) .vp-tight {
+    line-height: 1.25;
+  }
+  /* A slow sweep of light across the black "₹0" panel */
+  .vp-zero::before {
+    content: '';
+    position: absolute;
+    inset: -40% -20%;
+    background: conic-gradient(from 0deg, transparent 0 70%, rgb(255 212 0 / 0.18) 80%, transparent 90%);
+    animation: vp-spin 7s linear infinite;
+    pointer-events: none;
+  }
+}
+
+@keyframes vp-up {
+  from {
+    transform: translateY(40%);
+    opacity: 0;
+  }
+}
+@keyframes vp-pop {
+  0% {
+    transform: scale(0.4) rotate(-12deg);
+    opacity: 0;
+  }
+  60% {
+    transform: scale(1.15) rotate(3deg);
+    opacity: 1;
+  }
+}
+@keyframes vp-drop {
+  from {
+    transform: translateY(-120%);
+    opacity: 0;
+  }
+}
+@keyframes vp-ping {
+  0% {
+    box-shadow: 0 0 0 0 rgb(232 19 15 / 0.7);
+  }
+  70%,
+  100% {
+    box-shadow: 0 0 0 8px rgb(232 19 15 / 0);
+  }
+}
+@keyframes vp-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+@keyframes vp-ride {
+  from {
+    transform: translateX(-120px);
+  }
+  to {
+    transform: translateX(660px);
+  }
+}
+@keyframes vp-bob {
+  50% {
+    transform: translateY(-4px);
+  }
+}
+@keyframes vp-pill {
+  0%,
+  8% {
+    opacity: 0;
+    transform: translateY(10px) scale(0.9);
+  }
+  16%,
+  80% {
+    opacity: 1;
+    transform: none;
+  }
+  92%,
+  100% {
+    opacity: 0;
+    transform: translateY(-6px);
+  }
+}
+
+/*
+ * Home page (Delivez Now design): light by default, dark when the device asks for it, like the design.
+ * Only inside .dz-now, so the rest of the app keeps its light look. Use as bg-now-bg, text-now-muted, border-now-line…
+ */
+@theme inline {
+  --color-now-bg: var(--now-bg);
+  --color-now-surface: var(--now-surface);
+  --color-now-card: var(--now-card);
+  --color-now-line: var(--now-line);
+  --color-now-text: var(--now-text);
+  --color-now-muted: var(--now-muted);
+}
+.dz-now {
+  --now-bg: #ffffff;
+  --now-surface: #f6f6f4;
+  --now-card: #ffffff;
+  --now-line: #e4e4e0;
+  --now-text: #161616;
+  --now-muted: #5e5e5a;
+  background: var(--now-bg);
+  color: var(--now-text);
+}
+@media (prefers-color-scheme: dark) {
+  .dz-now {
+    --now-bg: #0e0e0e;
+    --now-surface: #171717;
+    --now-card: #1a1a1a;
+    --now-line: #2a2a2a;
+    --now-text: #f2f2f0;
+    --now-muted: #a5a5a0;
+    color-scheme: dark;
+  }
+}
+@layer components {
+  /* The route on the hero's live-order card, drawn as moving dashes. */
+  .now-dash {
+    animation: now-dash 1.2s linear infinite;
+  }
+  /* The rider on the hero street, left to right across the 560-wide scene. */
+  .now-ride {
+    animation: now-ride 6s linear infinite;
+  }
+}
+@keyframes now-dash {
+  to {
+    stroke-dashoffset: -20;
+  }
+}
+@keyframes now-ride {
+  from {
+    transform: translateX(-60px);
+  }
+  to {
+    transform: translateX(600px);
+  }
+}
+/* The bar under the picked category card fills while it waits for the next one. */
+@keyframes now-grow {
+  from {
+    transform: scaleX(0);
+  }
+}
+/* The design's display type is narrower than the app's: tighten it on the home page (Latin only; the rule for Indian scripts in tokens.css is more specific). */
+@layer base {
+  .dz-now :is(h1, h2, .font-display) {
+    font-stretch: 64%;
+  }
+}

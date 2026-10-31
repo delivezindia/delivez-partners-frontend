@@ -5,13 +5,15 @@ import { Brand } from './ui';
 import { PARTNERS_URL } from '../lib/config';
 import { useAuth } from '../lib/auth-store';
 import { useI18n, type MsgKey } from '../lib/i18n';
-import { VERTICAL_LABEL } from '../lib/labels';
+import { KIND_LABEL, type ShopPage } from '../lib/labels';
 import { VerticalIcon } from './VerticalIcon';
 import type { Vertical } from '../lib/types';
 
 /* Public-site building blocks, matching the Delivez Partners site (apps/partners-web/src/site). */
 
 export const SITE_VERTICALS: Vertical[] = ['EAT', 'GROCERY', 'PHARMACY', 'DIAGNOSTICS', 'LOCAL_STORES'];
+/** The kinds of shop plus the Rush and Street Cart pages: what the category menus list. */
+export const SITE_PAGES: (Vertical | ShopPage)[] = [...SITE_VERTICALS, 'RUSH', 'STREET'];
 
 export function Section({ id, eyebrow, title, intro, children, className = '', center = false }: { id?: string; eyebrow?: string; title?: string; intro?: string; children: ReactNode; className?: string; center?: boolean }) {
   return (
@@ -98,7 +100,7 @@ function useClickOutside(ref: React.RefObject<HTMLElement>, onOutside: () => voi
 }
 
 /** Site header: yellow with the red rule, like the Partners site. `onCategory` lets the landing page react to a pick. */
-export function SiteNavbar({ onCategory }: { onCategory?: (v: Vertical) => void }) {
+export function SiteNavbar({ onCategory }: { onCategory?: (v: Vertical | ShopPage) => void }) {
   const { pathname } = useLocation();
   const token = useAuth((s) => s.accessToken);
   const { t, lang, languages, setLanguage } = useI18n();
@@ -134,7 +136,7 @@ export function SiteNavbar({ onCategory }: { onCategory?: (v: Vertical) => void 
     { href: anchor('how'), label: 'lc.land.howTitle' },
     { href: anchor('faq'), label: 'lc.site.faq' },
   ];
-  const pickCategory = (v: Vertical) => {
+  const pickCategory = (v: Vertical | ShopPage) => {
     setCatOpen(false);
     setMobileOpen(false);
     onCategory?.(v);
@@ -154,10 +156,10 @@ export function SiteNavbar({ onCategory }: { onCategory?: (v: Vertical) => void 
               {catOpen && (
                 <div className="absolute left-0 top-full mt-3 w-[440px] rounded-[14px] border border-line bg-white p-3 text-ink shadow-xl">
                   <div className="grid grid-cols-2 gap-1">
-                    {SITE_VERTICALS.map((v) => (
+                    {SITE_PAGES.map((v) => (
                       <Link key={v} to={`/shops?v=${v}`} onClick={() => pickCategory(v)} className="flex items-center gap-3 rounded-xl p-3 transition hover:bg-dz-yellow-soft">
                         <VerticalIcon v={v} />
-                        <span className="text-sm font-bold">{t(VERTICAL_LABEL[v])}</span>
+                        <span className="text-sm font-bold">{t(KIND_LABEL[v])}</span>
                       </Link>
                     ))}
                   </div>
@@ -235,10 +237,10 @@ export function SiteNavbar({ onCategory }: { onCategory?: (v: Vertical) => void 
             </div>
             <p className="mt-6 text-xs font-extrabold uppercase tracking-wider text-ink-3">{t('lc.home.categories')}</p>
             <ul className="mt-2 space-y-1">
-              {SITE_VERTICALS.map((v) => (
+              {SITE_PAGES.map((v) => (
                 <li key={v}>
                   <Link to={`/shops?v=${v}`} onClick={() => pickCategory(v)} className="flex items-center gap-3 rounded-xl px-2 py-2.5 font-bold hover:bg-dz-yellow-soft">
-                    <VerticalIcon v={v} size="sm" bare /> {t(VERTICAL_LABEL[v])}
+                    <VerticalIcon v={v} size="sm" bare /> {t(KIND_LABEL[v])}
                   </Link>
                 </li>
               ))}
@@ -302,10 +304,10 @@ export function SiteFooter() {
         <div>
           <p className="mb-3 text-sm font-semibold text-white">{t('lc.home.categories')}</p>
           <ul className="space-y-2 text-sm">
-            {SITE_VERTICALS.map((v) => (
+            {SITE_PAGES.map((v) => (
               <li key={v}>
                 <Link to={`/shops?v=${v}`} className="hover:text-dz-yellow">
-                  {t(VERTICAL_LABEL[v])}
+                  {t(KIND_LABEL[v])}
                 </Link>
               </li>
             ))}

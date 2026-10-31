@@ -15,10 +15,15 @@ export interface Opening {
 
 const WEEKDAY_INDEX: Record<string, number> = { Sun: 0, Mon: 1, Tue: 2, Wed: 3, Thu: 4, Fri: 5, Sat: 6 };
 
+/** 'HH:MM' → "9:00 am" in the customer's language. */
+export function clockLabel(hhmm: string, locale: string) {
+  const [h, m] = hhmm.split(':').map(Number);
+  return new Date(Date.UTC(2024, 0, 7, h, m)).toLocaleTimeString(locale, { hour: 'numeric', minute: '2-digit', timeZone: 'UTC' });
+}
+
 /** { day: 'tomorrow', time: '09:00' } → "tomorrow 9:00 am" in the customer's language. */
 export function opensAtLabel(o: Opening, locale: string, today: string, tomorrow: string) {
-  const [h, m] = o.time.split(':').map(Number);
-  const time = new Date(Date.UTC(2024, 0, 7, h, m)).toLocaleTimeString(locale, { hour: 'numeric', minute: '2-digit', timeZone: 'UTC' });
+  const time = clockLabel(o.time, locale);
   if (o.day === 'today') return `${today} ${time}`;
   if (o.day === 'tomorrow') return `${tomorrow} ${time}`;
   // 7 Jan 2024 was a Sunday.

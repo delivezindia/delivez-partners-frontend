@@ -11,13 +11,19 @@ export interface StoreCard {
   slug: string | null;
   name: string;
   vertical: Vertical;
+  /** RESTAURANT, CLOUD_KITCHEN, SUPERMARKET, KIRANA… */
+  storeType: string;
   cuisines: string[];
   description: string | null;
   logoUrl: string | null;
   coverUrl: string | null;
   area: string | null;
   distanceKm: number;
+  /** Which way the shop is from the address, in degrees (0 = north, 90 = east). */
+  bearing: number;
   open: boolean;
+  /** When today's opening hours end ("HH:MM", shop's local time); null without set hours or when closed. */
+  closesAt: string | null;
   busy: boolean;
   bookable: boolean;
   opensAt: import('./format').Opening | null;

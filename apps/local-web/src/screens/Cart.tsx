@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { Link, Navigate, useNavigate } from 'react-router-dom';
+import { Link, Navigate, useLocation, useNavigate } from 'react-router-dom';
 import { useQueryClient } from '@tanstack/react-query';
 import { AlertTriangle, ArrowLeft, BadgePercent, Building2, CreditCard, MapPin, Smartphone, ShoppingBag, Store as StoreIcon } from 'lucide-react';
 import { CouponBox, problemText } from '../components/CouponBox';
@@ -43,7 +43,9 @@ export default function Cart() {
   const token = useAuth((s) => s.accessToken);
   const cart = useCart();
   const at = useDeliverTo((s) => s.at);
-  const [note, setNote] = useState('');
+  // A note written on the Street Cart page arrives with the navigation.
+  const passed = (useLocation().state as { note?: unknown } | null)?.note;
+  const [note, setNote] = useState(() => (typeof passed === 'string' ? passed.slice(0, 300) : ''));
   const [method, setMethod] = useState<PayMethod>('UPI');
   const [picking, setPicking] = useState(false);
   const [error, setError] = useState('');

@@ -82,5 +82,12 @@ export function simpleLine(p: Product): Omit<CartLine, 'key' | 'qty'> {
   };
 }
 
+/** Plain add in the size picked on the card (no add-ons). */
+export function sizedLine(p: Product, variantId: string | null): Omit<CartLine, 'key' | 'qty'> {
+  const v = p.variants.find((x) => x.id === variantId);
+  if (!v) return simpleLine(p);
+  return { ...simpleLine(p), variantId: v.id, options: p.variants.length > 1 ? v.name : '', unitPrice: p.price + v.priceDiff };
+}
+
 /** Products with a choice to make open the options sheet instead of adding straight away. */
 export const needsOptions = (p: Product) => p.variants.length > 1 || p.addonGroups.some((g) => g.addons.length > 0);

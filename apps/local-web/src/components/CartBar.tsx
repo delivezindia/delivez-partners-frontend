@@ -11,8 +11,8 @@ export function CartBar() {
   const lab = storeVertical === 'DIAGNOSTICS';
   const { pathname } = useLocation();
   const n = cartCount(lines);
-  // Only while browsing (home, a shop); forms and the cart itself have their own buttons at the bottom.
-  if (!n || !(pathname === '/' || pathname.startsWith('/s/'))) return null;
+  // Only while browsing (home, the shop lists, a shop); forms and the cart itself have their own buttons at the bottom.
+  if (!n || !(pathname === '/' || pathname === '/shops' || pathname.startsWith('/s/'))) return null;
   return (
     <div className="pointer-events-none fixed inset-x-0 bottom-0 z-20 px-4 pb-[max(16px,env(safe-area-inset-bottom))]">
       <Link to={lab ? '/book-lab' : '/cart'} className="dz-rise pointer-events-auto mx-auto flex max-w-3xl items-center gap-3 rounded-2xl bg-dz-green px-4 py-3 text-white shadow-lg">
