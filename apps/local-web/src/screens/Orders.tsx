@@ -1,10 +1,10 @@
 import { Link, useSearchParams } from 'react-router-dom';
 import { ArrowLeft, ChevronRight, FlaskConical, Receipt } from 'lucide-react';
-import { Skeleton } from '../components/ui';
+import { Button, Skeleton } from '../components/ui';
 import { rupees } from '../lib/format';
 import { useI18n } from '../lib/i18n';
 import { LAB_STATUS, useLabBookings } from '../lib/labs';
-import { STATUS_LABEL, useOrders } from '../lib/orders';
+import { STATUS_LABEL, useOrderPages } from '../lib/orders';
 
 // Order history (ongoing first — they're newest) and lab test bookings.
 export default function Orders() {
@@ -40,8 +40,8 @@ export default function Orders() {
 
 function OrderList() {
   const { t, locale } = useI18n();
-  const orders = useOrders();
-  const list = orders.data?.orders ?? [];
+  const orders = useOrderPages();
+  const list = orders.data?.pages.flatMap((p) => p.orders) ?? [];
   return (
     <>
       {orders.isLoading && [0, 1, 2].map((i) => <Skeleton key={i} className="h-24" />)}
@@ -70,6 +70,11 @@ function OrderList() {
           <ChevronRight className="h-5 w-5 shrink-0 text-ink-3" aria-hidden />
         </Link>
       ))}
+      {orders.hasNextPage && (
+        <Button variant="ghost" className="w-full" disabled={orders.isFetchingNextPage} onClick={() => void orders.fetchNextPage()} data-older-orders>
+          {t('lc.ord.older')}
+        </Button>
+      )}
     </>
   );
 }

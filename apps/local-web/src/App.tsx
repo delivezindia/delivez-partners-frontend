@@ -3,6 +3,7 @@ import { BrowserRouter, Navigate, Route, Routes, useLocation, useSearchParams } 
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { useAuth } from './lib/auth-store';
 import { CartBar } from './components/CartBar';
+import { OfflineBanner } from './components/OfflineBanner';
 import Home from './screens/Home';
 import Landing from './screens/Landing';
 import Store from './screens/Store';
@@ -68,6 +69,7 @@ export default function App() {
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
         <CartBar />
+        <OfflineBanner />
       </BrowserRouter>
     </QueryClientProvider>
   );

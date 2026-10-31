@@ -1,6 +1,6 @@
 import type { CheckoutParams } from './razorpay';
 import { useRef } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useInfiniteQuery, useQuery } from '@tanstack/react-query';
 import { api, newIdempotencyKey } from './api';
 import type { CartLine } from './cart';
 import type { MsgKey } from './i18n';
@@ -10,9 +10,10 @@ import { useLiveRoom } from './live';
 export type Blocker = 'STORE_CLOSED' | 'DELIVERY_NOT_OFFERED' | 'ADDRESS_REQUIRED' | 'OUT_OF_RANGE' | 'BELOW_MINIMUM' | 'LAB_BOOKING' | 'RX_REQUIRED' | 'NO_PHARMACIST' | 'ITEMS';
 export type Problem = {
   productId: string;
-  code: 'GONE' | 'UNAVAILABLE' | 'OUT_OF_STOCK' | 'FEW_LEFT' | 'OPTIONS_CHANGED';
+  code: 'GONE' | 'UNAVAILABLE' | 'OUT_OF_STOCK' | 'FEW_LEFT' | 'OPTIONS_CHANGED' | 'MAX_QTY';
   name: string;
   left?: number;
+  max?: number;
 };
 
 export interface Quote {
@@ -227,6 +228,16 @@ export function useOrders() {
   return useQuery({
     queryKey: ['orders'],
     queryFn: () => api<{ orders: CustomerOrder[]; nextCursor: string | null }>('/local/orders'),
+  });
+}
+
+/** Full order history for My orders: 20 at a time, older pages on request. */
+export function useOrderPages() {
+  return useInfiniteQuery({
+    queryKey: ['orders', 'pages'],
+    queryFn: ({ pageParam }) => api<{ orders: CustomerOrder[]; nextCursor: string | null }>(`/local/orders${pageParam ? `?cursor=${encodeURIComponent(pageParam)}` : ''}`),
+    initialPageParam: null as string | null,
+    getNextPageParam: (last) => last.nextCursor,
   });
 }
 

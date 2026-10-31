@@ -33,6 +33,7 @@ const PROBLEM: Record<Problem['code'], MsgKey> = {
   OUT_OF_STOCK: 'lc.co.p.out',
   FEW_LEFT: 'lc.co.p.few',
   OPTIONS_CHANGED: 'lc.co.p.options',
+  MAX_QTY: 'lc.co.p.max',
 };
 
 // L2 Cart + checkout (home delivery, paid online).
@@ -149,7 +150,7 @@ export default function Cart() {
                 <div className="min-w-0 flex-1">
                   <b className="block leading-snug">{l.name}</b>
                   {l.options && <span className="block text-xs text-ink-3">{l.options}</span>}
-                  {p && <span className="mt-0.5 block text-xs font-bold text-dz-red">{t(PROBLEM[p.code], { n: p.left ?? 0 })}</span>}
+                  {p && <span className="mt-0.5 block text-xs font-bold text-dz-red">{t(PROBLEM[p.code], { n: (p.code === 'MAX_QTY' ? p.max : p.left) ?? 0 })}</span>}
                 </div>
                 <div className="flex flex-col items-end gap-1">
                   <QtyStepper size="sm" qty={l.qty} max={l.maxQty} onChange={(n) => cart.setQty(l.key, n)} label={l.name} />

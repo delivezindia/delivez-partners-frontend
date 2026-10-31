@@ -5,6 +5,7 @@ import { Modal } from '../components/Modal';
 import { ProductSheet } from '../components/ProductSheet';
 import { ReorderNotice } from '../components/ReorderNotice';
 import { Button, QtyStepper, Skeleton, VegMark } from '../components/ui';
+import { ApiError } from '../lib/api';
 import { needsOptions, simpleLine, useCart, type CartLine } from '../lib/cart';
 import { km, opensAtLabel, rupees } from '../lib/format';
 import { useI18n } from '../lib/i18n';
@@ -42,6 +43,16 @@ export default function Store() {
         <Skeleton className="h-8 w-2/3" />
         <Skeleton className="h-24" />
         <Skeleton className="h-24" />
+      </div>
+    );
+  // Couldn't reach the server (as opposed to "no such shop"): say so and offer a retry.
+  if (!data && menu.error && !(menu.error instanceof ApiError && menu.error.status === 404))
+    return (
+      <div className="mx-auto max-w-md p-10 text-center">
+        <p className="text-lg font-bold">{t('lc.err.network')}</p>
+        <Button className="mt-4" onClick={() => void menu.refetch()} disabled={menu.isFetching}>
+          {t('lc.tryAgain')}
+        </Button>
       </div>
     );
   if (!data)

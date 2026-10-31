@@ -89,7 +89,7 @@ export default function Home() {
         <div className="mb-4 mt-8 flex items-end justify-between gap-3">
           <div>
             <p className="text-xs font-extrabold uppercase tracking-[0.14em] text-dz-red">{searching ? t('lc.dash.search') : t('lc.dash.explore')}</p>
-            <h2 className="mt-1 text-2xl sm:text-3xl">{searching ? t('lc.home.results', { q: q.trim() }) : vertical ? t(VERTICAL_LABEL[vertical]) : t('lc.home.near')}</h2>
+            <h2 className="mt-1 text-2xl [overflow-wrap:anywhere] sm:text-3xl">{searching ? t('lc.home.results', { q: q.trim() }) : vertical ? t(VERTICAL_LABEL[vertical]) : t('lc.home.near')}</h2>
           </div>
           {!nearby.isLoading && stores.length > 0 && <span className="shrink-0 rounded-full bg-white px-3 py-1 text-xs font-bold text-ink-2 ring-1 ring-line">{t('lc.dash.shops', { n: stores.length })}</span>}
         </div>

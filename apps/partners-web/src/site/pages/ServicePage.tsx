@@ -8,6 +8,7 @@ const CTA_NOUN: Record<string, string> = {
   restaurants: 'kitchen',
   grocery: 'store',
   pharmacy: 'pharmacy',
+  diagnostics: 'lab',
   'local-stores': 'shop',
   vendors: 'stall',
 };
@@ -128,7 +129,7 @@ export default function ServicePage() {
         </div>
       </Section>
 
-      <CtaBand title={`Bring your ${CTA_NOUN[service.slug]} online`} body={`Free to register · about ${service.minutes} · documents can come later.`} />
+      <CtaBand title={`Bring your ${CTA_NOUN[service.slug] ?? 'business'} online`} body={`Free to register · about ${service.minutes} · documents can come later.`} />
     </>
   );
 }
