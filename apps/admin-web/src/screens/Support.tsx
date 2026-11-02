@@ -114,6 +114,7 @@ function TicketPanel({ id }: { id: string }) {
   if (t.error) return <ErrorBox error={errorText(t.error)} />;
   if (!t.data) return <Empty>Loading…</Empty>;
   const d = t.data;
+  const them = d.raisedByType === 'CUSTOMER' ? 'customer' : 'shop';
   return (
     <Card
       title={`${d.number} · ${d.subject}`}
@@ -136,10 +137,10 @@ function TicketPanel({ id }: { id: string }) {
         </ol>
         {canAct && d.status !== 'CLOSED' && (
           <div className="space-y-2 border-t border-line pt-3">
-            <textarea className={`${inputCls} h-auto min-h-24 py-2`} value={reply} onChange={(e) => setReply(e.target.value)} placeholder="Reply to the shop (they see “Delivez support”)" aria-label="Reply" />
+            <textarea className={`${inputCls} h-auto min-h-24 py-2`} value={reply} onChange={(e) => setReply(e.target.value)} placeholder={`Reply to the ${them} (they see “Delivez support”)`} aria-label="Reply" />
             <div className="flex flex-wrap items-center gap-2">
               <select className={`${inputCls} w-auto`} value={after} onChange={(e) => setAfter(e.target.value as typeof after)} aria-label="After replying">
-                <option value="WAITING_ON_USER">…and wait for the shop</option>
+                <option value="WAITING_ON_USER">…and wait for the {them}</option>
                 <option value="IN_PROGRESS">…and keep working on it</option>
                 <option value="RESOLVED">…and mark resolved</option>
               </select>

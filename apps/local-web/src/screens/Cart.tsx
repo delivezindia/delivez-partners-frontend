@@ -265,6 +265,10 @@ export default function Cart() {
 
           {shortBy > 0 && <Notice>{t('lc.co.b.min', { amount: rupees(shortBy) })}</Notice>}
           {blockers.map((b) => BLOCKER[b] && <Notice key={b}>{t(BLOCKER[b]!)}</Notice>)}
+          {/* The bill couldn't be worked out (e.g. ops paused the shop): say why the button is off. */}
+          {quote.error && !quote.isFetching && (
+            <Notice>{quote.error instanceof ApiError && quote.error.code === 'STORE_NOT_FOUND' ? t('lc.store.notFound') : messageOf(quote.error, t('lc.err.network'))}</Notice>
+          )}
           <ErrorText>{error}</ErrorText>
           <Button className="w-full min-h-14 text-base" disabled={!q?.canPlace || placing || quote.isFetching} onClick={() => void place()} data-place-order>
             {verifying ? t('lc.pay.verifying') : placing ? t('lc.co.placing') : t('lc.co.place', { total: rupees(totals.grandTotal) })}
