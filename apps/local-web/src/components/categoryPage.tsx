@@ -544,6 +544,7 @@ export function AroundMap({ points, picked, onPick, centre, accent, label }: { p
   const max = Math.max(0.5, Math.ceil(Math.max(0, ...points.map((p) => p.km)) * 2) / 2);
   const placed: { p: AroundPoint; x: number; y: number }[] = [];
   for (const p of points) {
+    if (!Number.isFinite(p.bearing)) continue; // no direction (an older API): leave the pin out
     const r = Math.max(26, (RING * Math.min(p.km, max)) / max);
     let deg = p.bearing;
     let x = 0;

@@ -1,5 +1,5 @@
 import { api } from './api';
-import type { CustomerOrder } from './orders';
+import { normalizeOrder, type CustomerOrder } from './orders';
 
 /** What the API returns to open Razorpay Checkout for an unpaid order. */
 export interface CheckoutParams {
@@ -68,5 +68,5 @@ export async function payWithRazorpay(orderId: string, p: CheckoutParams, onVeri
   const result = await openCheckout(p);
   if (!result) return null;
   onVerifying?.();
-  return api<CustomerOrder>(`/local/orders/${orderId}/payment/verify`, { method: 'POST', body: result });
+  return normalizeOrder(await api<CustomerOrder>(`/local/orders/${orderId}/payment/verify`, { method: 'POST', body: result }));
 }

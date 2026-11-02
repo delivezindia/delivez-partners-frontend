@@ -15,7 +15,7 @@ import { cartTotal, useCart } from '../lib/cart';
 import { km, rupees } from '../lib/format';
 import { useI18n, type MsgKey } from '../lib/i18n';
 import { useDeliverTo } from '../lib/location';
-import { toItems, useQuote, type Blocker, type CouponProblem, type CustomerOrder, type PayMethod, type Problem, PAY_LABEL, PAY_METHODS } from '../lib/orders';
+import { normalizeOrder, toItems, useQuote, type Blocker, type CouponProblem, type CustomerOrder, type PayMethod, type Problem, PAY_LABEL, PAY_METHODS } from '../lib/orders';
 import { messageOf } from './Login';
 
 const BLOCKER: Partial<Record<Blocker, MsgKey>> = {
@@ -92,7 +92,7 @@ export default function Cart() {
     setError('');
     setPlacing(true);
     try {
-      const o = await api<CustomerOrder>('/local/orders', {
+      const placed = await api<CustomerOrder>('/local/orders', {
         method: 'POST',
         body: {
           storeId: cart.storeId,
@@ -107,6 +107,7 @@ export default function Cart() {
         },
         idempotencyKey: attempt.current,
       });
+      const o = normalizeOrder(placed);
       cart.clear();
       qc.invalidateQueries({ queryKey: ['orders'] });
       qc.setQueryData(['order', o.id], o);

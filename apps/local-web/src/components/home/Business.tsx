@@ -217,7 +217,8 @@ function ShopMap() {
           </text>
         </g>
       ))}
-      {pts.map((s) => {
+      {/* No direction (an older API): leave the pin out rather than draw it at NaN. */}
+      {pts.filter((s) => Number.isFinite(s.bearing)).map((s) => {
         const r = Math.max(12, (R * Math.min(s.distanceKm, max)) / max);
         const t = (s.bearing * Math.PI) / 180;
         return <circle key={s.id} cx={240 + r * Math.sin(t)} cy={180 - r * Math.cos(t)} r="5.5" fill={KIND_LOOK[s.vertical].accent} stroke="#080C14" strokeWidth="1.5" opacity={s.open ? 1 : 0.45} />;

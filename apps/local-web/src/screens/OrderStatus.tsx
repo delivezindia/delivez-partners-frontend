@@ -10,7 +10,7 @@ import { Button, ErrorText, Skeleton } from '../components/ui';
 import { api, newIdempotencyKey } from '../lib/api';
 import { rupees } from '../lib/format';
 import { useI18n } from '../lib/i18n';
-import { CANCEL_REASON, PAY_LABEL, STATUS_LABEL, STEPS, useOrder, type CustomerOrder } from '../lib/orders';
+import { CANCEL_REASON, normalizeOrder, PAY_LABEL, STATUS_LABEL, STEPS, useOrder, type CustomerOrder } from '../lib/orders';
 import { messageOf } from './Login';
 import { useReorder } from '../lib/reorder';
 import { payWithRazorpay, type CheckoutParams } from '../lib/razorpay';
@@ -51,7 +51,7 @@ export default function OrderStatus() {
     setError('');
     setBusy(true);
     try {
-      const updated = await api<CustomerOrder>(`/local/orders/${o!.id}/cancel`, { method: 'POST', body: {}, idempotencyKey: newIdempotencyKey() });
+      const updated = normalizeOrder(await api<CustomerOrder>(`/local/orders/${o!.id}/cancel`, { method: 'POST', body: {}, idempotencyKey: newIdempotencyKey() }));
       qc.setQueryData(['order', id], updated);
       qc.invalidateQueries({ queryKey: ['orders'] });
       setConfirmCancel(false);

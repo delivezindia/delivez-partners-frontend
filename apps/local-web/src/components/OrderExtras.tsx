@@ -8,7 +8,7 @@ import { Button, ErrorText, QtyStepper } from './ui';
 import { api, newIdempotencyKey } from '../lib/api';
 import { rupees } from '../lib/format';
 import { useI18n, type MsgKey } from '../lib/i18n';
-import { RETURN_REASONS, REVIEW_TAGS, type CustomerOrder, type ReturnReason, type Substitution } from '../lib/orders';
+import { normalizeOrder, RETURN_REASONS, REVIEW_TAGS, type CustomerOrder, type ReturnReason, type Substitution } from '../lib/orders';
 import { messageOf } from '../screens/Login';
 
 /** Ticks every second while mounted — for countdowns. */
@@ -36,7 +36,7 @@ function useOrderAction(o: CustomerOrder) {
     setError('');
     setBusy(true);
     try {
-      const updated = await api<CustomerOrder>(`/local/orders/${o.id}/${path}`, { method: 'POST', body, idempotencyKey: newIdempotencyKey() });
+      const updated = normalizeOrder(await api<CustomerOrder>(`/local/orders/${o.id}/${path}`, { method: 'POST', body, idempotencyKey: newIdempotencyKey() }));
       qc.setQueryData(['order', o.id], updated);
       qc.invalidateQueries({ queryKey: ['orders'] });
       return true;

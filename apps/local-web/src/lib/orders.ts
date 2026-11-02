@@ -2,6 +2,7 @@ import type { CheckoutParams } from './razorpay';
 import { useRef } from 'react';
 import { useInfiniteQuery, useQuery } from '@tanstack/react-query';
 import { api, newIdempotencyKey } from './api';
+import { useAuth } from './auth-store';
 import type { CartLine } from './cart';
 import type { MsgKey } from './i18n';
 import type { Vertical } from './types';
@@ -218,7 +219,7 @@ export function useOrder(id: string) {
   const live = useRef(false);
   const q = useQuery({
     queryKey: ['order', id],
-    queryFn: () => api<CustomerOrder>(`/local/orders/${encodeURIComponent(id)}`),
+    queryFn: async () => normalizeOrder(await api<CustomerOrder>(`/local/orders/${encodeURIComponent(id)}`)),
     enabled: !!id,
     refetchInterval: (q) => (q.state.data && !q.state.data.active ? false : live.current ? 60_000 : 8_000),
   });
@@ -227,18 +228,44 @@ export function useOrder(id: string) {
   return q;
 }
 
+/** A server running an older API leaves out order fields added since: fill them so the order screens still render. */
+export function normalizeOrder(o: CustomerOrder): CustomerOrder {
+  return {
+    ...o,
+    items: o.items ?? [],
+    substitutions: o.substitutions ?? [],
+    returns: o.returns ?? [],
+    returnWindow: o.returnWindow ?? null,
+    review: o.review ?? null,
+    rx: o.rx ?? null,
+    coupon: o.coupon ?? null,
+    canRate: o.canRate ?? false,
+    awaitingPayment: o.awaitingPayment ?? false,
+  };
+}
+const orderList = async (path: string) => {
+  const r = await api<{ orders: CustomerOrder[]; nextCursor: string | null }>(path);
+  return { ...r, orders: (r.orders ?? []).map(normalizeOrder), nextCursor: r.nextCursor ?? null };
+};
+
+// Only for a signed-in customer: right after logging out the cache is cleared while the home page is still
+// mounted, and without this the list would be asked for again with no session (a 401).
 export function useOrders() {
+  const signedIn = !!useAuth((s) => s.accessToken);
   return useQuery({
     queryKey: ['orders'],
-    queryFn: () => api<{ orders: CustomerOrder[]; nextCursor: string | null }>('/local/orders'),
+    queryFn: () => orderList('/local/orders'),
+    enabled: signedIn,
   });
 }
 
 /** Full order history for My orders: 20 at a time, older pages on request. */
 export function useOrderPages() {
+  const signedIn = !!useAuth((s) => s.accessToken);
   return useInfiniteQuery({
+    enabled: signedIn,
     queryKey: ['orders', 'pages'],
-    queryFn: ({ pageParam }) => api<{ orders: CustomerOrder[]; nextCursor: string | null }>(`/local/orders${pageParam ? `?cursor=${encodeURIComponent(pageParam)}` : ''}`),
+    queryFn: ({ pageParam }) => orderList(`/local/orders${pageParam ? `?cursor=${encodeURIComponent(pageParam)}` : ''}`),
     initialPageParam: null as string | null,
     getNextPageParam: (last) => last.nextCursor,
   });
