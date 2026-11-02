@@ -17,10 +17,11 @@ export default function AmShell() {
   const { data: me, isLoading } = useMe();
   const online = useOnline();
   const pending = useOutbox();
-  const counts = useAmQuery<{ issues: unknown[] }>('issues-open', '/admin/am/issues?status=open', { refetchInterval: 60_000, enabled: me?.role === 'ACCOUNT_MANAGER' });
+  // One row is enough: the badge needs only the total.
+  const counts = useAmQuery<{ issues: unknown[]; total?: number }>('issues-open-count', '/admin/am/issues?status=open&limit=1', { refetchInterval: 60_000, enabled: me?.role === 'ACCOUNT_MANAGER' });
   if (isLoading) return null;
   if (me && me.role !== 'ACCOUNT_MANAGER') return <Navigate to="/" replace />;
-  const openIssues = counts.data?.data.issues.length ?? 0;
+  const openIssues = counts.data?.data.total ?? counts.data?.data.issues.length ?? 0;
 
   return (
     <div className="min-h-screen bg-soft pb-[calc(72px+env(safe-area-inset-bottom))] lg:pb-0 lg:pl-60">

@@ -1,5 +1,6 @@
-import { useEffect } from 'react';
+import { Suspense, useEffect } from 'react';
 import { Outlet, useLocation } from 'react-router-dom';
+import { PageLoading } from '../components/PageLoading';
 import { Footer } from './Footer';
 import { Navbar } from './Navbar';
 
@@ -32,7 +33,10 @@ export function PublicLayout({ footer = true }: { footer?: boolean }) {
     <div className="flex min-h-screen flex-col bg-white">
       <Navbar />
       <main className="flex-1">
-        <Outlet />
+        {/* Keeps the navbar up while a page's code downloads. */}
+        <Suspense fallback={<PageLoading />}>
+          <Outlet />
+        </Suspense>
       </main>
       {footer && <Footer />}
     </div>

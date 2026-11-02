@@ -190,8 +190,8 @@ export function useQuote(input: { storeId: string | null; addressId?: string; li
   const rx = input.rxKeys?.length ? input.rxKeys : undefined;
   return useQuery({
     queryKey: ['quote', input.storeId, input.addressId, items, rx, input.couponCode],
-    queryFn: () =>
-      api<Quote>('/local/cart/quote', {
+    queryFn: async (): Promise<Quote> => {
+      const q = await api<Quote>('/local/cart/quote', {
         method: 'POST',
         body: {
           storeId: input.storeId,
@@ -202,7 +202,10 @@ export function useQuote(input: { storeId: string | null; addressId?: string; li
           couponCode: input.couponCode,
         },
         idempotencyKey: newIdempotencyKey(),
-      }),
+      });
+      // A server running an older API leaves out lists added since: default them so the cart still renders.
+      return { ...q, lines: q.lines ?? [], problems: q.problems ?? [], rxItems: q.rxItems ?? [], offers: q.offers ?? [], blockers: q.blockers ?? [], coupon: q.coupon ?? null, couponError: q.couponError ?? null };
+    },
     enabled: enabled && !!input.storeId && items.length > 0,
     placeholderData: (prev) => prev,
     staleTime: 10_000,

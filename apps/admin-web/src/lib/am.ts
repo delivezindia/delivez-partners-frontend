@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { keepPreviousData, useQuery, useQueryClient } from '@tanstack/react-query';
 import { api, ApiError } from './api';
 
 // Account manager mobile view: types, offline cache and the offline notes outbox.
@@ -144,7 +144,7 @@ const write = (k: string, data: unknown) => {
 const isNetwork = (e: unknown) => !(e instanceof ApiError);
 
 /** Fetch with a phone-side copy: offline → last synced data (and when it was synced). */
-export function useAmQuery<T>(key: string, path: string, opts: { refetchInterval?: number; enabled?: boolean } = {}) {
+export function useAmQuery<T>(key: string, path: string, opts: { refetchInterval?: number; enabled?: boolean; keepPrevious?: boolean } = {}) {
   return useQuery({
     queryKey: ['am', key],
     queryFn: async (): Promise<{ data: T; cachedAt: string | null }> => {
@@ -160,6 +160,8 @@ export function useAmQuery<T>(key: string, path: string, opts: { refetchInterval
     },
     refetchInterval: opts.refetchInterval ?? 60_000,
     enabled: opts.enabled ?? true,
+    // Keeps the list on screen while a bigger page (another key) loads.
+    placeholderData: opts.keepPrevious ? keepPreviousData : undefined,
     retry: (n, e) => isNetwork(e) && n < 1,
   });
 }

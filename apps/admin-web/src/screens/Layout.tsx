@@ -27,13 +27,14 @@ const NAV: { to: string; label: string; icon: LucideIcon; end?: boolean; roles?:
 ];
 
 export default function Layout() {
-  const { data: me } = useMe();
+  const { data: me, isLoading } = useMe();
   const qc = useQueryClient();
   const navigate = useNavigate();
-  const pending = useQuery({ queryKey: ['documents', 'PENDING'], queryFn: () => api<{ superseded: boolean }[]>('/admin/documents?status=PENDING'), refetchInterval: 30_000 });
+  const isAm = me?.role === 'ACCOUNT_MANAGER';
+  // Only once we know who this is: account managers can't read the console's data (they'd just get 403s).
+  const pending = useQuery({ queryKey: ['documents', 'PENDING'], queryFn: () => api<{ superseded: boolean }[]>('/admin/documents?status=PENDING'), refetchInterval: 30_000, enabled: !!me && !isAm });
   const pendingCount = pending.data?.filter((d) => !d.superseded).length ?? 0;
   const nav = NAV.filter((n) => !n.roles || can(me?.role, n.roles));
-  const isAm = me?.role === 'ACCOUNT_MANAGER';
 
   async function logout() {
     await disablePush();
@@ -58,7 +59,9 @@ export default function Layout() {
     </NavLink>
   );
 
-  // Account managers have their own phone-first view and no access to the console pages.
+  // Account managers have their own phone-first view and no access to the console pages. Until we know the role,
+  // render nothing, so a console page (and its data requests) doesn't start for someone who can't see it.
+  if (isLoading) return <div className="min-h-screen bg-soft" />;
   if (isAm) return <Navigate to="/am" replace />;
 
   return (
@@ -81,7 +84,8 @@ export default function Layout() {
             </button>
           </div>
         </div>
-        <nav className="mx-auto flex max-w-[1400px] gap-1 overflow-x-auto border-t border-black/10 px-3 [scrollbar-width:none]" aria-label="Admin">
+        {/* Phones: one swipeable row. Laptop and up: wraps to a second line instead of hiding the last items. */}
+        <nav className="mx-auto flex max-w-[1400px] gap-1 overflow-x-auto border-t border-black/10 px-3 [scrollbar-width:none] lg:flex-wrap lg:overflow-visible" aria-label="Admin">
           {nav.map(link)}
         </nav>
       </header>

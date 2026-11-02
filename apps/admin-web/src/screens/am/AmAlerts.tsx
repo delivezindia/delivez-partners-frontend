@@ -7,6 +7,9 @@ import { AmHeader, Page, Synced } from './AmShell';
 import { IssuesList } from './AmStore';
 import { Empty } from './parts';
 
+/** Issues load this many at a time (most urgent first). */
+const PAGE = 100;
+
 interface Notice {
   id: string;
   title: string | null;
@@ -19,7 +22,8 @@ interface Notice {
 /** Issues to handle (with SLA timers) and the alerts that were pushed to this phone. */
 export default function AmAlerts() {
   const [tab, setTab] = useState<'issues' | 'alerts'>('issues');
-  const issues = useAmQuery<{ issues: Issue[] }>('issues-open', '/admin/am/issues?status=open', { refetchInterval: 30_000 });
+  const [limit, setLimit] = useState(PAGE);
+  const issues = useAmQuery<{ issues: Issue[]; total?: number }>(`issues-open-${limit}`, `/admin/am/issues?status=open&limit=${limit}`, { refetchInterval: 30_000, keepPrevious: true });
   const notices = useQuery({ queryKey: ['notifications'], queryFn: () => api<{ items: Notice[]; unread: number }>('/me/notifications?limit=30'), refetchInterval: 30_000, enabled: tab === 'alerts' });
   const navigate = useNavigate();
   const qc = useQueryClient();
@@ -29,9 +33,10 @@ export default function AmAlerts() {
     if (n.url) navigate(n.url);
   }
   const list = issues.data?.data.issues ?? [];
+  const total = issues.data?.data.total ?? list.length;
   return (
     <>
-      <AmHeader title="Alerts" sub={`${list.length} open issue${list.length === 1 ? '' : 's'}`} />
+      <AmHeader title="Alerts" sub={`${total} open issue${total === 1 ? '' : 's'}`} />
       <Synced at={undefined} cachedAt={issues.data?.cachedAt ?? null} />
       <Page>
         <div className="grid grid-cols-2 gap-1 rounded-xl bg-white p-1 ring-1 ring-line md:max-w-md" role="tablist">
@@ -58,7 +63,14 @@ export default function AmAlerts() {
           issues.isLoading ? (
             <div className="h-32 animate-pulse rounded-2xl bg-white" />
           ) : (
-            <IssuesList issues={list} showStore />
+            <>
+              <IssuesList issues={list} showStore />
+              {list.length < total && (
+                <button type="button" onClick={() => setLimit((n) => n + PAGE)} disabled={issues.isPlaceholderData} className="h-11 w-full rounded-xl bg-white text-sm font-extrabold ring-1 ring-line disabled:opacity-40" data-more-issues>
+                  {issues.isPlaceholderData ? 'Loading…' : `Show ${Math.min(PAGE, total - list.length)} more (${list.length} of ${total})`}
+                </button>
+              )}
+            </>
           )
         ) : !notices.data?.items.length ? (
           <Empty>No alerts yet. You’ll get one for churn risk over 70, SLA breaches and sudden order drops at your restaurants.</Empty>

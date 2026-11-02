@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { Suspense, useState } from 'react';
 import { useEffect } from 'react';
 import { NavLink, Outlet, useLocation, useNavigate, useOutletContext, useParams } from 'react-router-dom';
 import { useQueryClient } from '@tanstack/react-query';
@@ -255,7 +255,14 @@ export default function StoreLayout() {
       )}
 
       <section className="mx-auto w-full max-w-6xl flex-1 px-4 py-6 sm:px-6">
-        {isLoading || !data || !role ? <PageSkeleton /> : <Outlet context={{ storeId, detail: data, role, feed } satisfies StoreContext} />}
+        {isLoading || !data || !role ? (
+          <PageSkeleton />
+        ) : (
+          // Keeps the sidebar up while a screen's code downloads.
+          <Suspense fallback={<PageSkeleton />}>
+            <Outlet context={{ storeId, detail: data, role, feed } satisfies StoreContext} />
+          </Suspense>
+        )}
       </section>
       <Toaster />
     </main>

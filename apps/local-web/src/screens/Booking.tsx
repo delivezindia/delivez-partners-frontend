@@ -3,6 +3,7 @@ import { Link, useParams, useSearchParams } from 'react-router-dom';
 import { useQueryClient } from '@tanstack/react-query';
 import { ArrowLeft, CalendarClock, Check, CircleCheck, Download, FileText, FlaskConical, Home, LifeBuoy, MapPin, Phone, Store as StoreIcon, UserRound, XCircle } from 'lucide-react';
 import { Modal } from '../components/Modal';
+import { NotFoundPage } from '../components/NotFoundPage';
 import { PushCard } from '../components/PushCard';
 import { SlotPicker } from '../components/SlotPicker';
 import { Button, ErrorText, Skeleton } from '../components/ui';
@@ -28,15 +29,7 @@ export default function Booking() {
 
   const b = q.data;
   if (q.isLoading) return <Skeleton className="m-4 h-48" />;
-  if (!b)
-    return (
-      <div className="p-10 text-center">
-        <p className="font-bold">{t('lc.lb.notFound')}</p>
-        <Link to="/orders?tab=labs" className="mt-3 inline-block font-bold text-dz-red underline">
-          {t('lc.lb.mine')}
-        </Link>
-      </div>
-    );
+  if (!b) return <NotFoundPage title={t('lc.ord.tabLabs')} message={t('lc.lb.notFound')} backTo="/orders?tab=labs" backLabel={t('lc.lb.mine')} />;
 
   const ended = ['CANCELLED', 'REJECTED'].includes(b.status);
   const current = LAB_STEPS.findIndex((s) => s.states.includes(b.status));

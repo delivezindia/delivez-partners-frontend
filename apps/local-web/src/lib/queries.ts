@@ -55,6 +55,8 @@ export const cityList = (o: Overview | undefined) => (o?.cities.length ? o.citie
 export const menuQuery = (idOrSlug: string, at: { lat: number; lng: number } | null) => ({
   queryKey: ['menu', idOrSlug, at?.lat, at?.lng],
   queryFn: () => api<Menu>(`/local/stores/${encodeURIComponent(idOrSlug)}${at ? `?lat=${at.lat}&lng=${at.lng}` : ''}`),
+  // No shop yet (e.g. an empty basket on the lab page): "/local/stores/" is the shop list, not a menu.
+  enabled: !!idOrSlug,
 });
 
 export function useMenu(idOrSlug: string, at: { lat: number; lng: number } | null) {

@@ -3,6 +3,7 @@ import { Link, useParams, useSearchParams } from 'react-router-dom';
 import { useQueryClient } from '@tanstack/react-query';
 import { ArrowLeft, Bike, Check, CreditCard, CircleCheck, Phone, RotateCcw, XCircle } from 'lucide-react';
 import { Modal } from '../components/Modal';
+import { NotFoundPage } from '../components/NotFoundPage';
 import { PushCard } from '../components/PushCard';
 import { DoorCheck, HelpLink, RateOrder, RxStatus, Substitutions } from '../components/OrderExtras';
 import { Button, ErrorText, Skeleton } from '../components/ui';
@@ -33,15 +34,7 @@ export default function OrderStatus() {
         <Skeleton className="h-48" />
       </div>
     );
-  if (!o)
-    return (
-      <div className="p-10 text-center">
-        <p className="font-bold">{t('lc.ord.notFound')}</p>
-        <Link to="/orders" className="mt-3 inline-block font-bold text-dz-red underline">
-          {t('lc.ord.all')}
-        </Link>
-      </div>
-    );
+  if (!o) return <NotFoundPage title={t('lc.ord.all')} message={t('lc.ord.notFound')} backTo="/orders" backLabel={t('lc.ord.all')} />;
 
   const flow = STEPS;
   const current = flow.findIndex((s) => s.states.includes(o.status));
