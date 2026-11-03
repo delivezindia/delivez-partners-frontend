@@ -21,6 +21,7 @@ import {
   Truck,
   type LucideIcon,
 } from 'lucide-react';
+import en from '@delivez/i18n/locales/en.json';
 import { useBasket } from '../categoryPage';
 import { useAuth } from '../../lib/auth-store';
 import { simpleLine } from '../../lib/cart';
@@ -30,7 +31,7 @@ import { itemIcon, storeLook } from '../../lib/icons';
 import { STATUS_LABEL, useOrders, type CustomerOrder, type OrderStatus } from '../../lib/orders';
 import { menuQuery, useNearby, useOverview, type PublicOffer } from '../../lib/queries';
 import type { Menu, Product } from '../../lib/types';
-import { KINDS, NowSection, Soon, pill, useAround } from './kit';
+import { KINDS, NowSection, Soon, pill, placed, useAround } from './kit';
 
 // ---------------------------------------------------------------- How it works
 
@@ -50,7 +51,7 @@ export function HowBand() {
     return () => clearInterval(id);
   }, []);
   return (
-    <NowSection id="how" surface tag="How Delivez Now works" title="Four steps to your door.">
+    <NowSection id="how" surface tag={t('lc.hm.how.tag')} title={t('lc.hm.how.title')}>
       <ol className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
         {STEPS.map((s, i) => (
           <li key={s.title} data-step={i} aria-current={i === on ? 'step' : undefined} className={`rounded-[20px] border p-5 transition duration-300 ${i === on ? 'border-black bg-black text-white' : 'border-now-line bg-now-card text-now-text'}`}>
@@ -69,10 +70,13 @@ export function HowBand() {
 
 // ---------------------------------------------------------------- Search
 
-const EXAMPLES = ['Paracetamol', 'Milk', 'Flowers', 'Charger', 'Pizza', 'Pet food'];
+/** Shown in the reader's language; tapping one searches the English word, as products are named in the shops. */
+const EXAMPLES: MsgKey[] = ['lc.hm.t.paracetamol', 'lc.hm.t.milk', 'lc.hm.t.flowers', 'lc.hm.t.charger', 'lc.hm.t.pizza', 'lc.hm.t.petFood'];
 type Tab = 'products' | 'stores' | 'categories';
+const TAB_LABEL: Record<Tab, MsgKey> = { products: 'lc.hm.s.products', stores: 'lc.hm.s.stores', categories: 'lc.home.categories' };
 
 export function SearchBand() {
+  const { t } = useI18n();
   const a = useAround();
   const overview = useOverview().data;
   const basket = useBasket();
@@ -99,12 +103,13 @@ export function SearchBand() {
     .filter((m): m is Menu => !!m)
     .flatMap((m) => m.products.filter((p) => p.available && !p.prescriptionRequired && p.name.toLowerCase().includes(needle) && (!price || simpleLine(p).unitPrice <= price)).map((p) => ({ p, m })))
     .slice(0, 12);
-  const kinds = searching ? KINDS.filter((k) => k.title.toLowerCase().includes(needle)) : [];
-  const types = searching ? Object.entries(overview?.verticals ?? {}).flatMap(([v, x]) => x.types.filter((t) => t.name.toLowerCase().includes(needle)).map((t) => ({ v, name: t.name }))) : [];
+  const kinds = searching ? KINDS.filter((k) => [t(k.title), en[k.title]].some((s) => s.toLowerCase().includes(needle))) : [];
+  const types = searching ? Object.entries(overview?.verticals ?? {}).flatMap(([v, x]) => x.types.filter((y) => y.name.toLowerCase().includes(needle)).map((y) => ({ v, name: y.name }))) : [];
+  const kindName = (v: string) => KINDS.find((k) => k.k === v);
   const busy = searching && (hits.isLoading || hits.isPlaceholderData || (tab === 'products' && menus.some((m) => m.isLoading)));
   const select = 'mt-1 rounded-[10px] border-[1.5px] border-now-line bg-now-card px-2.5 py-2 text-sm font-bold text-now-text';
   let body: ReactNode;
-  if (!searching) body = <p className="text-now-muted">Type to search, or try an example above.</p>;
+  if (!searching) body = <p className="text-now-muted">{t('lc.hm.s.hint')}</p>;
   else if (busy) body = <div className="h-24 animate-pulse rounded-2xl bg-now-card" />;
   else if (tab === 'stores')
     body = stores.length ? (
@@ -119,7 +124,7 @@ export function SearchBand() {
                 </span>
                 <span className="min-w-0 flex-1">
                   <b className="block truncate">{s.name}</b>
-                  <small className="text-xs text-now-muted">{[km(s.distanceKm), s.open ? `${s.etaMinutes} min` : 'Closed', s.rating && `★ ${s.rating.avg.toFixed(1)}`].filter(Boolean).join(' · ')}</small>
+                  <small className="text-xs text-now-muted">{[km(s.distanceKm), s.open ? t('lc.store.mins', { n: s.etaMinutes }) : t('lc.hm.closed'), s.rating && `★ ${s.rating.avg.toFixed(1)}`].filter(Boolean).join(' · ')}</small>
                 </span>
                 <ArrowRight className="h-4 w-4 shrink-0" aria-hidden />
               </Link>
@@ -145,12 +150,12 @@ export function SearchBand() {
       <div className="flex flex-wrap gap-1.5">
         {kinds.map((k) => (
           <Link key={k.k} to={k.to} className={pill(false)}>
-            {k.title} <ArrowRight className="h-3.5 w-3.5" aria-hidden />
+            {t(k.title)} <ArrowRight className="h-3.5 w-3.5" aria-hidden />
           </Link>
         ))}
         {types.map((x) => (
           <Link key={`${x.v}-${x.name}`} to={`/shops?v=${x.v}`} className={pill(false)}>
-            {x.name} · {KINDS.find((k) => k.k === x.v)?.title}
+            {x.name} · {kindName(x.v) ? t(kindName(x.v)!.title) : ''}
           </Link>
         ))}
       </div>
@@ -158,68 +163,68 @@ export function SearchBand() {
       <NoHits term={term} where={a.where} />
     );
   return (
-    <NowSection id="search" tag="Search" title="Find anything nearby.">
+    <NowSection id="search" tag={t('lc.dash.search')} title={t('lc.hm.s.title')}>
       <label className="sr-only" htmlFor="now-q">
-        Search for products, stores or categories
+        {t('lc.hm.searchPh')}
       </label>
       <div className="relative">
         <Search className="pointer-events-none absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-now-muted" aria-hidden />
-        <input id="now-q" value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search for products, stores or categories" className="min-h-14 w-full rounded-[14px] border-2 border-dz-red bg-now-card pl-12 pr-4 text-base text-now-text placeholder:text-now-muted" data-now-search />
+        <input id="now-q" value={q} onChange={(e) => setQ(e.target.value)} placeholder={t('lc.hm.searchPh')} className="min-h-14 w-full rounded-[14px] border-2 border-dz-red bg-now-card pl-12 pr-4 text-base text-now-text placeholder:text-now-muted" data-now-search />
       </div>
       <div className="mt-2.5 flex flex-wrap gap-1.5">
         {EXAMPLES.map((x) => (
-          <button key={x} type="button" onClick={() => setQ(x)} className={pill(false)}>
-            {x}
+          <button key={x} type="button" onClick={() => setQ(en[x])} className={pill(false)}>
+            {t(x)}
           </button>
         ))}
       </div>
-      <div className="mt-3 flex flex-wrap gap-1.5" role="tablist" aria-label="Search in">
+      <div className="mt-3 flex flex-wrap gap-1.5" role="tablist" aria-label={t('lc.hm.s.in')}>
         {(['products', 'stores', 'categories'] as Tab[]).map((x) => (
           <button key={x} type="button" role="tab" aria-selected={tab === x} onClick={() => setTab(x)} className={`rounded-full px-3.5 py-2 text-[13px] font-extrabold capitalize transition ${tab === x ? 'bg-dz-red text-white' : 'border-[1.5px] border-now-line bg-now-surface text-now-text'}`}>
-            {x}
+            {t(TAB_LABEL[x])}
           </button>
         ))}
       </div>
       {tab !== 'categories' && (
         <div className="mt-3 flex flex-wrap gap-3 text-xs font-extrabold text-now-muted">
           <label>
-            Distance
+            {t('lc.hm.s.dist')}
             <select value={dist} onChange={(e) => setDist(Number(e.target.value))} className={`${select} block`}>
-              <option value={0}>Any</option>
-              <option value={1}>Under 1 km</option>
-              <option value={3}>Under 3 km</option>
+              <option value={0}>{t('lc.hm.any')}</option>
+              <option value={1}>{t('lc.hm.s.underKm', { n: 1 })}</option>
+              <option value={3}>{t('lc.hm.s.underKm', { n: 3 })}</option>
             </select>
           </label>
           <label>
-            Delivery time
+            {t('lc.hm.s.time')}
             <select value={time} onChange={(e) => setTime(Number(e.target.value))} className={`${select} block`}>
-              <option value={0}>Any</option>
-              <option value={20}>Under 20 min</option>
-              <option value={40}>Under 40 min</option>
+              <option value={0}>{t('lc.hm.any')}</option>
+              <option value={20}>{t('lc.food.fFast', { n: 20 })}</option>
+              <option value={40}>{t('lc.food.fFast', { n: 40 })}</option>
             </select>
           </label>
           <label>
-            Rating
+            {t('lc.hm.s.rating')}
             <select value={rating} onChange={(e) => setRating(Number(e.target.value))} className={`${select} block`}>
-              <option value={0}>Any</option>
+              <option value={0}>{t('lc.hm.any')}</option>
               <option value={4}>4+</option>
             </select>
           </label>
           {tab === 'products' && (
             <label>
-              Price
+              {t('lc.hm.s.price')}
               <select value={price} onChange={(e) => setPrice(Number(e.target.value))} className={`${select} block`}>
-                <option value={0}>Any</option>
-                <option value={10000}>Under ₹100</option>
-                <option value={50000}>Under ₹500</option>
+                <option value={0}>{t('lc.hm.any')}</option>
+                <option value={10000}>{t('lc.hm.s.underPrice', { price: rupees(10000) })}</option>
+                <option value={50000}>{t('lc.hm.s.underPrice', { price: rupees(50000) })}</option>
               </select>
             </label>
           )}
           <label>
-            Availability
+            {t('lc.hm.s.avail')}
             <select value={openOnly ? 1 : 0} onChange={(e) => setOpenOnly(e.target.value === '1')} className={`${select} block`}>
-              <option value={0}>Any</option>
-              <option value={1}>Open now</option>
+              <option value={0}>{t('lc.hm.any')}</option>
+              <option value={1}>{t('lc.food.fOpen')}</option>
             </select>
           </label>
         </div>
@@ -233,10 +238,12 @@ export function SearchBand() {
 }
 
 function NoHits({ term, where }: { term: string; where: string | null }) {
-  return <p className="text-now-muted">{`Nothing matches “${term}” ${where ? `near ${where}` : 'near you'} yet.`}</p>;
+  const { t } = useI18n();
+  return <p className="text-now-muted">{placed(t, where, 'lc.hm.s.none', 'lc.hm.s.noneYou', { q: term })}</p>;
 }
 
 function ProductRow({ p, m, onAdd, qty }: { p: Product; m: Menu; onAdd: () => void; qty: number }) {
+  const { t } = useI18n();
   const Icon = itemIcon(p.name);
   return (
     <li className="flex items-center gap-3 rounded-2xl border border-now-line bg-now-card px-3 py-2.5 text-now-text">
@@ -247,8 +254,8 @@ function ProductRow({ p, m, onAdd, qty }: { p: Product; m: Menu; onAdd: () => vo
         <b className="block truncate text-sm">{p.name}</b>
         <small className="block truncate text-xs text-now-muted">{`${rupees(simpleLine(p).unitPrice)} · ${m.store.name}`}</small>
       </span>
-      <button type="button" onClick={onAdd} className="shrink-0 rounded-lg border-[1.5px] border-dz-red px-3 py-1.5 text-xs font-black text-dz-red hover:bg-dz-red hover:text-white" aria-label={`Add ${p.name}`}>
-        {qty > 0 ? `${qty} in cart` : 'Add'}
+      <button type="button" onClick={onAdd} className="shrink-0 rounded-lg border-[1.5px] border-dz-red px-3 py-1.5 text-xs font-black text-dz-red hover:bg-dz-red hover:text-white" aria-label={t('lc.addNamed', { name: p.name })}>
+        {qty > 0 ? t('lc.hm.inCart', { n: qty }) : t('lc.hm.add')}
       </button>
     </li>
   );
@@ -257,39 +264,40 @@ function ProductRow({ p, m, onAdd, qty }: { p: Product; m: Menu; onAdd: () => vo
 // ---------------------------------------------------------------- Offers
 
 const OFFER_BG = ['linear-gradient(135deg,#E8130F,#7A0209)', 'linear-gradient(135deg,#1E5BD6,#0E2E6E)', 'linear-gradient(135deg,#17803A,#0B3D20)', 'linear-gradient(135deg,#000,#3A2E00)', 'linear-gradient(135deg,#0E5A7A,#05202A)', 'linear-gradient(135deg,#7A1E5A,#2A0A20)', 'linear-gradient(135deg,#E0A800,#7A5A0A)'];
-const OFFER_KINDS: { k: string; label: string; test: (o: PublicOffer) => boolean }[] = [
-  { k: 'shop', label: 'Store Offers', test: (o) => !!o.shop },
-  { k: 'free', label: 'Free Delivery', test: (o) => o.kind === 'FREE_DELIVERY' },
-  { k: 'first', label: 'First Order', test: (o) => o.firstOrderOnly },
-  { k: 'cat', label: 'Category Discounts', test: (o) => !o.shop && !!o.vertical },
+const OFFER_KINDS: { k: string; label: MsgKey; test: (o: PublicOffer) => boolean }[] = [
+  { k: 'shop', label: 'lc.hm.of.kShop', test: (o) => !!o.shop },
+  { k: 'free', label: 'lc.hm.of.kFree', test: (o) => o.kind === 'FREE_DELIVERY' },
+  { k: 'first', label: 'lc.hm.of.kFirst', test: (o) => o.firstOrderOnly },
+  { k: 'cat', label: 'lc.hm.of.kCat', test: (o) => !o.shop && !!o.vertical },
 ];
-const COMING: { icon: LucideIcon; label: string; body: string; bg: string }[] = [
-  { icon: Store, label: 'Store offers', body: 'Discounts from the shops you order from', bg: OFFER_BG[0] },
-  { icon: CreditCard, label: 'Bank offers', body: 'Savings on UPI and cards', bg: OFFER_BG[1] },
-  { icon: Truck, label: 'Free delivery', body: 'Free delivery days and minimum-order deals', bg: OFFER_BG[2] },
-  { icon: Sparkles, label: 'First order', body: 'A welcome offer on your first order', bg: OFFER_BG[3] },
-  { icon: Pill, label: 'Category deals', body: 'Savings on medicines, groceries and more', bg: OFFER_BG[4] },
-  { icon: Gift, label: 'Festival offers', body: 'Hampers and gifts for every festival', bg: OFFER_BG[5] },
-  { icon: Timer, label: 'Flash deals', body: 'Short-time deals near you', bg: OFFER_BG[6] },
+const COMING: { icon: LucideIcon; label: MsgKey; body: MsgKey; bg: string }[] = [
+  { icon: Store, label: 'lc.hm.of.c1', body: 'lc.hm.of.c1b', bg: OFFER_BG[0] },
+  { icon: CreditCard, label: 'lc.hm.of.c2', body: 'lc.hm.of.c2b', bg: OFFER_BG[1] },
+  { icon: Truck, label: 'lc.dash.free', body: 'lc.hm.of.c3b', bg: OFFER_BG[2] },
+  { icon: Sparkles, label: 'lc.hm.of.c4', body: 'lc.hm.of.c4b', bg: OFFER_BG[3] },
+  { icon: Pill, label: 'lc.hm.of.c5', body: 'lc.hm.of.c5b', bg: OFFER_BG[4] },
+  { icon: Gift, label: 'lc.hm.of.c6', body: 'lc.hm.of.c6b', bg: OFFER_BG[5] },
+  { icon: Timer, label: 'lc.hm.of.c7', body: 'lc.hm.of.c7b', bg: OFFER_BG[6] },
 ];
 
 export function OffersBand() {
+  const { t } = useI18n();
   const { offers } = useAround();
   const [k, setK] = useState('');
   const kinds = OFFER_KINDS.filter((x) => offers.some(x.test));
   const shown = offers.filter((o) => !k || OFFER_KINDS.find((x) => x.k === k)!.test(o));
   return (
-    <NowSection id="offers" surface tag="Offers & promotions" title="Offers near you." intro={offers.length ? 'Tap a code to copy it, then apply it in your cart. Every order also has no platform fee and no packaging fee.' : 'Coupons are on the way. Today every order has no platform fee and no packaging fee.'}>
+    <NowSection id="offers" surface tag={t('lc.hm.of.tag')} title={t('lc.hm.of.title')} intro={t(offers.length ? 'lc.hm.of.intro' : 'lc.hm.of.introNone')}>
       {offers.length ? (
         <>
           {kinds.length > 0 && (
-            <div className="mb-3 flex flex-wrap gap-1.5" role="group" aria-label="Kind of offer">
+            <div className="mb-3 flex flex-wrap gap-1.5" role="group" aria-label={t('lc.hm.of.kind')}>
               <button type="button" aria-pressed={!k} onClick={() => setK('')} className={pill(!k)}>
-                All
+                {t('lc.home.all')}
               </button>
               {kinds.map((x) => (
                 <button key={x.k} type="button" aria-pressed={k === x.k} onClick={() => setK(k === x.k ? '' : x.k)} className={pill(k === x.k)}>
-                  {x.label}
+                  {t(x.label)}
                 </button>
               ))}
             </div>
@@ -309,8 +317,8 @@ export function OffersBand() {
             {COMING.map((o) => (
               <div key={o.label} className="grid content-start gap-2 rounded-[18px] p-4 text-white" style={{ background: o.bg }}>
                 <o.icon className="h-6 w-6" aria-hidden />
-                <b className="font-display text-2xl leading-tight">{o.label}</b>
-                <small className="opacity-90">{o.body}</small>
+                <b className="font-display text-2xl leading-tight">{t(o.label)}</b>
+                <small className="opacity-90">{t(o.body)}</small>
               </div>
             ))}
           </div>
@@ -320,24 +328,24 @@ export function OffersBand() {
   );
 }
 
-const VERTICAL_WORD: Record<string, string> = { EAT: 'food', GROCERY: 'grocery', PHARMACY: 'pharmacy', DIAGNOSTICS: 'lab', LOCAL_STORES: 'local shop' };
 function OfferCard({ o, bg }: { o: PublicOffer; bg: string }) {
+  const { t, locale } = useI18n();
   const [copied, setCopied] = useState(false);
-  const where = o.shop ? `At ${o.shop}` : o.vertical ? `On ${VERTICAL_WORD[o.vertical]} orders` : 'On any shop';
-  const terms = [where + (o.city ? ` in ${o.city}` : ''), o.minOrder > 0 && `above ${rupees(o.minOrder)}`, o.firstOrderOnly && 'first order only'].filter(Boolean).join(' · ');
-  const ends = new Date(o.endsAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' });
+  const where = o.shop ? t('lc.hm.of.at', { shop: o.shop }) : o.vertical ? t(`lc.hm.of.v.${o.vertical}` as MsgKey) : t('lc.hm.of.any');
+  const terms = [where, o.city && t('lc.hm.of.city', { city: o.city }), o.minOrder > 0 && t('lc.hm.of.above', { amount: rupees(o.minOrder) }), o.firstOrderOnly && t('lc.hm.of.firstOnly')].filter(Boolean).join(' · ');
+  const ends = new Date(o.endsAt).toLocaleDateString(locale, { day: 'numeric', month: 'short' });
   return (
     <div className="grid content-start gap-2 rounded-[18px] p-4 text-white" style={{ background: bg }} data-offer-card={o.code}>
-      <small className="text-xs font-black uppercase tracking-[1px] opacity-90">{o.kind === 'FREE_DELIVERY' ? 'Free delivery' : o.shop ? 'Store offer' : o.firstOrderOnly ? 'First order' : 'Offer'}</small>
+      <small className="text-xs font-black uppercase tracking-[1px] opacity-90">{t(o.kind === 'FREE_DELIVERY' ? 'lc.dash.free' : o.shop ? 'lc.hm.of.storeOffer' : o.firstOrderOnly ? 'lc.hm.of.c4' : 'lc.hm.of.offer')}</small>
       <b className="font-display text-2xl leading-tight">{o.headline}</b>
       {o.description && <span className="text-sm opacity-95">{o.description}</span>}
       <small className="opacity-90">{terms}</small>
       <div className="mt-1 flex items-center gap-2">
-        <button type="button" onClick={() => void navigator.clipboard?.writeText(o.code).then(() => setCopied(true), () => undefined)} className="rounded-lg border border-dashed border-white/70 px-2.5 py-1 font-mono font-extrabold tracking-wider hover:bg-white/10" aria-label={`Copy code ${o.code}`}>
+        <button type="button" onClick={() => void navigator.clipboard?.writeText(o.code).then(() => setCopied(true), () => undefined)} className="rounded-lg border border-dashed border-white/70 px-2.5 py-1 font-mono font-extrabold tracking-wider hover:bg-white/10" aria-label={t('lc.hm.of.copy', { code: o.code })}>
           {o.code}
         </button>
-        <small className="font-bold">{copied ? 'Copied' : 'Tap to copy'}</small>
-        <small className="ml-auto opacity-80">Ends {ends}</small>
+        <small className="font-bold">{t(copied ? 'lc.hm.of.copied' : 'lc.hm.of.tap')}</small>
+        <small className="ml-auto opacity-80">{t('lc.hm.of.ends', { date: ends })}</small>
       </div>
     </div>
   );
@@ -357,15 +365,17 @@ const TRACK: { s: OrderStatus; icon: LucideIcon }[] = [
 const AT: Partial<Record<OrderStatus, number>> = { DRAFT: 0, AWAITING_RX_REVIEW: 0, PLACED: 0, ACCEPTED: 1, PREPARING: 2, READY_SOON: 2, READY: 3, PICKED_UP: 4, OUT_FOR_DELIVERY: 4, ARRIVED: 5, DELIVERED: 6, COMPLETED: 6 };
 
 export function TrackBand() {
+  const { t } = useI18n();
   const token = useAuth((s) => s.accessToken);
   return (
-    <NowSection id="track" tag="Live order tracking" title="Track Every Step" intro={token ? 'Your orders in progress, as they move. Enter an order number to find one.' : 'Log in to follow your orders here, from the shop to your door.'}>
+    <NowSection id="track" tag={t('lc.hm.tr.tag')} title={t('lc.hm.tr.title')} intro={t(token ? 'lc.hm.tr.intro' : 'lc.hm.tr.introOut')}>
       {token ? <MyOrders /> : <Tracker order={null} note={null} onFind={null} />}
     </NowSection>
   );
 }
 
 function MyOrders() {
+  const { t } = useI18n();
   const { data } = useOrders();
   const orders = data?.orders ?? [];
   const [picked, setPicked] = useState<string | null>(null);
@@ -373,10 +383,10 @@ function MyOrders() {
   const order = orders.find((o) => o.id === picked) ?? orders.find((o) => o.active) ?? null;
   const find = (num: string) => {
     const hit = orders.find((o) => o.orderNumber.toLowerCase() === num.trim().toLowerCase().replace(/^#/, ''));
-    setNote(hit ? null : 'No order with that number in your account.');
+    setNote(hit ? null : t('lc.hm.tr.noOrder'));
     if (hit) setPicked(hit.id);
   };
-  return <Tracker order={order} note={note ?? (orders.length && !order ? 'Nothing on its way right now. Enter an order number to see one.' : null)} onFind={find} />;
+  return <Tracker order={order} note={note ?? (orders.length && !order ? t('lc.hm.tr.nothing') : null)} onFind={find} />;
 }
 
 function Tracker({ order, note, onFind }: { order: CustomerOrder | null; note: string | null; onFind: ((num: string) => void) | null }) {
@@ -394,16 +404,16 @@ function Tracker({ order, note, onFind }: { order: CustomerOrder | null; note: s
         }}
       >
         <label className="sr-only" htmlFor="track-no">
-          Order number
+          {t('lc.hm.tr.num')}
         </label>
-        <input id="track-no" value={num} onChange={(e) => setNum(e.target.value)} placeholder="Order number" disabled={!onFind} className="min-h-11 rounded-[10px] border-[1.5px] border-[#2A3140] bg-[#11151D] px-3 font-mono text-sm text-white placeholder:text-neutral-500 disabled:opacity-60" />
+        <input id="track-no" value={num} onChange={(e) => setNum(e.target.value)} placeholder={t('lc.hm.tr.num')} disabled={!onFind} className="min-h-11 rounded-[10px] border-[1.5px] border-[#2A3140] bg-[#11151D] px-3 font-mono text-sm text-white placeholder:text-neutral-500 disabled:opacity-60" />
         {onFind ? (
           <button type="submit" className="min-h-11 rounded-xl bg-dz-yellow px-[18px] text-sm font-black text-black">
-            Track Order
+            {t('lc.hm.tr.track')}
           </button>
         ) : (
           <Link to={`/login?next=${encodeURIComponent('/#track')}`} className="inline-flex min-h-11 items-center rounded-xl bg-dz-yellow px-[18px] text-sm font-black text-black">
-            Log in to track
+            {t('lc.hm.tr.login')}
           </Link>
         )}
       </form>
@@ -411,7 +421,7 @@ function Tracker({ order, note, onFind }: { order: CustomerOrder | null; note: s
       <div className="grid gap-3 lg:grid-cols-2">
         <div className="rounded-[18px] border border-white/10 bg-[#0B1220] p-3.5">
           <p className="mb-2 flex justify-between text-[11px] font-black uppercase tracking-[1px] text-neutral-400">
-            <span>On the way</span>
+            <span>{t('lc.hm.tr.onWay')}</span>
             {order && <span className="text-dz-yellow">#{order.orderNumber}</span>}
           </p>
           <RouteArt step={step} />
@@ -422,15 +432,15 @@ function Tracker({ order, note, onFind }: { order: CustomerOrder | null; note: s
                 <small className="text-neutral-400">{t(STATUS_LABEL[order.status])}</small>
               </span>
               <Link to={`/orders/${order.id}`} className="inline-flex items-center gap-1 rounded-lg bg-white/10 px-3 py-2 text-xs font-black hover:bg-white/20">
-                Open order page <ArrowRight className="h-3.5 w-3.5" aria-hidden />
+                {t('lc.hm.tr.open')} <ArrowRight className="h-3.5 w-3.5" aria-hidden />
               </Link>
             </div>
           ) : (
-            <p className="mt-3 text-center text-sm text-neutral-400">{onFind ? 'Place an order and it shows up here.' : 'Your orders show up here once you log in.'}</p>
+            <p className="mt-3 text-center text-sm text-neutral-400">{t(onFind ? 'lc.hm.tr.empty' : 'lc.hm.tr.emptyOut')}</p>
           )}
         </div>
         <div className="rounded-[18px] border border-white/10 bg-[#0B1220] p-3.5">
-          <p className="mb-2 text-[11px] font-black uppercase tracking-[1px] text-neutral-400">Timeline</p>
+          <p className="mb-2 text-[11px] font-black uppercase tracking-[1px] text-neutral-400">{t('lc.hm.tr.timeline')}</p>
           <ol className="grid gap-1.5" aria-live="polite">
             {TRACK.map((x, i) => {
               const done = i < step || (i === step && step === TRACK.length - 1);
@@ -439,7 +449,7 @@ function Tracker({ order, note, onFind }: { order: CustomerOrder | null; note: s
                 <li key={x.s} className={`flex items-center gap-3 rounded-xl px-3 py-2 text-sm ${now ? 'bg-dz-yellow font-black text-black' : 'bg-[#11151D]'}`}>
                   <x.icon className={`h-4 w-4 shrink-0 ${done ? 'text-[#2BD463]' : now ? '' : 'text-neutral-500'}`} aria-hidden />
                   <span className="flex-1">{t(STATUS_LABEL[x.s])}</span>
-                  {done ? <Check className="h-4 w-4 text-[#2BD463]" aria-label="Done" /> : <span className={now ? '' : 'text-neutral-600'}>{now ? 'Now' : '–'}</span>}
+                  {done ? <Check className="h-4 w-4 text-[#2BD463]" aria-label={t('lc.hm.tr.done')} /> : <span className={now ? '' : 'text-neutral-600'}>{now ? t('lc.hm.now') : '–'}</span>}
                 </li>
               );
             })}

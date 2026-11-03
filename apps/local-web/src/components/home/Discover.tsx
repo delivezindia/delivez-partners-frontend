@@ -26,34 +26,45 @@ import {
   Zap,
   type LucideIcon,
 } from 'lucide-react';
+import en from '@delivez/i18n/locales/en.json';
 import { api, ApiError } from '../../lib/api';
 import { rupees } from '../../lib/format';
+import { useI18n, type MsgKey } from '../../lib/i18n';
 import { itemIcon, storeLook } from '../../lib/icons';
 import { useOverview } from '../../lib/queries';
 import type { Vertical } from '../../lib/types';
 import { KIND_LOOK } from '../VerticalIcon';
-import { KINDS, NowLogo, NowSection, Soon, inKind, kindOf, useAround, type Kind } from './kit';
+import { KINDS, NowLogo, NowSection, Soon, inKind, kindOf, placed, useAround, type Kind } from './kit';
 
 // ---------------------------------------------------------------- The app
 
-const PHONE_TILES: { icon: LucideIcon; label: string; color: string }[] = [
-  { icon: Store, label: 'Nearby Stores', color: '#7A3FC0' },
-  { icon: BadgePercent, label: 'Offers', color: '#E8130F' },
-  { icon: ShoppingBasket, label: 'Grocery', color: '#17803A' },
-  { icon: UtensilsCrossed, label: 'Food', color: '#E8130F' },
-  { icon: Pill, label: 'Pharmacy', color: '#1E5BB8' },
-  { icon: Store, label: 'Local Shops', color: '#7A3FC0' },
-  { icon: Gift, label: 'Gifts', color: '#BE185D' },
-  { icon: Zap, label: 'Rush', color: '#7B2FD4' },
+const PHONE_TILES: { icon: LucideIcon; label: MsgKey; color: string }[] = [
+  { icon: Store, label: 'lc.hm.app.nearby', color: '#7A3FC0' },
+  { icon: BadgePercent, label: 'lc.hm.offers', color: '#E8130F' },
+  { icon: ShoppingBasket, label: 'lc.hm.t.grocery', color: '#17803A' },
+  { icon: UtensilsCrossed, label: 'lc.v.EAT', color: '#E8130F' },
+  { icon: Pill, label: 'lc.hm.t.pharmacy', color: '#1E5BB8' },
+  { icon: Store, label: 'lc.v.LOCAL_STORES', color: '#7A3FC0' },
+  { icon: Gift, label: 'lc.hm.t.gifts', color: '#BE185D' },
+  { icon: Zap, label: 'lc.v.RUSH', color: '#7B2FD4' },
 ];
-const APP_FEATURES: { icon: LucideIcon; label: string; body: string }[] = [
-  { icon: ShoppingBag, label: 'One app, every store', body: 'Food, groceries and medicines in one place' },
-  { icon: MapPin, label: 'Live order status', body: 'Every step as it happens, with your rider’s name' },
-  { icon: Zap, label: 'Rush essentials', body: 'Everyday items from the quickest shops near you' },
-  { icon: Repeat, label: 'Reorder in one tap', body: 'Your past orders, rebuilt from today’s menu' },
+const APP_FEATURES: { icon: LucideIcon; label: MsgKey; body: MsgKey }[] = [
+  { icon: ShoppingBag, label: 'lc.hm.app.f1', body: 'lc.hm.app.f1b' },
+  { icon: MapPin, label: 'lc.hm.app.f2', body: 'lc.hm.app.f2b' },
+  { icon: Zap, label: 'lc.hm.app.f3', body: 'lc.hm.app.f3b' },
+  { icon: Repeat, label: 'lc.hm.app.f4', body: 'lc.hm.app.f4b' },
+];
+const PHONE_NAV: [LucideIcon, MsgKey][] = [
+  [Home, 'lc.hm.app.home'],
+  [LayoutGrid, 'lc.home.categories'],
+  [Search, 'lc.dash.search'],
+  [ShoppingCart, 'lc.hm.app.cart'],
+  [Receipt, 'lc.hm.app.orders'],
+  [CircleUserRound, 'lc.hm.app.account'],
 ];
 
 export function AppBand() {
+  const { t } = useI18n();
   const overview = useOverview().data;
   const a = useAround();
   // The phone shows real shops: two restaurants near you (or the two nearest shops of any kind).
@@ -71,22 +82,22 @@ export function AppBand() {
               <div className="space-y-2 bg-[#E8130F] p-4 pb-3 text-white">
                 <b className="block font-display text-lg italic">DELIVEZ NOW</b>
                 <span className="flex items-center gap-2 rounded-lg bg-white px-3 py-2 text-[11px] text-[#7C7C77]">
-                  <Search className="h-3.5 w-3.5" /> Search for products, stores or categories
+                  <Search className="h-3.5 w-3.5" /> {t('lc.hm.searchPh')}
                 </span>
               </div>
               <p className="flex items-center gap-1.5 px-3.5 pt-3 text-xs font-extrabold">
-                <MapPin className="h-3.5 w-3.5 text-[#E8130F]" /> {a.where ?? 'Your area'}
+                <MapPin className="h-3.5 w-3.5 text-[#E8130F]" /> {a.where ?? t('lc.hm.yourArea')}
               </p>
               <div className="grid grid-cols-4 gap-1.5 p-3">
                 {PHONE_TILES.map((x) => (
                   <span key={x.label} className="grid justify-items-center gap-1 rounded-xl bg-[#F6F6F4] px-0.5 py-2 text-center text-[9.5px] font-extrabold leading-tight">
                     <x.icon className="h-[18px] w-[18px]" style={{ color: x.color }} strokeWidth={2.2} />
-                    {x.label}
+                    {t(x.label)}
                   </span>
                 ))}
               </div>
               <p className="mx-3 flex items-center gap-1.5 rounded-xl bg-[#E8130F] px-3 py-2.5 text-[11px] font-extrabold text-white">
-                <Zap className="h-3.5 w-3.5" /> Essentials from the quickest shops
+                <Zap className="h-3.5 w-3.5" /> {t('lc.hm.kindBlurb.RUSH')}
               </p>
               <ul className="space-y-1 px-3 pb-2 pt-2">
                 {rows.map((s) => {
@@ -104,7 +115,7 @@ export function AppBand() {
                               <Star className="h-3 w-3 fill-[#FFD400] text-[#FFD400]" /> {s.rating.avg.toFixed(1)} ·
                             </>
                           )}{' '}
-                          {s.etaMinutes} min
+                          {t('lc.store.mins', { n: s.etaMinutes })}
                         </small>
                       </span>
                     </li>
@@ -112,33 +123,24 @@ export function AppBand() {
                 })}
               </ul>
               <div className="grid grid-cols-6 border-t border-[#E4E4E0] px-1 py-2 text-[8.5px] font-bold text-[#7C7C77]">
-                {(
-                  [
-                    [Home, 'Home'],
-                    [LayoutGrid, 'Categories'],
-                    [Search, 'Search'],
-                    [ShoppingCart, 'Cart'],
-                    [Receipt, 'Orders'],
-                    [CircleUserRound, 'Account'],
-                  ] as [LucideIcon, string][]
-                ).map(([I, l], i) => (
+                {PHONE_NAV.map(([I, l], i) => (
                   <span key={l} className={`grid justify-items-center gap-0.5 ${i === 0 ? 'text-[#E8130F]' : ''}`}>
-                    <I className="h-4 w-4" /> {l}
+                    <I className="h-4 w-4" /> {t(l)}
                   </span>
                 ))}
               </div>
             </div>
           </div>
-          <Float className="left-0 top-[18%]" icon={Bike} title="Rider on the way" sub="Live on your order page" />
-          <Float className="bottom-[22%] right-0" icon={ShieldCheck} title="Delivered" sub="Handed over with your code" delay="1.2s" />
-          <Float className="bottom-[8%] left-[4%]" icon={BadgePercent} title="Coupons at checkout" sub="Offers near you" delay="2.2s" />
+          <Float className="left-0 top-[18%]" icon={Bike} title={t('lc.hm.rush.s4')} sub={t('lc.hm.app.fl1b')} />
+          <Float className="bottom-[22%] right-0" icon={ShieldCheck} title={t('lc.hm.app.fl2')} sub={t('lc.hm.app.fl2b')} delay="1.2s" />
+          <Float className="bottom-[8%] left-[4%]" icon={BadgePercent} title={t('lc.hm.app.fl3')} sub={t('lc.hm.app.fl3b')} delay="2.2s" />
         </div>
         <div>
-          <p className="text-[13.5px] font-extrabold uppercase tracking-[1.4px] text-dz-red">Delivez Now app</p>
+          <p className="text-[13.5px] font-extrabold uppercase tracking-[1.4px] text-dz-red">{t('lc.hm.app.tag')}</p>
           <h2 className="mb-3.5 mt-2.5 text-[clamp(34px,4.4vw,58px)] leading-[0.98] text-now-text">
-            Your whole neighbourhood, <span className="text-dz-red">in one app.</span>
+            {t('lc.hm.app.title1')} <span className="text-dz-red">{t('lc.hm.app.title2')}</span>
           </h2>
-          <p className="mb-[22px] max-w-[54ch] text-[17px] text-now-muted">Food, groceries, medicines, local shops, gifts and Rush essentials, with one checkout and live order status to your door. Shop on the web today.</p>
+          <p className="mb-[22px] max-w-[54ch] text-[17px] text-now-muted">{t('lc.hm.app.body')}</p>
           <div className="mb-6 grid gap-2.5 sm:grid-cols-2">
             {APP_FEATURES.map((f) => (
               <div key={f.label} className="flex items-start gap-3 rounded-2xl border border-now-line bg-now-card px-3.5 py-3">
@@ -146,36 +148,36 @@ export function AppBand() {
                   <f.icon className="h-5 w-5" aria-hidden />
                 </span>
                 <span>
-                  <b className="block text-[14.5px] text-now-text">{f.label}</b>
-                  <small className="text-[13px] text-now-muted">{f.body}</small>
+                  <b className="block text-[14.5px] text-now-text">{t(f.label)}</b>
+                  <small className="text-[13px] text-now-muted">{t(f.body)}</small>
                 </span>
               </div>
             ))}
           </div>
           <div className="flex flex-wrap items-center gap-2.5">
-            {['Android app', 'iPhone app'].map((x) => (
+            {[t('lc.hm.app.android'), t('lc.hm.app.iphone')].map((x) => (
               <span key={x} className="inline-flex items-center gap-2.5 rounded-[14px] bg-[#111] px-[18px] py-2.5 leading-[1.05] text-white">
                 <Smartphone className="h-6 w-6" aria-hidden />
                 <span>
                   <small className="block text-[10.5px] font-semibold opacity-80">{x}</small>
-                  <b className="text-[15px]">Coming soon</b>
+                  <b className="text-[15px]">{t('lc.rush.soonTag')}</b>
                 </span>
               </span>
             ))}
             <a href="#categories" className="inline-flex items-center gap-2 rounded-[14px] border-[1.5px] border-now-line px-[18px] py-3 font-extrabold text-now-text transition hover:border-now-text">
-              <Globe className="h-5 w-5" aria-hidden /> Shop on the web <ArrowRight className="h-4 w-4" aria-hidden />
+              <Globe className="h-5 w-5" aria-hidden /> {t('lc.hm.app.web')} <ArrowRight className="h-4 w-4" aria-hidden />
             </a>
           </div>
           {overview && (
             <p className="mt-5 flex flex-wrap gap-x-5 gap-y-1 text-[14.5px] text-now-muted" data-app-stats>
               <span>
-                <b className="text-[17px] text-now-text">{overview.shops}</b> shops live
+                <b className="text-[17px] text-now-text">{overview.shops}</b> {t('lc.hm.app.shopsLive')}
               </span>
               <span>
-                <b className="text-[17px] text-now-text">{overview.cities.length}</b> {overview.cities.length === 1 ? 'city' : 'cities'}
+                <b className="text-[17px] text-now-text">{overview.cities.length}</b> {t(overview.cities.length === 1 ? 'lc.hm.app.city' : 'lc.hm.app.cities')}
               </span>
               <span>
-                <b className="text-[17px] text-now-text">{kinds}</b> kinds of shops
+                <b className="text-[17px] text-now-text">{kinds}</b> {t('lc.hm.app.kinds')}
               </span>
             </p>
           )}
@@ -203,6 +205,7 @@ type AreaAnswer = { pincode: string; live: boolean; city: string | null; liveCit
 type PinInfo = { serviceable: boolean; zone: { name: string } | null };
 
 export function AreaCheck({ onStart }: { onStart: () => void }) {
+  const { t } = useI18n();
   const overview = useOverview().data;
   const { fee } = useAround();
   const [pin, setPin] = useState('');
@@ -224,38 +227,38 @@ export function AreaCheck({ onStart }: { onStart: () => void }) {
   const cityShops = answer?.city ? overview?.cities.find((c) => c.name.toLowerCase() === answer.city!.toLowerCase())?.shops : undefined;
   const cells: [string, ReactNode, boolean?][] = answer
     ? [
-        ['Delivez Now', answer.live ? 'Available' : 'Not yet', answer.live],
-        ['City', answer.city ?? '—'],
-        ['Area', answer.zone ?? '—'],
-        [answer.city ? `Shops live in ${answer.city}` : 'Shops live', cityShops ?? (answer.live ? '—' : 0)],
-        ['Delivery fee', `Flat ${rupees(fee)} per order`],
-        ['Live now in', answer.liveCities.join(', ') || '—'],
+        ['Delivez Now', answer.live ? t('lc.hm.area.yes') : t('lc.hm.area.no'), answer.live],
+        [t('lc.hm.area.city'), answer.city ?? '—'],
+        [t('lc.hm.area.area'), answer.zone ?? '—'],
+        [answer.city ? t('lc.hm.area.shopsIn', { city: answer.city }) : t('lc.hm.area.shops'), cityShops ?? (answer.live ? '—' : 0)],
+        [t('lc.hm.area.fee'), t('lc.hm.area.flat', { fee: rupees(fee) })],
+        [t('lc.hm.area.liveIn'), answer.liveCities.join(', ') || '—'],
       ]
     : [];
   return (
-    <NowSection id="serviceability" surface tag="Serviceability" title="Check Your Area">
+    <NowSection id="serviceability" surface tag={t('lc.hm.area.tag')} title={t('lc.hm.area.title')}>
       <div className="grid gap-3 rounded-[22px] border border-white/10 bg-[#07090D] p-4 text-white sm:p-5">
         <form onSubmit={check} className="flex flex-wrap gap-2">
           <label className="sr-only" htmlFor="pin">
-            PIN code
+            {t('lc.hm.area.pin')}
           </label>
           <input
             id="pin"
             value={pin}
             onChange={(e) => (setPin(e.target.value.replace(/\D/g, '').slice(0, 6)), setState(null))}
             inputMode="numeric"
-            placeholder="PIN code, e.g. 226021"
+            placeholder={t('lc.hm.area.pinPh')}
             className="min-h-12 w-full rounded-[10px] border-[1.5px] border-[#2A3140] bg-[#11151D] px-3.5 font-mono text-white placeholder:text-neutral-500 sm:w-[180px]"
             data-pin
           />
           <button type="submit" disabled={state === 'busy'} className="min-h-12 rounded-xl bg-dz-yellow px-[18px] font-black text-black disabled:opacity-60">
-            {state === 'busy' ? 'Checking…' : 'Check Your Area'}
+            {state === 'busy' ? t('lc.hm.area.checking') : t('lc.hm.area.title')}
           </button>
         </form>
         <div aria-live="polite" data-pin-result={answer ? (answer.live ? 'yes' : 'soon') : (state ?? '')}>
-          {state === 'bad' && <p className="font-bold text-[#FF7D84]">Enter a valid 6-digit PIN code.</p>}
-          {state === 'error' && <p className="font-bold text-[#FF7D84]">Couldn’t check right now. Try again in a moment.</p>}
-          {!answer && !state && <p className="text-sm text-neutral-400">Enter your PIN code to see if Delivez Now delivers there.</p>}
+          {state === 'bad' && <p className="font-bold text-[#FF7D84]">{t('lc.hm.area.bad')}</p>}
+          {state === 'error' && <p className="font-bold text-[#FF7D84]">{t('lc.hm.area.err')}</p>}
+          {!answer && !state && <p className="text-sm text-neutral-400">{t('lc.hm.area.hint')}</p>}
           {answer && (
             <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
               {cells.map(([label, value, ok]) => (
@@ -271,7 +274,7 @@ export function AreaCheck({ onStart }: { onStart: () => void }) {
           )}
           {answer?.live && (
             <button type="button" onClick={onStart} className="mt-3 inline-flex items-center gap-2 rounded-xl bg-dz-red px-[18px] py-3 text-sm font-black text-white">
-              <MapPin className="h-4 w-4" aria-hidden /> Set my exact location
+              <MapPin className="h-4 w-4" aria-hidden /> {t('lc.hm.area.exact')}
             </button>
           )}
         </div>
@@ -283,29 +286,22 @@ export function AreaCheck({ onStart }: { onStart: () => void }) {
 // ---------------------------------------------------------------- Shop by category
 
 /** What each kind's page offers, by type: the Rush page's categories and the Street Cart page's cart types. */
-const PAGE_TYPES: Record<'RUSH' | 'STREET', string[]> = {
-  RUSH: ['Staples', 'Fruit & veg', 'Dairy & bread', 'Snacks & drinks', 'Personal care', 'Household', 'Baby', 'Pet', 'Health', 'Electronics'],
-  STREET: ['Fruit', 'Vegetables', 'Chaat & snacks', 'Juice & coconut', 'Tea & coffee', 'Flowers', 'Ice cream & kulfi', 'Tiffin & breakfast', 'Corn & grills', 'Milk & dairy'],
+const PAGE_TYPES: Record<'RUSH' | 'STREET', MsgKey[]> = {
+  RUSH: ['lc.hm.t.staples', 'lc.hm.t.fruitVeg', 'lc.hm.t.dairyBread', 'lc.hm.t.snacksDrinks', 'lc.hm.t.personalCare', 'lc.hm.t.household', 'lc.hm.t.baby', 'lc.hm.t.pet', 'lc.hm.t.health', 'lc.hm.t.electronics'],
+  STREET: ['lc.hm.t.fruit', 'lc.hm.t.vegetables', 'lc.hm.t.chaat', 'lc.hm.t.juice', 'lc.hm.t.tea', 'lc.hm.t.flowers', 'lc.hm.t.iceCream', 'lc.hm.t.tiffin', 'lc.hm.t.corn', 'lc.hm.t.milkDairy'],
 };
 /** Until shops of a kind are live, the kinds of shop it will have. */
-const PLANNED: Record<Vertical, string[]> = {
-  EAT: ['Restaurants', 'Cafés', 'Bakeries', 'Desserts', 'Fast food', 'Local kitchens', 'Breakfast', 'Healthy food'],
-  GROCERY: ['Fruits & vegetables', 'Dairy', 'Staples', 'Snacks', 'Beverages', 'Household essentials'],
-  PHARMACY: ['Medicines', 'Healthcare products', 'Medical supplies', 'Baby care', 'First aid', 'Health devices'],
-  DIAGNOSTICS: ['Blood tests', 'Health packages', 'Home sample collection', 'Walk-in labs'],
-  LOCAL_STORES: ['Electronics', 'Fashion', 'Beauty', 'Home & kitchen', 'Stationery', 'Pet supplies'],
+const PLANNED: Record<Vertical, MsgKey[]> = {
+  EAT: ['lc.hm.t.restaurants', 'lc.hm.t.cafes', 'lc.hm.t.bakeries', 'lc.hm.t.desserts', 'lc.hm.t.fastFood', 'lc.hm.t.localKitchens', 'lc.hm.t.breakfast', 'lc.hm.t.healthyFood'],
+  GROCERY: ['lc.hm.t.fruitsVeg', 'lc.hm.t.dairy', 'lc.hm.t.staples', 'lc.hm.t.snacks', 'lc.hm.t.beverages', 'lc.hm.t.householdEss'],
+  PHARMACY: ['lc.hm.t.medicines', 'lc.hm.t.healthcare', 'lc.hm.t.medSupplies', 'lc.hm.t.babyCare', 'lc.hm.t.firstAid', 'lc.hm.t.devices'],
+  DIAGNOSTICS: ['lc.hm.t.bloodTests', 'lc.hm.t.packages', 'lc.hm.t.homeCollection', 'lc.hm.t.walkIn'],
+  LOCAL_STORES: ['lc.hm.t.electronics', 'lc.hm.t.fashion', 'lc.hm.t.beauty', 'lc.hm.t.homeKitchen', 'lc.hm.t.stationery', 'lc.hm.t.petSupplies'],
 };
-const LONG: Record<Kind, string> = {
-  EAT: 'Restaurants and cloud kitchens near you, with every step of your order shown live.',
-  GROCERY: 'Fresh produce, daily staples and household essentials from your neighbourhood stores.',
-  PHARMACY: 'Medicines from pharmacies near you, with a pharmacist’s check where a prescription is needed.',
-  DIAGNOSTICS: 'Book tests at labs near you: home sample collection or walk in.',
-  LOCAL_STORES: 'Your neighbourhood shops, from bakeries and florists to electronics, delivered.',
-  RUSH: 'Everyday essentials from the shops that can reach you quickest. Delivez Rush stores are coming soon.',
-  STREET: 'Street carts, stalls and society vendors near you, brought by a Delivez rider.',
-};
+const LONG = (k: Kind) => `lc.hm.long.${k}` as MsgKey;
 
 export function Categories() {
+  const { t } = useI18n();
   const overview = useOverview().data;
   const a = useAround();
   const [on, setOn] = useState<Kind>('EAT');
@@ -318,7 +314,7 @@ export function Categories() {
   const count = (k: Kind) => (k === 'RUSH' || k === 'STREET' ? null : (overview?.verticals[k]?.shops ?? null));
   const pick = (k: Kind) => (setAuto(false), setOn(k));
   return (
-    <NowSection id="categories" tag="Shop by category" title="Everything around you, in one place.">
+    <NowSection id="categories" tag={t('lc.hm.cats.tag')} title={t('lc.hm.cats.title')}>
       <div className="grid gap-3.5 sm:grid-cols-2 lg:grid-cols-4" data-cats>
         {KINDS.map((x) => {
           const L = KIND_LOOK[x.k];
@@ -337,12 +333,12 @@ export function Categories() {
             >
               <L.icon className="absolute -bottom-5 -right-3 -z-10 h-32 w-32 -rotate-12 opacity-[0.09] transition duration-500 group-hover:rotate-0 group-hover:scale-110" style={{ color: L.accent }} aria-hidden />
               <NowLogo k={x.k} className="h-[42px]" />
-              <h3 className="mt-3 font-display text-[23px] leading-tight">{x.title}</h3>
-              <p className="mt-1 text-[13.5px] text-[#5E5E5A]">{x.blurb}</p>
+              <h3 className="mt-3 font-display text-[23px] leading-tight">{t(x.title)}</h3>
+              <p className="mt-1 text-[13.5px] text-[#5E5E5A]">{t(x.blurb)}</p>
               <span className="mt-auto flex items-center gap-2 pt-4">
                 <span className="inline-flex items-center gap-1.5 rounded-full border border-[#ECE8DF] bg-white px-2.5 py-1 text-xs font-extrabold">
                   <i className="h-2 w-2 rounded-full bg-[#17803A]" aria-hidden />
-                  {n === null ? `${near} near ${a.where ?? 'you'}` : n ? `${n} shops live` : 'Coming soon'}
+                  {n === null ? placed(t, a.where, 'lc.hm.cats.near', 'lc.hm.cats.nearYou', { n: near }) : n ? t('lc.hm.nShopsLive', { n }) : t('lc.rush.soonTag')}
                 </span>
                 <span className="ml-auto grid h-9 w-9 place-items-center rounded-full text-white transition group-hover:translate-x-1" style={{ background: active ? L.accent : '#111' }}>
                   <ArrowRight className="h-4 w-4" aria-hidden />
@@ -354,11 +350,11 @@ export function Categories() {
         })}
         <div className="flex min-h-[222px] flex-col justify-between rounded-[24px] p-6 text-white" style={{ background: 'radial-gradient(420px 260px at 100% 0%, rgba(255,212,0,.3), transparent 60%), radial-gradient(360px 300px at 0% 100%, rgba(232,19,15,.45), transparent 65%), #111' }}>
           <div>
-            <h3 className="font-display text-2xl">Can’t wait to start?</h3>
-            <p className="mt-1 text-sm text-neutral-300">Set your location and see every shop that delivers to you right now.</p>
+            <h3 className="font-display text-2xl">{t('lc.hm.cats.start')}</h3>
+            <p className="mt-1 text-sm text-neutral-300">{t('lc.hm.cats.startBody')}</p>
           </div>
           <a href="#hero-location" className="mt-5 inline-flex min-h-12 items-center justify-center rounded-xl bg-dz-yellow font-black text-black">
-            Choose location
+            {t('lc.hm.cats.choose')}
           </a>
         </div>
       </div>
@@ -369,6 +365,7 @@ export function Categories() {
 
 /** The kind picked above: the nearest shop of that kind, how quick and how many, and what it sells by type. */
 function KindPanel({ k, onPick }: { k: Kind; onPick: (k: Kind) => void }) {
+  const { t } = useI18n();
   const overview = useOverview().data;
   const a = useAround();
   const x = kindOf(k);
@@ -376,17 +373,20 @@ function KindPanel({ k, onPick }: { k: Kind; onPick: (k: Kind) => void }) {
   const near = a.stores.filter((s) => inKind(s, k));
   const open = near.filter((s) => s.open);
   const first = [...open].sort((p, q) => p.etaMinutes - q.etaMinutes)[0];
-  const types = k === 'RUSH' || k === 'STREET' ? PAGE_TYPES[k] : overview?.verticals[k]?.types.length ? overview.verticals[k].types.map((t) => t.name) : PLANNED[k];
+  // Shown in the reader's language; the icon is picked from the English name.
+  const keyed = (key: MsgKey) => ({ name: t(key), en: en[key] });
+  const types = k === 'RUSH' || k === 'STREET' ? PAGE_TYPES[k].map(keyed) : overview?.verticals[k]?.types.length ? overview.verticals[k].types.map((x) => ({ name: x.name, en: x.name })) : PLANNED[k].map(keyed);
+  const title = t(x.title);
   return (
     <div key={k} className="vp-up mt-3.5 grid overflow-hidden rounded-[24px] border border-now-line bg-now-card lg:grid-cols-[0.9fr_1.1fr]" data-kind-panel={k}>
       <div className="flex flex-col gap-3.5 border-now-line p-6 lg:border-r" style={{ background: `linear-gradient(160deg, ${L.tint}22, transparent 80%)` }}>
         <span className="w-fit rounded-2xl bg-white px-3 py-2">
           <NowLogo k={k} className="h-[40px]" />
         </span>
-        <p className="text-[15.5px] text-now-muted">{LONG[k]}</p>
+        <p className="text-[15.5px] text-now-muted">{t(LONG(k))}</p>
         <div className="rounded-2xl border border-now-line bg-now-bg p-4">
           <p className="flex items-center gap-2 text-xs font-extrabold uppercase tracking-[1px] text-now-muted">
-            <i className={`h-2 w-2 rounded-full ${first ? 'bg-[#17803A]' : 'bg-neutral-400'}`} aria-hidden /> {a.where ? `Quickest near ${a.where}` : 'Quickest near you'}
+            <i className={`h-2 w-2 rounded-full ${first ? 'bg-[#17803A]' : 'bg-neutral-400'}`} aria-hidden /> {placed(t, a.where, 'lc.hm.kp.quickest', 'lc.hm.kp.quickestYou')}
           </p>
           {a.loading ? (
             <div className="mt-3 h-10 animate-pulse rounded-lg bg-now-surface" />
@@ -403,50 +403,50 @@ function KindPanel({ k, onPick }: { k: Kind; onPick: (k: Kind) => void }) {
                 <Link to={`/s/${first.slug ?? first.id}`} className="truncate font-bold text-now-text hover:underline">
                   {first.name}
                 </Link>
-                <b className="shrink-0 text-dz-red">{first.etaMinutes} min</b>
+                <b className="shrink-0 text-dz-red">{t('lc.store.mins', { n: first.etaMinutes })}</b>
               </p>
             </>
           ) : (
-            <p className="mt-3 text-sm text-now-muted">{near.length ? 'These shops are closed right now.' : `No ${x.title.toLowerCase()} shops deliver to ${a.where ?? 'you'} yet.`}</p>
+            <p className="mt-3 text-sm text-now-muted">{near.length ? t('lc.hm.kp.closed') : placed(t, a.where, 'lc.hm.kp.none', 'lc.hm.kp.noneYou', { kind: title.toLowerCase() })}</p>
           )}
         </div>
         <div className="grid grid-cols-2 gap-2.5">
           <div className="rounded-2xl border border-now-line bg-now-bg p-3.5">
-            <b className="block font-display text-[26px] leading-none text-now-text">{first ? `${first.etaMinutes} min` : '—'}</b>
-            <small className="text-xs text-now-muted">quickest delivery right now</small>
+            <b className="block font-display text-[26px] leading-none text-now-text">{first ? t('lc.store.mins', { n: first.etaMinutes }) : '—'}</b>
+            <small className="text-xs text-now-muted">{t('lc.hm.quickestNow')}</small>
           </div>
           <div className="rounded-2xl border border-now-line bg-now-bg p-3.5">
             <b className="block font-display text-[26px] leading-none text-now-text">{near.length}</b>
-            <small className="text-xs text-now-muted">{`shops near ${a.where ?? 'you'}`}</small>
+            <small className="text-xs text-now-muted">{placed(t, a.where, 'lc.hm.shopsNear', 'lc.hm.shopsNearYou')}</small>
           </div>
         </div>
         <Link to={x.to} className="inline-flex w-fit items-center gap-2 rounded-xl px-[18px] py-3 text-sm font-black text-white" style={{ background: L.accent }}>
-          Shop {x.title} <ArrowRight className="h-4 w-4" aria-hidden />
+          {t('lc.hm.kp.shop', { kind: title })} <ArrowRight className="h-4 w-4" aria-hidden />
         </Link>
       </div>
       <div className="p-6">
         <div className="mb-3 flex flex-wrap items-center gap-2">
-          <p className="mr-auto text-xs font-extrabold uppercase tracking-[1px] text-now-muted">Shop {x.title} by type</p>
+          <p className="mr-auto text-xs font-extrabold uppercase tracking-[1px] text-now-muted">{t('lc.hm.kp.byType', { kind: title })}</p>
           {overview && liveShops(k, overview) === 0 && <Soon />}
         </div>
         <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 xl:grid-cols-3">
-          {types.map((t) => {
-            const I = itemIcon(t, '', L.icon);
+          {types.map((y) => {
+            const I = itemIcon(y.en, '', L.icon);
             return (
-              <Link key={t} to={x.to} className="group flex items-center gap-2.5 rounded-2xl border border-now-line bg-now-surface px-3 py-3 text-sm font-bold text-now-text transition hover:-translate-y-0.5 hover:border-now-text">
+              <Link key={y.en} to={x.to} className="group flex items-center gap-2.5 rounded-2xl border border-now-line bg-now-surface px-3 py-3 text-sm font-bold text-now-text transition hover:-translate-y-0.5 hover:border-now-text">
                 <span className="grid h-9 w-9 shrink-0 place-items-center rounded-xl" style={{ background: L.tint, color: L.accent }} aria-hidden>
                   <I className="h-[18px] w-[18px]" strokeWidth={2.2} />
                 </span>
-                <span className="min-w-0 truncate">{t}</span>
+                <span className="min-w-0 truncate">{y.name}</span>
                 <ArrowRight className="ml-auto h-4 w-4 shrink-0 opacity-0 transition group-hover:opacity-100" aria-hidden />
               </Link>
             );
           })}
         </div>
-        <div className="mt-4 flex flex-wrap gap-1.5" role="group" aria-label="Kinds of shop">
+        <div className="mt-4 flex flex-wrap gap-1.5" role="group" aria-label={t('lc.hm.kp.kinds')}>
           {KINDS.map((y) => (
             <button key={y.k} type="button" aria-pressed={y.k === k} onClick={() => onPick(y.k)} className={`rounded-full border-[1.5px] px-3 py-1.5 text-xs font-extrabold transition ${y.k === k ? 'border-black bg-black text-dz-yellow' : 'border-now-line text-now-text hover:border-now-text'}`}>
-              {y.title}
+              {t(y.title)}
             </button>
           ))}
         </div>

@@ -28,31 +28,33 @@ import {
 import { useBasket } from '../categoryPage';
 import { simpleLine } from '../../lib/cart';
 import { rupees } from '../../lib/format';
+import { useI18n, type MsgKey } from '../../lib/i18n';
 import { itemIcon } from '../../lib/icons';
 import { menuQuery, useOverview } from '../../lib/queries';
 import type { Menu, Product, StoreCard, Vertical } from '../../lib/types';
-import { BrandHead, CityNote, NowLogo, NowSection, StoreGrid, inKind, offerAt, pill, useAround } from './kit';
+import { BrandHead, CityNote, NowLogo, NowSection, StoreGrid, inKind, offerAt, pill, placed, useAround } from './kit';
 
 // ---------------------------------------------------------------- Stores near you
 
-const SORTS: { k: string; icon: LucideIcon; label: string }[] = [
-  { k: 'near', icon: MapPin, label: 'Nearby' },
-  { k: 'fast', icon: Timer, label: 'Fastest' },
-  { k: 'top', icon: Star, label: 'Top rated' },
+const SORTS: { k: string; icon: LucideIcon; label: MsgKey }[] = [
+  { k: 'near', icon: MapPin, label: 'lc.hm.sort.near' },
+  { k: 'fast', icon: Timer, label: 'lc.hm.sort.fast' },
+  { k: 'top', icon: Star, label: 'lc.hm.sort.top' },
 ];
-const CATS: { k: string; label: string; test: (s: StoreCard) => boolean }[] = [
-  { k: 'all', label: 'All categories', test: () => true },
-  { k: 'EAT', label: 'Food & Restaurants', test: (s) => s.vertical === 'EAT' },
-  { k: 'GROCERY', label: 'Grocery', test: (s) => s.vertical === 'GROCERY' },
-  { k: 'PHARMACY', label: 'Pharmacy & Wellness', test: (s) => s.vertical === 'PHARMACY' },
-  { k: 'DIAGNOSTICS', label: 'Lab Tests', test: (s) => s.vertical === 'DIAGNOSTICS' },
-  { k: 'LOCAL_STORES', label: 'Local Stores', test: (s) => s.vertical === 'LOCAL_STORES' },
-  { k: 'gifts', label: 'Gifts & Flowers', test: (s) => s.storeType === 'FLOWER' || s.storeType === 'OTHER' || /gift|flower|bouquet|hamper/i.test(s.name) },
-  { k: 'street', label: 'Street Carts', test: (s) => inKind(s, 'STREET') },
+const CATS: { k: string; label: MsgKey; test: (s: StoreCard) => boolean }[] = [
+  { k: 'all', label: 'lc.hm.cat.all', test: () => true },
+  { k: 'EAT', label: 'lc.hm.kind.EAT', test: (s) => s.vertical === 'EAT' },
+  { k: 'GROCERY', label: 'lc.hm.kind.GROCERY', test: (s) => s.vertical === 'GROCERY' },
+  { k: 'PHARMACY', label: 'lc.hm.kind.PHARMACY', test: (s) => s.vertical === 'PHARMACY' },
+  { k: 'DIAGNOSTICS', label: 'lc.hm.kind.DIAGNOSTICS', test: (s) => s.vertical === 'DIAGNOSTICS' },
+  { k: 'LOCAL_STORES', label: 'lc.hm.kind.LOCAL_STORES', test: (s) => s.vertical === 'LOCAL_STORES' },
+  { k: 'gifts', label: 'lc.hm.cat.gifts', test: (s) => s.storeType === 'FLOWER' || s.storeType === 'OTHER' || /gift|flower|bouquet|hamper/i.test(s.name) },
+  { k: 'street', label: 'lc.hm.cat.street', test: (s) => inKind(s, 'STREET') },
 ];
 const MIX: Vertical[] = ['EAT', 'GROCERY', 'PHARMACY', 'LOCAL_STORES', 'DIAGNOSTICS'];
 
 export function StoresNear({ onStart }: { onStart: () => void }) {
+  const { t } = useI18n();
   const a = useAround();
   const [sort, setSort] = useState('near');
   const [open, setOpen] = useState(false);
@@ -75,45 +77,45 @@ export function StoresNear({ onStart }: { onStart: () => void }) {
   }
   const shown = all ? list : list.slice(0, 8);
   return (
-    <NowSection id="stores" surface tag="Nearby stores" title="Stores Near You" intro={`Real shops that deliver ${a.saved ? `to ${a.where}` : a.where ? `around ${a.where}` : 'near you'}. Filter, then tap a shop to see what it sells.`}>
+    <NowSection id="stores" surface tag={t('lc.hm.near.tag')} title={t('lc.hm.near.title')} intro={placed(t, a.where, a.saved ? 'lc.hm.near.introTo' : 'lc.hm.near.introAround', 'lc.hm.near.introYou')}>
       <CityNote />
-      <div className="dz-scroll-x -mx-4 flex gap-1.5 overflow-x-auto px-4 pb-1 sm:mx-0 sm:flex-wrap sm:px-0" role="group" aria-label="Sort and filter">
+      <div className="dz-scroll-x -mx-4 flex gap-1.5 overflow-x-auto px-4 pb-1 sm:mx-0 sm:flex-wrap sm:px-0" role="group" aria-label={t('lc.hm.sortFilter')}>
         {SORTS.map((x) => (
           <button key={x.k} type="button" aria-pressed={sort === x.k} onClick={() => setSort(x.k)} className={pill(sort === x.k)}>
-            <x.icon className="h-4 w-4" aria-hidden /> {x.label}
+            <x.icon className="h-4 w-4" aria-hidden /> {t(x.label)}
           </button>
         ))}
         {hasOffers && (
           <button type="button" aria-pressed={offers} onClick={() => setOffers(!offers)} className={pill(offers)}>
-            <BadgePercent className="h-4 w-4" aria-hidden /> Offers
+            <BadgePercent className="h-4 w-4" aria-hidden /> {t('lc.hm.offers')}
           </button>
         )}
         <button type="button" aria-pressed={open} onClick={() => setOpen(!open)} className={pill(open)}>
-          <Clock className="h-4 w-4" aria-hidden /> Open now
+          <Clock className="h-4 w-4" aria-hidden /> {t('lc.food.fOpen')}
         </button>
         {hasFree && (
           <button type="button" aria-pressed={free} onClick={() => setFree(!free)} className={pill(free)}>
-            <Truck className="h-4 w-4" aria-hidden /> Free delivery
+            <Truck className="h-4 w-4" aria-hidden /> {t('lc.dash.free')}
           </button>
         )}
       </div>
-      <div className="dz-scroll-x -mx-4 mb-4 mt-2 flex gap-1.5 overflow-x-auto px-4 pb-1 sm:mx-0 sm:flex-wrap sm:px-0" role="group" aria-label="Category">
+      <div className="dz-scroll-x -mx-4 mb-4 mt-2 flex gap-1.5 overflow-x-auto px-4 pb-1 sm:mx-0 sm:flex-wrap sm:px-0" role="group" aria-label={t('lc.hm.category')}>
         {cats.map((c) => (
           <button key={c.k} type="button" aria-pressed={cat === c.k} onClick={() => (setCat(c.k), setAll(false))} className={pill(cat === c.k)}>
-            {c.label}
+            {t(c.label)}
           </button>
         ))}
       </div>
-      <StoreGrid stores={shown} offers={a.offers} empty="No shops match these filters yet." />
+      <StoreGrid stores={shown} offers={a.offers} empty={t('lc.hm.near.empty')} />
       <div className="mt-4 flex flex-wrap gap-2">
         {!all && list.length > 8 && (
           <button type="button" onClick={() => setAll(true)} className="inline-flex min-h-12 items-center rounded-xl bg-black px-[18px] font-black text-dz-yellow">
-            View all {list.length} nearby stores
+            {t('lc.hm.near.viewAll', { n: list.length })}
           </button>
         )}
         {!a.saved && (
           <button type="button" onClick={onStart} className="inline-flex min-h-12 items-center gap-2 rounded-xl bg-dz-red px-[18px] font-black text-white">
-            <MapPin className="h-4 w-4" aria-hidden /> Set my location
+            <MapPin className="h-4 w-4" aria-hidden /> {t('lc.hm.setLocation')}
           </button>
         )}
       </div>
@@ -123,24 +125,26 @@ export function StoresNear({ onStart }: { onStart: () => void }) {
 
 // ---------------------------------------------------------------- Rush
 
-const RUSH_STEPS: { icon: LucideIcon; label: string }[] = [
-  { icon: Receipt, label: 'Order placed' },
-  { icon: ShoppingBasket, label: 'Picked by the shop' },
-  { icon: Package, label: 'Packed' },
-  { icon: Bike, label: 'Rider on the way' },
+const RUSH_STEPS: { icon: LucideIcon; label: MsgKey }[] = [
+  { icon: Receipt, label: 'lc.hm.rush.s1' },
+  { icon: ShoppingBasket, label: 'lc.hm.rush.s2' },
+  { icon: Package, label: 'lc.hm.rush.s3' },
+  { icon: Bike, label: 'lc.hm.rush.s4' },
 ];
-const RUSH_ITEMS: { icon: LucideIcon; label: string }[] = [
-  { icon: Milk, label: 'Milk' },
-  { icon: Croissant, label: 'Bread' },
-  { icon: Popcorn, label: 'Snacks' },
-  { icon: Sparkles, label: 'Personal care' },
-  { icon: Battery, label: 'Batteries' },
-  { icon: HeartPulse, label: 'First aid' },
-  { icon: Baby, label: 'Baby care' },
-  { icon: Home, label: 'Household' },
+const RUSH_ITEMS: { icon: LucideIcon; label: MsgKey }[] = [
+  { icon: Milk, label: 'lc.hm.t.milk' },
+  { icon: Croissant, label: 'lc.hm.t.bread' },
+  { icon: Popcorn, label: 'lc.hm.t.snacks' },
+  { icon: Sparkles, label: 'lc.hm.t.personalCare' },
+  { icon: Battery, label: 'lc.hm.t.batteries' },
+  { icon: HeartPulse, label: 'lc.hm.t.firstAid' },
+  { icon: Baby, label: 'lc.hm.t.babyCare' },
+  { icon: Home, label: 'lc.hm.t.household' },
 ];
+const RUSH_CHIPS: MsgKey[] = ['lc.hm.t.quickFirst', 'lc.hm.t.daily', 'lc.hm.t.grocery', 'lc.hm.t.snacks', 'lc.hm.t.beverages', 'lc.hm.t.personalCare', 'lc.hm.t.household', 'lc.hm.t.medicines'];
 
 export function RushBand() {
+  const { t } = useI18n();
   const a = useAround();
   const [k, setK] = useState(0);
   useEffect(() => {
@@ -153,9 +157,9 @@ export function RushBand() {
   const late = open.filter((s) => !!s.closesAt && s.closesAt >= '22:00').length;
   const first = open[0];
   const stats: [string, string][] = [
-    [first ? `${first.etaMinutes} min` : '—', 'quickest delivery right now'],
-    [String(shops.length), `essentials shops near ${a.where ?? 'you'}`],
-    [String(late), 'open till 10 pm or later today'],
+    [first ? t('lc.store.mins', { n: first.etaMinutes }) : '—', t('lc.hm.quickestNow')],
+    [String(shops.length), placed(t, a.where, 'lc.hm.rush.shops', 'lc.hm.rush.shopsYou')],
+    [String(late), t('lc.hm.rush.late')],
   ];
   return (
     <section id="quick" className="scroll-mt-28 bg-now-bg px-4 py-[52px] sm:px-6">
@@ -168,30 +172,30 @@ export function RushBand() {
             <NowLogo k="RUSH" className="h-[38px]" />
           </span>
           <h2 className="text-[clamp(34px,3.8vw,52px)] leading-[0.95]">
-            Need essentials fast? <span className="text-dz-yellow">Rush it.</span>
+            {t('lc.hm.rush.title1')} <span className="text-dz-yellow">{t('lc.hm.rush.title2')}</span>
           </h2>
-          <p className="max-w-[56ch] text-[#DCCFF2]">Everyday essentials from the shops that can reach you quickest, packed and brought by a Delivez rider. Delivez Rush stores, stocked only with essentials, are coming soon.</p>
+          <p className="max-w-[56ch] text-[#DCCFF2]">{t('lc.hm.rush.body')}</p>
           <div className="flex flex-wrap gap-2">
-            {['Quickest shops first', 'Daily essentials', 'Grocery', 'Snacks', 'Beverages', 'Personal care', 'Household', 'Medicines'].map((x) => (
+            {RUSH_CHIPS.map((x) => (
               <span key={x} className="rounded-full border border-white/20 bg-white/10 px-3 py-1.5 text-[13px] font-bold">
-                {x}
+                {t(x)}
               </span>
             ))}
           </div>
           <div className="mt-auto flex flex-wrap gap-2.5 pt-2">
             <Link to="/shops?v=RUSH" className="inline-flex items-center gap-1.5 rounded-xl bg-dz-yellow px-[18px] py-3 text-sm font-black text-black transition hover:-translate-y-0.5" data-rush-cta>
-              Shop Rush <ArrowRight className="h-4 w-4" aria-hidden />
+              {t('lc.hm.rush.cta')} <ArrowRight className="h-4 w-4" aria-hidden />
             </Link>
             <a href="#how" className="inline-flex items-center rounded-xl border-[1.5px] border-white/30 px-[18px] py-3 text-sm font-black text-white transition hover:border-white">
-              How Rush works
+              {t('lc.hm.rush.how')}
             </a>
           </div>
         </div>
         <div className="grid content-start gap-3.5 rounded-[28px] bg-[#0E0E0E] p-6 text-white ring-1 ring-white/5">
           <div className="flex flex-wrap items-end justify-between gap-2">
             <div>
-              <p className="text-xs font-extrabold uppercase tracking-[1px] text-neutral-400">Quickest right now</p>
-              <b className="font-display text-[44px] leading-none text-dz-yellow tabular-nums">{a.loading ? '…' : first ? `${first.etaMinutes} min` : '—'}</b>
+              <p className="text-xs font-extrabold uppercase tracking-[1px] text-neutral-400">{t('lc.hm.quickestHead')}</p>
+              <b className="font-display text-[44px] leading-none text-dz-yellow tabular-nums">{a.loading ? '…' : first ? t('lc.store.mins', { n: first.etaMinutes }) : '—'}</b>
             </div>
             {first && (
               <span className="inline-flex max-w-full items-center gap-1.5 truncate text-[13px] font-extrabold text-[#5FE0A0]">
@@ -203,7 +207,7 @@ export function RushBand() {
             {RUSH_STEPS.map((s, i) => (
               <div key={s.label} className={`rounded-2xl border p-3 text-[12.5px] transition duration-300 ${i <= k ? 'border-[#7B2FD4] bg-[#24133D] text-white' : 'border-[#262626] bg-[#181818] text-neutral-400'}`}>
                 <s.icon className="mb-1.5 h-5 w-5" aria-hidden />
-                {s.label}
+                {t(s.label)}
               </div>
             ))}
           </div>
@@ -214,7 +218,7 @@ export function RushBand() {
             {RUSH_ITEMS.map((s) => (
               <span key={s.label} className="grid justify-items-center gap-1.5 rounded-2xl bg-[#181818] px-1 py-3 text-center text-[11.5px] text-neutral-300">
                 <s.icon className="h-6 w-6 text-dz-yellow" aria-hidden />
-                {s.label}
+                {t(s.label)}
               </span>
             ))}
           </div>
@@ -234,11 +238,11 @@ export function RushBand() {
 
 // ---------------------------------------------------------------- Shop products
 
-const SHOP_KINDS: { v: Vertical; label: string }[] = [
-  { v: 'GROCERY', label: 'Grocery' },
-  { v: 'PHARMACY', label: 'Pharmacy & Wellness' },
-  { v: 'LOCAL_STORES', label: 'Local Stores' },
-  { v: 'EAT', label: 'Food' },
+const SHOP_KINDS: { v: Vertical; label: MsgKey }[] = [
+  { v: 'GROCERY', label: 'lc.hm.kind.GROCERY' },
+  { v: 'PHARMACY', label: 'lc.hm.kind.PHARMACY' },
+  { v: 'LOCAL_STORES', label: 'lc.hm.kind.LOCAL_STORES' },
+  { v: 'EAT', label: 'lc.v.EAT' },
 ];
 /** Menus read for products: the nearest open shops of the kind picked. */
 const MENUS = 6;
@@ -247,6 +251,7 @@ const offOf = (p: Product) => (p.mrp && p.mrp > simpleLine(p).unitPrice ? Math.r
 
 /** Products from the shops near you, with the design's filters (only the ones the data can answer). */
 export function ShopProducts() {
+  const { t } = useI18n();
   const a = useAround();
   const basket = useBasket();
   const [v, setV] = useState<Vertical>('GROCERY');
@@ -272,26 +277,26 @@ export function ShopProducts() {
   const cap = max ?? top;
   const shown = items.filter((i) => (!aisle || i.aisle === aisle) && simpleLine(i.p).unitPrice <= cap && offOf(i.p) >= disc && (!stock || i.p.available) && (!veg || i.p.isVeg === true));
   const reset = (to: Vertical) => (setV(to), setAisle(''), setMax(null), setN(PAGE));
-  const label = SHOP_KINDS.find((k) => k.v === v)!.label;
+  const label = t(SHOP_KINDS.find((k) => k.v === v)!.label);
   const field = 'mt-1 w-full rounded-[10px] border-[1.5px] border-now-line bg-now-bg px-3 py-2 text-sm font-bold text-now-text';
   return (
-    <NowSection id="shop" surface tag="Shop products" title={label} intro={`From the shops nearest ${a.where ?? 'you'} that are open now. Filter, then add straight to your cart.`}>
+    <NowSection id="shop" surface tag={t('lc.hm.shop.tag')} title={label} intro={placed(t, a.where, 'lc.hm.shop.intro', 'lc.hm.shop.introYou')}>
       <div className="grid items-start gap-4 lg:grid-cols-[240px_1fr]">
-        <aside className="grid gap-3 rounded-[20px] border border-now-line bg-now-card p-4 text-now-text" aria-label="Product filters">
+        <aside className="grid gap-3 rounded-[20px] border border-now-line bg-now-card p-4 text-now-text" aria-label={t('lc.hm.shop.filters')}>
           <label className="text-[13px] font-extrabold">
-            Shop
+            {t('lc.hm.shop.shop')}
             <select value={v} onChange={(e) => reset(e.target.value as Vertical)} className={field}>
               {SHOP_KINDS.map((k) => (
                 <option key={k.v} value={k.v}>
-                  {k.label}
+                  {t(k.label)}
                 </option>
               ))}
             </select>
           </label>
           <label className="text-[13px] font-extrabold">
-            Category
+            {t('lc.hm.category')}
             <select value={aisle} onChange={(e) => (setAisle(e.target.value), setN(PAGE))} className={field}>
-              <option value="">All</option>
+              <option value="">{t('lc.home.all')}</option>
               {aisles.map((x) => (
                 <option key={x} value={x}>
                   {x}
@@ -301,32 +306,32 @@ export function ShopProducts() {
           </label>
           {top > 0 && (
             <label className="text-[13px] font-extrabold">
-              Max price: {rupees(cap)}
+              {t('lc.hm.shop.maxPrice', { price: rupees(cap) })}
               <input type="range" min={0} max={top} step={1000} value={cap} onChange={(e) => setMax(Number(e.target.value))} className="mt-2 w-full accent-[#E8130F]" />
             </label>
           )}
           <label className="text-[13px] font-extrabold">
-            Discount
+            {t('lc.hm.shop.discount')}
             <select value={disc} onChange={(e) => setDisc(Number(e.target.value))} className={field}>
-              <option value={0}>Any</option>
-              <option value={10}>10% off or more</option>
-              <option value={20}>20% off or more</option>
+              <option value={0}>{t('lc.hm.any')}</option>
+              <option value={10}>{t('lc.hm.shop.offMin', { n: 10 })}</option>
+              <option value={20}>{t('lc.hm.shop.offMin', { n: 20 })}</option>
             </select>
           </label>
           <label className="flex items-center gap-2 text-[13px] font-extrabold">
-            <input type="checkbox" checked={stock} onChange={(e) => setStock(e.target.checked)} className="h-4 w-4 accent-[#E8130F]" /> In stock only
+            <input type="checkbox" checked={stock} onChange={(e) => setStock(e.target.checked)} className="h-4 w-4 accent-[#E8130F]" /> {t('lc.hm.shop.inStockOnly')}
           </label>
           <label className="flex items-center gap-2 text-[13px] font-extrabold">
-            <input type="checkbox" checked={veg} onChange={(e) => setVeg(e.target.checked)} className="h-4 w-4 accent-[#17803A]" /> Vegetarian
+            <input type="checkbox" checked={veg} onChange={(e) => setVeg(e.target.checked)} className="h-4 w-4 accent-[#17803A]" /> {t('lc.hm.shop.veg')}
           </label>
         </aside>
         <div>
           {loading ? (
             <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-5">{[0, 1, 2, 3, 4].map((i) => <div key={i} className="h-64 animate-pulse rounded-[18px] bg-now-card" />)}</div>
           ) : !shops.length ? (
-            <p className="rounded-2xl border border-now-line bg-now-card p-6 text-now-muted">{`No ${label.toLowerCase()} shops near ${a.where ?? 'you'} are open right now.`}</p>
+            <p className="rounded-2xl border border-now-line bg-now-card p-6 text-now-muted">{placed(t, a.where, 'lc.hm.shop.none', 'lc.hm.shop.noneYou', { kind: label.toLowerCase() })}</p>
           ) : !shown.length ? (
-            <p className="rounded-2xl border border-now-line bg-now-card p-6 text-now-muted">No products match these filters.</p>
+            <p className="rounded-2xl border border-now-line bg-now-card p-6 text-now-muted">{t('lc.hm.shop.noMatch')}</p>
           ) : (
             <>
               <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-5" aria-live="polite" data-products>
@@ -336,7 +341,7 @@ export function ShopProducts() {
               </div>
               {shown.length > n && (
                 <button type="button" onClick={() => setN(n + PAGE)} className="mt-4 inline-flex min-h-11 items-center rounded-xl border-[1.5px] border-now-line bg-now-card px-[18px] font-black text-now-text hover:border-now-text">
-                  Show more ({shown.length - n})
+                  {t('lc.hm.showMore', { n: shown.length - n })}
                 </button>
               )}
             </>
@@ -349,6 +354,7 @@ export function ShopProducts() {
 }
 
 function ProductTile({ p, m, aisle, basket }: { p: Product; m: Menu; aisle: string; basket: ReturnType<typeof useBasket> }) {
+  const { t } = useI18n();
   const Icon = itemIcon(p.name, aisle);
   const price = simpleLine(p).unitPrice;
   const off = offOf(p);
@@ -357,7 +363,7 @@ function ProductTile({ p, m, aisle, basket }: { p: Product; m: Menu; aisle: stri
     <div className="flex flex-col gap-1.5 rounded-[18px] border border-now-line bg-now-card p-2.5 text-now-text" data-product={p.id}>
       <div className="relative grid h-[84px] place-items-center overflow-hidden rounded-[14px] bg-now-surface">
         {p.imageUrl ? <img src={p.imageUrl} alt="" loading="lazy" className="h-full w-full object-cover" /> : <Icon className="h-9 w-9 text-dz-red" strokeWidth={1.8} aria-hidden />}
-        {off > 0 && <span className="absolute left-2 top-2 rounded-md bg-[#17803A] px-1.5 py-0.5 text-[10.5px] font-black text-white">{off}% OFF</span>}
+        {off > 0 && <span className="absolute left-2 top-2 rounded-md bg-[#17803A] px-1.5 py-0.5 text-[10.5px] font-black uppercase text-white">{t('lc.off', { n: off })}</span>}
       </div>
       <b className="line-clamp-2 min-h-[34px] text-[13.5px] leading-tight">{p.name}</b>
       <small className="truncate text-xs text-now-muted">{[p.unitSize && [p.unitSize, p.unit].filter(Boolean).join(' '), m.store.name].filter(Boolean).join(' · ')}</small>
@@ -365,22 +371,22 @@ function ProductTile({ p, m, aisle, basket }: { p: Product; m: Menu; aisle: stri
         {rupees(price)}
         {off > 0 && <s className="ml-1 text-xs font-medium text-now-muted">{rupees(p.mrp!)}</s>}
       </span>
-      <small className={`text-xs font-bold ${p.available ? 'text-[#17803A]' : 'text-dz-red'}`}>{!p.available ? 'Out of stock' : p.fewLeft ? `Only ${p.fewLeft} left` : 'In stock'}</small>
+      <small className={`text-xs font-bold ${p.available ? 'text-[#17803A]' : 'text-dz-red'}`}>{!p.available ? t('lc.hm.outOfStock') : p.fewLeft ? t('lc.fewLeft', { n: p.fewLeft }) : t('lc.hm.inStock')}</small>
       {!p.available ? (
-        <span className="mt-auto rounded-[10px] bg-now-surface py-2 text-center text-sm font-black text-now-muted">Out of stock</span>
+        <span className="mt-auto rounded-[10px] bg-now-surface py-2 text-center text-sm font-black text-now-muted">{t('lc.hm.outOfStock')}</span>
       ) : qty > 0 ? (
         <span className="mt-auto flex items-center justify-between rounded-[10px] bg-dz-red text-white">
-          <button type="button" onClick={() => basket.step(m.store, p, qty - 1)} className="grid h-9 w-9 place-items-center" aria-label={`Remove one ${p.name}`}>
+          <button type="button" onClick={() => basket.step(m.store, p, qty - 1)} className="grid h-9 w-9 place-items-center" aria-label={t('lc.hm.removeOne', { name: p.name })}>
             <Minus className="h-4 w-4" aria-hidden />
           </button>
           <b aria-live="polite">{qty}</b>
-          <button type="button" disabled={qty >= p.maxQty} onClick={() => basket.step(m.store, p, qty + 1)} className="grid h-9 w-9 place-items-center disabled:opacity-50" aria-label={`Add one more ${p.name}`}>
+          <button type="button" disabled={qty >= p.maxQty} onClick={() => basket.step(m.store, p, qty + 1)} className="grid h-9 w-9 place-items-center disabled:opacity-50" aria-label={t('lc.hm.addOne', { name: p.name })}>
             <Plus className="h-4 w-4" aria-hidden />
           </button>
         </span>
       ) : (
-        <button type="button" onClick={() => basket.add(m.store, p)} className="mt-auto rounded-[10px] border-[1.5px] border-dz-red bg-white py-2 text-sm font-black text-dz-red transition hover:bg-dz-red hover:text-white" aria-label={`Add ${p.name}`}>
-          Add
+        <button type="button" onClick={() => basket.add(m.store, p)} className="mt-auto rounded-[10px] border-[1.5px] border-dz-red bg-white py-2 text-sm font-black text-dz-red transition hover:bg-dz-red hover:text-white" aria-label={t('lc.addNamed', { name: p.name })}>
+          {t('lc.hm.add')}
         </button>
       )}
     </div>
@@ -390,6 +396,7 @@ function ProductTile({ p, m, aisle, basket }: { p: Product; m: Menu; aisle: stri
 // ---------------------------------------------------------------- Restaurants
 
 export function FoodNear() {
+  const { t } = useI18n();
   const a = useAround();
   const types = useOverview().data?.verticals.EAT.types.map((t) => t.name).slice(0, 8) ?? [];
   const [cuisine, setCuisine] = useState('');
@@ -403,10 +410,10 @@ export function FoodNear() {
   return (
     <section id="food" className="scroll-mt-28 bg-now-bg px-4 py-[52px] sm:px-6">
       <div className="mx-auto max-w-[1280px]">
-        <BrandHead k="EAT" tag="Food & restaurants" title="Restaurants near you." intro="Cuisines, ratings and delivery times from the restaurants that deliver to you." />
-        <div className="dz-scroll-x -mx-4 mb-2 flex gap-1.5 overflow-x-auto px-4 pb-1 sm:mx-0 sm:flex-wrap sm:px-0" role="group" aria-label="Cuisine">
+        <BrandHead k="EAT" tag={t('lc.hm.food.tag')} title={t('lc.hm.food.title')} intro={t('lc.hm.food.intro')} />
+        <div className="dz-scroll-x -mx-4 mb-2 flex gap-1.5 overflow-x-auto px-4 pb-1 sm:mx-0 sm:flex-wrap sm:px-0" role="group" aria-label={t('lc.hm.cuisine')}>
           <button type="button" aria-pressed={!cuisine} onClick={() => setCuisine('')} className={pill(!cuisine)}>
-            All
+            {t('lc.home.all')}
           </button>
           {cuisines.map((c) => (
             <button key={c} type="button" aria-pressed={cuisine === c} onClick={() => setCuisine(cuisine === c ? '' : c)} className={pill(cuisine === c)}>
@@ -414,22 +421,22 @@ export function FoodNear() {
             </button>
           ))}
         </div>
-        <div className="mb-3 flex flex-wrap gap-1.5" role="group" aria-label="Food options">
+        <div className="mb-3 flex flex-wrap gap-1.5" role="group" aria-label={t('lc.hm.food.options')}>
           <button type="button" aria-pressed={top} onClick={() => setTop(!top)} className={pill(top)}>
-            <Star className="h-4 w-4" aria-hidden /> Rating 4+
+            <Star className="h-4 w-4" aria-hidden /> {t('lc.hm.rating4')}
           </button>
           <button type="button" aria-pressed={open} onClick={() => setOpen(!open)} className={pill(open)}>
-            <Clock className="h-4 w-4" aria-hidden /> Open now
+            <Clock className="h-4 w-4" aria-hidden /> {t('lc.food.fOpen')}
           </button>
           {hasOffers && (
             <button type="button" aria-pressed={offers} onClick={() => setOffers(!offers)} className={pill(offers)}>
-              <BadgePercent className="h-4 w-4" aria-hidden /> Offers
+              <BadgePercent className="h-4 w-4" aria-hidden /> {t('lc.hm.offers')}
             </button>
           )}
         </div>
-        <StoreGrid stores={list} offers={a.offers} empty={eat.length ? 'No restaurants match these filters.' : `No restaurants deliver to ${a.where ?? 'you'} yet.`} />
+        <StoreGrid stores={list} offers={a.offers} empty={eat.length ? t('lc.hm.food.noMatch') : placed(t, a.where, 'lc.hm.food.none', 'lc.hm.food.noneYou')} />
         <Link to="/shops?v=EAT" className="mt-4 inline-flex items-center gap-2 rounded-xl bg-dz-red px-[18px] py-3 text-sm font-black text-white">
-          Order Food <ArrowRight className="h-4 w-4" aria-hidden />
+          {t('lc.hm.food.cta')} <ArrowRight className="h-4 w-4" aria-hidden />
         </Link>
       </div>
     </section>

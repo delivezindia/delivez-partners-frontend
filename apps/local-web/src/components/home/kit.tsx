@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { useQueries } from '@tanstack/react-query';
 import { Clock, FlaskConical, MapPin, Star, type LucideIcon } from 'lucide-react';
 import { km, rupees } from '../../lib/format';
+import { useI18n, type MsgKey } from '../../lib/i18n';
 import { storeLook } from '../../lib/icons';
 import { useDeliverTo } from '../../lib/location';
 import { nearbyQuery, useNearby, useOffers, useOverview, type Overview, type PublicOffer } from '../../lib/queries';
@@ -12,10 +13,15 @@ import type { StoreCard, Vertical } from '../../lib/types';
 /*
  * Building blocks of the home page (the Delivez Now design): light by default, dark when the device is (see .dz-now in
  * index.css). Honest by rule, like the category pages: shops, counts, times and offers come from the API; what the app
- * can't do yet says so. Copy is English for now, like the sections it replaces.
+ * can't do yet says so. Copy is in `lc.hm.*`, in every language.
  */
 
 export type Kind = Vertical | ShopPage;
+type T = ReturnType<typeof useI18n>['t'];
+
+/** A sentence about a place: the `{where}` form when there is one, the "you" form when there isn't. */
+export const placed = (t: T, where: string | null, withWhere: MsgKey, withYou: MsgKey, vars: Record<string, string | number> = {}) =>
+  where ? t(withWhere, { ...vars, where }) : t(withYou, vars);
 
 // ---------------------------------------------------------------- Where we are looking
 
@@ -42,6 +48,7 @@ const AroundCtx = createContext<Around | null>(null);
  * the live city with the most shops delivering there (each city centre is asked once, and the visitor can switch).
  */
 export function AroundProvider({ children }: { children: ReactNode }) {
+  const { t } = useI18n();
   const saved = useDeliverTo((s) => s.at);
   const overview = useOverview();
   const offers = useOffers();
@@ -61,7 +68,7 @@ export function AroundProvider({ children }: { children: ReactNode }) {
   const stores = useMemo(() => (q.data?.stores ?? []).filter((s) => s.delivers).sort((a, b) => a.distanceKm - b.distanceKm), [q.data]);
   const value: Around = {
     at,
-    where: saved ? saved.title : city ? `central ${city.name}` : null,
+    where: saved ? saved.title : city ? t('lc.hm.central', { city: city.name }) : null,
     saved: !!saved,
     cities,
     cityId: saved ? null : (city?.id ?? null),
@@ -82,11 +89,12 @@ export function useAround() {
 
 /** Before a location is set: which city the shops are from, and the others to switch to. */
 export function CityNote() {
+  const { t } = useI18n();
   const a = useAround();
   if (a.saved || a.cities.length < 2) return null;
   return (
     <div className="mb-4 flex flex-wrap items-center gap-1.5 text-[13px] font-bold text-now-muted">
-      Showing shops around
+      {t('lc.hm.showingAround')}
       {a.cities.map((c) => (
         <button key={c.id} type="button" aria-pressed={c.id === a.cityId} onClick={() => a.pickCity(c.id)} className={pill(c.id === a.cityId)}>
           {c.name}
@@ -98,14 +106,15 @@ export function CityNote() {
 
 // ---------------------------------------------------------------- Kinds of shop
 
-export const KINDS: { k: Kind; title: string; blurb: string; logo: string | null; tag: string; to: string }[] = [
-  { k: 'EAT', title: 'Food & Restaurants', blurb: 'Restaurants, cafés, bakeries and more', logo: 'food', tag: 'FOOD', to: '/shops?v=EAT' },
-  { k: 'GROCERY', title: 'Grocery', blurb: 'Fresh produce, staples and household', logo: 'grocery', tag: 'GROCERY', to: '/shops?v=GROCERY' },
-  { k: 'PHARMACY', title: 'Pharmacy & Wellness', blurb: 'Medicines and healthcare', logo: 'pharmacy', tag: 'PHARMACY', to: '/shops?v=PHARMACY' },
-  { k: 'DIAGNOSTICS', title: 'Lab Tests', blurb: 'Tests at certified labs, at home or walk-in', logo: null, tag: 'LAB TESTS', to: '/shops?v=DIAGNOSTICS' },
-  { k: 'LOCAL_STORES', title: 'Local Stores', blurb: 'Your neighbourhood shops', logo: 'local-shop', tag: 'LOCAL SHOP', to: '/shops?v=LOCAL_STORES' },
-  { k: 'RUSH', title: 'Rush', blurb: 'Essentials from the quickest shops', logo: 'rush-store', tag: 'RUSH STORE', to: '/shops?v=RUSH' },
-  { k: 'STREET', title: 'Street Cart', blurb: 'Street vendors and carts near you', logo: 'street-cart', tag: 'STREET CART', to: '/shops?v=STREET' },
+/** `tag` is part of the logo artwork, so it stays as drawn (English) in every language. */
+export const KINDS: { k: Kind; title: MsgKey; blurb: MsgKey; logo: string | null; tag: string; to: string }[] = [
+  { k: 'EAT', title: 'lc.hm.kind.EAT', blurb: 'lc.hm.kindBlurb.EAT', logo: 'food', tag: 'FOOD', to: '/shops?v=EAT' },
+  { k: 'GROCERY', title: 'lc.hm.kind.GROCERY', blurb: 'lc.hm.kindBlurb.GROCERY', logo: 'grocery', tag: 'GROCERY', to: '/shops?v=GROCERY' },
+  { k: 'PHARMACY', title: 'lc.hm.kind.PHARMACY', blurb: 'lc.hm.kindBlurb.PHARMACY', logo: 'pharmacy', tag: 'PHARMACY', to: '/shops?v=PHARMACY' },
+  { k: 'DIAGNOSTICS', title: 'lc.hm.kind.DIAGNOSTICS', blurb: 'lc.hm.kindBlurb.DIAGNOSTICS', logo: null, tag: 'LAB TESTS', to: '/shops?v=DIAGNOSTICS' },
+  { k: 'LOCAL_STORES', title: 'lc.hm.kind.LOCAL_STORES', blurb: 'lc.hm.kindBlurb.LOCAL_STORES', logo: 'local-shop', tag: 'LOCAL SHOP', to: '/shops?v=LOCAL_STORES' },
+  { k: 'RUSH', title: 'lc.hm.kind.RUSH', blurb: 'lc.hm.kindBlurb.RUSH', logo: 'rush-store', tag: 'RUSH STORE', to: '/shops?v=RUSH' },
+  { k: 'STREET', title: 'lc.hm.kind.STREET', blurb: 'lc.hm.kindBlurb.STREET', logo: 'street-cart', tag: 'STREET CART', to: '/shops?v=STREET' },
 ];
 export const kindOf = (k: Kind) => KINDS.find((x) => x.k === k)!;
 
@@ -120,35 +129,14 @@ export const inKind = (s: StoreCard, k: Kind) =>
       ? VENDOR_TYPES.has(s.storeType)
       : s.vertical === k;
 
-export const TYPE_LABEL: Record<string, string> = {
-  RESTAURANT: 'Restaurant',
-  CLOUD_KITCHEN: 'Cloud kitchen',
-  CAFE: 'Café',
-  BAKERY: 'Bakery',
-  SWEETS: 'Sweets',
-  SUPERMARKET: 'Supermarket',
-  KIRANA: 'Kirana',
-  GROCERY: 'Grocery',
-  PHARMACY_RETAIL: 'Pharmacy',
-  DIAGNOSTIC_LAB: 'Lab',
-  BABY_CARE: 'Baby care',
-  PET_CARE: 'Pet care',
-  ELECTRONICS: 'Electronics',
-  BEAUTY_WELLNESS: 'Beauty & wellness',
-  MEAT_FISH: 'Meat & fish',
-  CLOTHING: 'Fashion',
-  FLOWER: 'Florist',
-  PRINTING: 'Print & copy',
-  HOUSEHOLD_LIFESTYLE: 'Home & kitchen',
-  STREET_VENDOR: 'Street cart',
-  SOCIETY_VENDOR: 'Society vendor',
-  OTHER: 'Gifts & more',
-};
+const TYPES = ['RESTAURANT', 'CLOUD_KITCHEN', 'CAFE', 'BAKERY', 'SWEETS', 'SUPERMARKET', 'KIRANA', 'GROCERY', 'PHARMACY_RETAIL', 'DIAGNOSTIC_LAB', 'BABY_CARE', 'PET_CARE', 'ELECTRONICS', 'BEAUTY_WELLNESS', 'MEAT_FISH', 'CLOTHING', 'FLOWER', 'PRINTING', 'HOUSEHOLD_LIFESTYLE', 'STREET_VENDOR', 'SOCIETY_VENDOR', 'OTHER'] as const;
+export const TYPE_LABEL: Record<string, MsgKey> = Object.fromEntries(TYPES.map((x) => [x, `lc.hm.type.${x}` as MsgKey]));
 
 /** Delivez Now logo with the kind's tag (the design's files); lab tests have none yet, so their mark is drawn here. */
 export function NowLogo({ k, className = 'h-[46px]' }: { k: Kind; className?: string }) {
+  const { t } = useI18n();
   const kind = kindOf(k);
-  if (kind.logo) return <img src={`/brand/now-${kind.logo}.svg`} alt={`Delivez Now ${kind.title}`} className={`block w-auto ${className}`} />;
+  if (kind.logo) return <img src={`/brand/now-${kind.logo}.svg`} alt={t('lc.hm.logoAlt', { kind: t(kind.title) })} className={`block w-auto ${className}`} />;
   return <NowMark tag={kind.tag} icon={FlaskConical} className={className} />;
 }
 function NowMark({ tag, icon: Icon, className }: { tag: string; icon: LucideIcon; className: string }) {
@@ -179,11 +167,15 @@ function NowMark({ tag, icon: Icon, className }: { tag: string; icon: LucideIcon
 export const pill = (on: boolean) =>
   `inline-flex shrink-0 items-center gap-1.5 rounded-full border-[1.5px] px-3.5 py-2 text-[13px] font-extrabold transition ${on ? 'border-black bg-black text-dz-yellow' : 'border-now-line bg-now-surface text-now-text hover:border-now-text'}`;
 export const chip = 'inline-flex items-center gap-1.5 rounded-full border-[1.5px] border-now-line bg-now-surface px-3.5 py-2 text-[13px] font-extrabold text-now-text';
-export const Soon = ({ dark = false }: { dark?: boolean }) => (
-  <span className={`inline-flex rounded-full px-2.5 py-1 text-[11px] font-extrabold uppercase tracking-wide ${dark ? 'bg-white/10 text-dz-yellow' : 'bg-dz-yellow-soft text-black'}`}>Coming soon</span>
-);
+export function Soon({ dark = false }: { dark?: boolean }) {
+  const { t } = useI18n();
+  return <span className={`inline-flex rounded-full px-2.5 py-1 text-[11px] font-extrabold uppercase tracking-wide ${dark ? 'bg-white/10 text-dz-yellow' : 'bg-dz-yellow-soft text-black'}`}>{t('lc.rush.soonTag')}</span>;
+}
 
-export const scrollToId = (id: string) => document.getElementById(id)?.scrollIntoView({ behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth', block: 'start' });
+/** Text drawn in an SVG: squeezed into `width` when longer than `max` characters (some languages' words run long). */
+export const fit = (s: string, max: number, width: number) => (s.length > max ? { textLength: width, lengthAdjust: 'spacingAndGlyphs' as const } : {});
+
+export const scrollToId =(id: string) => document.getElementById(id)?.scrollIntoView({ behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth', block: 'start' });
 
 /** A home-page section: page or surface background, red tag, big title and the intro on the right. */
 export function NowSection({ id, surface = false, tag, title, intro, children, className = '' }: { id?: string; surface?: boolean; tag?: string; title?: ReactNode; intro?: ReactNode; children: ReactNode; className?: string }) {
@@ -229,10 +221,11 @@ export const offerAt = (s: StoreCard, offers: PublicOffer[]) => offers.find((o) 
 
 /** Store card from the design: a coloured band with the shop's photo or icon, then name, rating, distance, time and fees. */
 export function StoreTile({ s, offer }: { s: StoreCard; offer?: string | null }) {
+  const { t } = useI18n();
   const look = storeLook(s);
   const img = s.coverUrl ?? s.logoUrl;
   const closed = !s.open && !s.bookable;
-  const kind = s.cuisines.length ? s.cuisines.slice(0, 2).join(' · ') : (TYPE_LABEL[s.storeType] ?? kindOf(s.vertical).title);
+  const kind = s.cuisines.length ? s.cuisines.slice(0, 2).join(' · ') : t(TYPE_LABEL[s.storeType] ?? kindOf(s.vertical).title);
   return (
     <Link
       to={`/s/${s.slug ?? s.id}`}
@@ -248,7 +241,7 @@ export function StoreTile({ s, offer }: { s: StoreCard; offer?: string | null })
           </span>
         )}
         {offer && <span className="absolute left-2 top-2 max-w-[62%] truncate rounded-md bg-dz-red px-2 py-0.5 text-[11px] font-black text-white">{offer}</span>}
-        <span className={`absolute right-2 top-2 rounded-md px-2 py-0.5 text-[11px] font-black ${closed ? 'bg-[#2A0A0E] text-[#FF7D84]' : 'bg-[#0F2418] text-[#2BD463]'}`}>{s.bookable ? 'Book a slot' : closed ? 'Closed' : 'Open'}</span>
+        <span className={`absolute right-2 top-2 rounded-md px-2 py-0.5 text-[11px] font-black ${closed ? 'bg-[#2A0A0E] text-[#FF7D84]' : 'bg-[#0F2418] text-[#2BD463]'}`}>{s.bookable ? t('lc.store.bookSlot') : closed ? t('lc.hm.closed') : t('lc.hm.open')}</span>
       </div>
       <div className="grid gap-1 p-3.5">
         <b className="truncate text-[15.5px]">{s.name}</b>
@@ -264,11 +257,11 @@ export function StoreTile({ s, offer }: { s: StoreCard; offer?: string | null })
           </span>
           {!s.bookable && (
             <span className="inline-flex items-center gap-1">
-              <Clock className="h-3.5 w-3.5 text-now-muted" aria-hidden /> {s.etaMinutes} min
+              <Clock className="h-3.5 w-3.5 text-now-muted" aria-hidden /> {t('lc.store.mins', { n: s.etaMinutes })}
             </span>
           )}
         </span>
-        {!s.bookable && <small className="text-xs text-now-muted">{`${s.minOrderAmount ? `Min order ${rupees(s.minOrderAmount)}` : 'No minimum'} · ${s.deliveryFee ? `Delivery ${rupees(s.deliveryFee)}` : 'Free delivery'}`}</small>}
+        {!s.bookable && <small className="text-xs text-now-muted">{`${s.minOrderAmount ? t('lc.store.min', { amount: rupees(s.minOrderAmount) }) : t('lc.hm.noMin')} · ${s.deliveryFee ? t('lc.store.fee', { fee: rupees(s.deliveryFee) }) : t('lc.dash.free')}`}</small>}
       </div>
     </Link>
   );
@@ -276,9 +269,10 @@ export function StoreTile({ s, offer }: { s: StoreCard; offer?: string | null })
 
 /** A grid of store cards with loading and empty states. */
 export function StoreGrid({ stores, empty, offers }: { stores: StoreCard[]; empty: string; offers: PublicOffer[] }) {
+  const { t } = useI18n();
   const a = useAround();
   if (a.loading) return <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">{[0, 1, 2, 3].map((i) => <div key={i} className="h-56 animate-pulse rounded-[18px] bg-now-card" />)}</div>;
-  if (a.error) return <p className="rounded-2xl bg-now-card p-6 text-now-muted">Couldn’t load shops right now. Try again in a moment.</p>;
+  if (a.error) return <p className="rounded-2xl bg-now-card p-6 text-now-muted">{t('lc.hm.loadFail')}</p>;
   if (!stores.length) return <p className="rounded-2xl border border-now-line bg-now-card p-6 text-now-muted">{empty}</p>;
   return (
     <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4" data-store-grid>
