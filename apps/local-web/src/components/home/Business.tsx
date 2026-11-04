@@ -481,13 +481,12 @@ const FAMILY: { k: Kind; name: string }[] = [
   { k: 'PHARMACY', name: 'Delivez Now Pharmacy' },
   { k: 'LOCAL_STORES', name: 'Delivez Now Local Shop' },
   { k: 'RUSH', name: 'Delivez Now Rush Store' },
-  { k: 'STREET', name: 'Delivez Now Street Cart' },
 ];
 
 export function FamilyBand() {
   const { t } = useI18n();
   const overview = useOverview().data;
-  const none = (k: Kind) => k !== 'RUSH' && k !== 'STREET' && !!overview && !overview.verticals[k]?.shops;
+  const none = (k: Kind) => k !== 'RUSH' && !!overview && !overview.verticals[k]?.shops;
   return (
     <NowSection id="now-family" tag={t('lc.hm.fam.tag')} title={t('lc.hm.fam.title')} intro={t('lc.hm.fam.intro')}>
       <div className="grid gap-3.5 sm:grid-cols-2 lg:grid-cols-3">

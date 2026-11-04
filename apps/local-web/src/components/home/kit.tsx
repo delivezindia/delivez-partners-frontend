@@ -114,20 +114,14 @@ export const KINDS: { k: Kind; title: MsgKey; blurb: MsgKey; logo: string | null
   { k: 'DIAGNOSTICS', title: 'lc.hm.kind.DIAGNOSTICS', blurb: 'lc.hm.kindBlurb.DIAGNOSTICS', logo: null, tag: 'LAB TESTS', to: '/shops?v=DIAGNOSTICS' },
   { k: 'LOCAL_STORES', title: 'lc.hm.kind.LOCAL_STORES', blurb: 'lc.hm.kindBlurb.LOCAL_STORES', logo: 'local-shop', tag: 'LOCAL SHOP', to: '/shops?v=LOCAL_STORES' },
   { k: 'RUSH', title: 'lc.hm.kind.RUSH', blurb: 'lc.hm.kindBlurb.RUSH', logo: 'rush-store', tag: 'RUSH STORE', to: '/shops?v=RUSH' },
-  { k: 'STREET', title: 'lc.hm.kind.STREET', blurb: 'lc.hm.kindBlurb.STREET', logo: 'street-cart', tag: 'STREET CART', to: '/shops?v=STREET' },
 ];
 export const kindOf = (k: Kind) => KINDS.find((x) => x.k === k)!;
 
-/** Local shops that sell everyday needs: the Rush page's list. */
-const ESSENTIAL_TYPES = new Set(['BAKERY', 'BABY_CARE', 'PET_CARE', 'HOUSEHOLD_LIFESTYLE', 'ELECTRONICS', 'BEAUTY_WELLNESS', 'SOCIETY_VENDOR', 'MEAT_FISH']);
+/** Street carts and society vendors: the Rush page's list. */
 const VENDOR_TYPES = new Set(['STREET_VENDOR', 'SOCIETY_VENDOR']);
-/** The same rules as the Rush and Street Cart pages, so counts here match what those pages list. */
+/** The same rules as the Rush page and the shop lists, so counts here match what they list: vendors only under Rush. */
 export const inKind = (s: StoreCard, k: Kind) =>
-  k === 'RUSH'
-    ? s.vertical === 'GROCERY' || s.vertical === 'PHARMACY' || (s.vertical === 'LOCAL_STORES' && ESSENTIAL_TYPES.has(s.storeType))
-    : k === 'STREET'
-      ? VENDOR_TYPES.has(s.storeType)
-      : s.vertical === k;
+  k === 'RUSH' ? VENDOR_TYPES.has(s.storeType) : s.vertical === k && !(k === 'LOCAL_STORES' && VENDOR_TYPES.has(s.storeType));
 
 const TYPES = ['RESTAURANT', 'CLOUD_KITCHEN', 'CAFE', 'BAKERY', 'SWEETS', 'SUPERMARKET', 'KIRANA', 'GROCERY', 'PHARMACY_RETAIL', 'DIAGNOSTIC_LAB', 'BABY_CARE', 'PET_CARE', 'ELECTRONICS', 'BEAUTY_WELLNESS', 'MEAT_FISH', 'CLOTHING', 'FLOWER', 'PRINTING', 'HOUSEHOLD_LIFESTYLE', 'STREET_VENDOR', 'SOCIETY_VENDOR', 'OTHER'] as const;
 export const TYPE_LABEL: Record<string, MsgKey> = Object.fromEntries(TYPES.map((x) => [x, `lc.hm.type.${x}` as MsgKey]));

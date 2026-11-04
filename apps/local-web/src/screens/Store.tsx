@@ -66,7 +66,8 @@ export default function Store() {
     );
 
   const s = data.store;
-  const canOrder = s.open || s.vertical === 'DIAGNOSTICS';
+  // Labs are booked for a slot; other shops take orders while open and only for an address they deliver to.
+  const canOrder = s.vertical === 'DIAGNOSTICS' || (s.open && s.delivers !== false);
   const hasVeg = data.products.some((p) => p.isVeg != null);
   const qtyOf = (productId: string) => (cart.storeId === s.id ? cart.lines.filter((l) => l.productId === productId).reduce((n, l) => n + l.qty, 0) : 0);
 
@@ -112,9 +113,12 @@ export default function Store() {
           </p>
           <div className="mt-3 flex flex-wrap gap-2 text-sm font-semibold">
             {s.open ? (
-              <span className="inline-flex items-center gap-1 rounded-lg bg-soft px-2.5 py-1">
-                <Clock className="h-4 w-4" aria-hidden /> {t('lc.store.mins', { n: s.etaMinutes })}
-              </span>
+              // No delivery time for an address the shop doesn't deliver to.
+              s.delivers !== false && (
+                <span className="inline-flex items-center gap-1 rounded-lg bg-soft px-2.5 py-1">
+                  <Clock className="h-4 w-4" aria-hidden /> {t('lc.store.mins', { n: s.etaMinutes })}
+                </span>
+              )
             ) : (
               <span className="rounded-lg bg-dz-red-soft px-2.5 py-1 text-dz-red">
                 {s.opensAt ? t('lc.store.closedOpens', { time: opensAtLabel(s.opensAt, locale, t('lc.today'), t('lc.tomorrow')) }) : t('lc.store.closed')}

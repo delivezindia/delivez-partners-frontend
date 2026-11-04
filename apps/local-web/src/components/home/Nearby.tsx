@@ -2,23 +2,23 @@ import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useQueries } from '@tanstack/react-query';
 import {
+  Apple,
   ArrowRight,
-  Baby,
-  Battery,
   Bike,
+  Carrot,
   Clock,
-  Croissant,
-  HeartPulse,
-  Home,
+  Coffee,
+  CupSoda,
+  Flower2,
+  IceCreamCone,
   MapPin,
   Milk,
   Minus,
   Package,
   Plus,
-  Popcorn,
   Receipt,
   ShoppingBasket,
-  Sparkles,
+  Soup,
   Star,
   Timer,
   Truck,
@@ -47,9 +47,9 @@ const CATS: { k: string; label: MsgKey; test: (s: StoreCard) => boolean }[] = [
   { k: 'GROCERY', label: 'lc.hm.kind.GROCERY', test: (s) => s.vertical === 'GROCERY' },
   { k: 'PHARMACY', label: 'lc.hm.kind.PHARMACY', test: (s) => s.vertical === 'PHARMACY' },
   { k: 'DIAGNOSTICS', label: 'lc.hm.kind.DIAGNOSTICS', test: (s) => s.vertical === 'DIAGNOSTICS' },
-  { k: 'LOCAL_STORES', label: 'lc.hm.kind.LOCAL_STORES', test: (s) => s.vertical === 'LOCAL_STORES' },
+  { k: 'LOCAL_STORES', label: 'lc.hm.kind.LOCAL_STORES', test: (s) => inKind(s, 'LOCAL_STORES') },
   { k: 'gifts', label: 'lc.hm.cat.gifts', test: (s) => s.storeType === 'FLOWER' || s.storeType === 'OTHER' || /gift|flower|bouquet|hamper/i.test(s.name) },
-  { k: 'street', label: 'lc.hm.cat.street', test: (s) => inKind(s, 'STREET') },
+  { k: 'RUSH', label: 'lc.hm.kind.RUSH', test: (s) => inKind(s, 'RUSH') },
 ];
 const MIX: Vertical[] = ['EAT', 'GROCERY', 'PHARMACY', 'LOCAL_STORES', 'DIAGNOSTICS'];
 
@@ -132,16 +132,16 @@ const RUSH_STEPS: { icon: LucideIcon; label: MsgKey }[] = [
   { icon: Bike, label: 'lc.hm.rush.s4' },
 ];
 const RUSH_ITEMS: { icon: LucideIcon; label: MsgKey }[] = [
-  { icon: Milk, label: 'lc.hm.t.milk' },
-  { icon: Croissant, label: 'lc.hm.t.bread' },
-  { icon: Popcorn, label: 'lc.hm.t.snacks' },
-  { icon: Sparkles, label: 'lc.hm.t.personalCare' },
-  { icon: Battery, label: 'lc.hm.t.batteries' },
-  { icon: HeartPulse, label: 'lc.hm.t.firstAid' },
-  { icon: Baby, label: 'lc.hm.t.babyCare' },
-  { icon: Home, label: 'lc.hm.t.household' },
+  { icon: Apple, label: 'lc.hm.t.fruit' },
+  { icon: Carrot, label: 'lc.hm.t.vegetables' },
+  { icon: Soup, label: 'lc.hm.t.chaat' },
+  { icon: CupSoda, label: 'lc.hm.t.juice' },
+  { icon: Coffee, label: 'lc.hm.t.tea' },
+  { icon: Flower2, label: 'lc.hm.t.flowers' },
+  { icon: IceCreamCone, label: 'lc.hm.t.iceCream' },
+  { icon: Milk, label: 'lc.hm.t.milkDairy' },
 ];
-const RUSH_CHIPS: MsgKey[] = ['lc.hm.t.quickFirst', 'lc.hm.t.daily', 'lc.hm.t.grocery', 'lc.hm.t.snacks', 'lc.hm.t.beverages', 'lc.hm.t.personalCare', 'lc.hm.t.household', 'lc.hm.t.medicines'];
+const RUSH_CHIPS: MsgKey[] = ['lc.hm.t.fruit', 'lc.hm.t.vegetables', 'lc.hm.t.chaat', 'lc.hm.t.juice', 'lc.hm.t.tea', 'lc.hm.t.flowers', 'lc.hm.t.tiffin', 'lc.hm.t.corn'];
 
 export function RushBand() {
   const { t } = useI18n();
@@ -154,12 +154,11 @@ export function RushBand() {
   }, []);
   const shops = a.stores.filter((s) => inKind(s, 'RUSH'));
   const open = shops.filter((s) => s.open).sort((p, q) => p.etaMinutes - q.etaMinutes);
-  const late = open.filter((s) => !!s.closesAt && s.closesAt >= '22:00').length;
   const first = open[0];
   const stats: [string, string][] = [
     [first ? t('lc.store.mins', { n: first.etaMinutes }) : '—', t('lc.hm.quickestNow')],
     [String(shops.length), placed(t, a.where, 'lc.hm.rush.shops', 'lc.hm.rush.shopsYou')],
-    [String(late), t('lc.hm.rush.late')],
+    [String(open.length), t('lc.street.statOpen')],
   ];
   return (
     <section id="quick" className="scroll-mt-28 bg-now-bg px-4 py-[52px] sm:px-6">

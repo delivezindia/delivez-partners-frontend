@@ -105,7 +105,7 @@ export default function Grocery({ at }: { at: DeliverTo }) {
 
   const productHits = data && searching ? data.products.filter((p) => oneTap(p) && `${p.name} ${aisleOf.get(p.id) ?? ''}`.toLowerCase().includes(needle)).slice(0, 8) : [];
   const elsewhere = searching ? (found.data?.stores ?? []).filter((s) => s.id !== card?.id).slice(0, 3) : [];
-  const canOrder = !!data?.store.open;
+  const canOrder = !!data?.store.open && data.store.delivers !== false;
 
   const faq = [
     { q: t('lc.vp.fq1'), a: t('lc.vp.fa1') },

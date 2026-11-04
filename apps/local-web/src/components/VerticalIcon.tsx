@@ -1,4 +1,4 @@
-import { FlaskConical, Pill, ShoppingBasket, ShoppingCart, Store, UtensilsCrossed, Zap, type LucideIcon } from 'lucide-react';
+import { FlaskConical, Pill, ShoppingBasket, Store, UtensilsCrossed, Zap, type LucideIcon } from 'lucide-react';
 import type { ShopPage } from '../lib/labels';
 import type { Vertical } from '../lib/types';
 
@@ -11,11 +11,10 @@ export const VERTICAL_LOOK: Record<Vertical, { icon: LucideIcon; accent: string;
   LOCAL_STORES: { icon: Store, accent: '#7A3FC0', tint: '#F4EEFC' },
 };
 
-/** The Rush and Street Cart pages, in the same style. */
+/** The Rush page, in the same style. */
 export const KIND_LOOK: Record<Vertical | ShopPage, { icon: LucideIcon; accent: string; tint: string }> = {
   ...VERTICAL_LOOK,
   RUSH: { icon: Zap, accent: '#7B2FD4', tint: '#F1E6FF' },
-  STREET: { icon: ShoppingCart, accent: '#C2470B', tint: '#FFE8D6' },
 };
 
 const SIZE = {

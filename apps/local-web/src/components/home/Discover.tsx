@@ -285,10 +285,9 @@ export function AreaCheck({ onStart }: { onStart: () => void }) {
 
 // ---------------------------------------------------------------- Shop by category
 
-/** What each kind's page offers, by type: the Rush page's categories and the Street Cart page's cart types. */
-const PAGE_TYPES: Record<'RUSH' | 'STREET', MsgKey[]> = {
-  RUSH: ['lc.hm.t.staples', 'lc.hm.t.fruitVeg', 'lc.hm.t.dairyBread', 'lc.hm.t.snacksDrinks', 'lc.hm.t.personalCare', 'lc.hm.t.household', 'lc.hm.t.baby', 'lc.hm.t.pet', 'lc.hm.t.health', 'lc.hm.t.electronics'],
-  STREET: ['lc.hm.t.fruit', 'lc.hm.t.vegetables', 'lc.hm.t.chaat', 'lc.hm.t.juice', 'lc.hm.t.tea', 'lc.hm.t.flowers', 'lc.hm.t.iceCream', 'lc.hm.t.tiffin', 'lc.hm.t.corn', 'lc.hm.t.milkDairy'],
+/** What the Rush page offers, by type: its cart types. */
+const PAGE_TYPES: Record<'RUSH', MsgKey[]> = {
+  RUSH: ['lc.hm.t.fruit', 'lc.hm.t.vegetables', 'lc.hm.t.chaat', 'lc.hm.t.juice', 'lc.hm.t.tea', 'lc.hm.t.flowers', 'lc.hm.t.iceCream', 'lc.hm.t.tiffin', 'lc.hm.t.corn', 'lc.hm.t.milkDairy'],
 };
 /** Until shops of a kind are live, the kinds of shop it will have. */
 const PLANNED: Record<Vertical, MsgKey[]> = {
@@ -311,7 +310,7 @@ export function Categories() {
     const id = setInterval(() => setOn((k) => KINDS[(KINDS.findIndex((x) => x.k === k) + 1) % KINDS.length].k), 6000);
     return () => clearInterval(id);
   }, [auto]);
-  const count = (k: Kind) => (k === 'RUSH' || k === 'STREET' ? null : (overview?.verticals[k]?.shops ?? null));
+  const count = (k: Kind) => (k === 'RUSH' ? null : (overview?.verticals[k]?.shops ?? null));
   const pick = (k: Kind) => (setAuto(false), setOn(k));
   return (
     <NowSection id="categories" tag={t('lc.hm.cats.tag')} title={t('lc.hm.cats.title')}>
@@ -375,7 +374,7 @@ function KindPanel({ k, onPick }: { k: Kind; onPick: (k: Kind) => void }) {
   const first = [...open].sort((p, q) => p.etaMinutes - q.etaMinutes)[0];
   // Shown in the reader's language; the icon is picked from the English name.
   const keyed = (key: MsgKey) => ({ name: t(key), en: en[key] });
-  const types = k === 'RUSH' || k === 'STREET' ? PAGE_TYPES[k].map(keyed) : overview?.verticals[k]?.types.length ? overview.verticals[k].types.map((x) => ({ name: x.name, en: x.name })) : PLANNED[k].map(keyed);
+  const types = k === 'RUSH' ? PAGE_TYPES[k].map(keyed) : overview?.verticals[k]?.types.length ? overview.verticals[k].types.map((x) => ({ name: x.name, en: x.name })) : PLANNED[k].map(keyed);
   const title = t(x.title);
   return (
     <div key={k} className="vp-up mt-3.5 grid overflow-hidden rounded-[24px] border border-now-line bg-now-card lg:grid-cols-[0.9fr_1.1fr]" data-kind-panel={k}>
@@ -454,4 +453,4 @@ function KindPanel({ k, onPick }: { k: Kind; onPick: (k: Kind) => void }) {
     </div>
   );
 }
-const liveShops = (k: Kind, o: NonNullable<ReturnType<typeof useOverview>['data']>) => (k === 'RUSH' || k === 'STREET' ? null : (o.verticals[k]?.shops ?? 0));
+const liveShops = (k: Kind, o: NonNullable<ReturnType<typeof useOverview>['data']>) => (k === 'RUSH' ? null : (o.verticals[k]?.shops ?? 0));

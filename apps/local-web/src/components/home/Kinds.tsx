@@ -9,7 +9,7 @@ import { useOrders } from '../../lib/orders';
 import { useOverview } from '../../lib/queries';
 import { useReorder } from '../../lib/reorder';
 import type { StoreCard } from '../../lib/types';
-import { BrandHead, Soon, TYPE_LABEL, chip, pill, placed, useAround } from './kit';
+import { BrandHead, Soon, TYPE_LABEL, chip, inKind, pill, placed, useAround } from './kit';
 
 const Section = ({ id, surface = false, children }: { id: string; surface?: boolean; children: React.ReactNode }) => (
   <section id={id} className={`scroll-mt-28 px-4 py-[52px] sm:px-6 ${surface ? 'bg-now-surface' : 'bg-now-bg'}`}>
@@ -123,7 +123,7 @@ export function LocalBand() {
   // The kinds of local shop that really deliver here, with how many; the planned kinds until there are any.
   const kinds = useMemo(() => {
     const n = new Map<string, number>();
-    for (const s of a.stores) if (s.vertical === 'LOCAL_STORES') n.set(s.storeType, (n.get(s.storeType) ?? 0) + 1);
+    for (const s of a.stores) if (inKind(s, 'LOCAL_STORES')) n.set(s.storeType, (n.get(s.storeType) ?? 0) + 1);
     return [...n.entries()].sort((x, y) => y[1] - x[1]);
   }, [a.stores]);
   return (
