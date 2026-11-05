@@ -2,13 +2,11 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Briefcase, Home, LocateFixed, MapPin, Plus } from 'lucide-react';
 import { Modal } from './Modal';
-import { api } from '../lib/api';
 import { useAuth } from '../lib/auth-store';
 import { useI18n } from '../lib/i18n';
 import { ADDRESS_LABEL } from '../lib/labels';
-import { fromAddress, useDeliverTo } from '../lib/location';
+import { fromAddress, placeLabel, reverseGeocode, useDeliverTo } from '../lib/location';
 import { useAddresses } from '../lib/queries';
-import type { GeocodeResult } from './MapPicker';
 
 const ICON = { HOME: Home, WORK: Briefcase, OTHER: MapPin };
 
@@ -66,10 +64,9 @@ export function LocationSheet({ onClose }: { onClose: () => void }) {
   );
 }
 
-/** Returns a function that asks the phone for its location and makes it the delivery spot. */
+/** Returns a function that asks the phone for its location and makes it the delivery spot, with its address. */
 export function useGps(onDone: () => void, setMessage: (m: string) => void) {
   const { t } = useI18n();
-  const token = useAuth((s) => s.accessToken);
   const set = useDeliverTo((s) => s.set);
   return () => {
     if (!navigator.geolocation) return setMessage(t('lc.loc.noGps'));
@@ -78,9 +75,8 @@ export function useGps(onDone: () => void, setMessage: (m: string) => void) {
       async (pos) => {
         const lat = Math.round(pos.coords.latitude * 1e6) / 1e6;
         const lng = Math.round(pos.coords.longitude * 1e6) / 1e6;
-        // The area name is a nicety; signed-out customers just see "Current location".
-        const r = token ? await api<GeocodeResult | null>(`/geo/reverse?lat=${lat}&lng=${lng}`).catch(() => null) : null;
-        set({ lat, lng, title: r?.area?.split(',').pop()?.trim() || t('lc.loc.current'), line: r?.line1 ?? '' });
+        // The area for the header and the street under it; "Current location" only if the lookup fails.
+        set({ lat, lng, ...placeLabel(await reverseGeocode(lat, lng), t('lc.loc.current')) });
         setMessage('');
         onDone();
       },

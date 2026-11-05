@@ -42,7 +42,7 @@ export default function Landing() {
 
   return (
     <div className="dz-now flex min-h-screen flex-col">
-      <SiteNavbar onCategory={() => askLocation()} />
+      <SiteNavbar onCategory={() => askLocation()} location />
       <AroundProvider>
         <main className="flex-1">
           <NowHero onGps={gps} onGo={go} mapHref={mapHref} message={message} askLocation={askLocation} />

@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { LocateFixed, Search } from 'lucide-react';
-import { mapsAuthFailed, mapsLibrary, nearbyLandmark, onMapsAuthFailure, parseAddress } from '../lib/googleMaps';
+import { addressFrom, mapsAuthFailed, mapsLibrary, onMapsAuthFailure, parseAddress } from '../lib/googleMaps';
+import { locateUnlessBlocked } from '../lib/location';
 import type { GeocodeResult } from './MapPicker';
 
 type Suggestion = { id: string; main: string; secondary: string; prediction: google.maps.places.PlacePrediction };
@@ -19,6 +20,7 @@ export function GoogleMapPicker({
   height = 'h-72',
   hint = "Drag the pin to your building's entrance. Riders will come to this point.",
   placeholder = 'Search your area, street or building',
+  locateOnOpen = false,
 }: {
   lat: number | null;
   lng: number | null;
@@ -29,6 +31,7 @@ export function GoogleMapPicker({
   height?: string;
   hint?: string;
   placeholder?: string;
+  locateOnOpen?: boolean;
 }) {
   const box = useRef<HTMLDivElement>(null);
   const map = useRef<google.maps.Map | null>(null);
@@ -101,17 +104,21 @@ export function GoogleMapPicker({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [ready, lat, lng]);
 
+  // Opening without a pin: find the customer once the map is ready.
+  useEffect(() => {
+    if (ready && locateOnOpen && lat == null) locateUnlessBlocked(useMyLocation);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [ready]);
+
   async function move(newLat: number, newLng: number, lookup = true) {
     latest.current.onChange(round(newLat), round(newLng));
     if (!lookup || !latest.current.onAddress || !geocoder.current) return;
     try {
       const { results } = await geocoder.current.geocode({ location: { lat: newLat, lng: newLng } });
-      // The most precise street address, plus the nearest named place as a landmark.
-      const r = results.find((x) => x.types.includes('street_address') || x.types.includes('premise')) ?? results[0];
-      if (r) {
-        const parsed = parseAddress(r.formatted_address, r.address_components);
-        latest.current.onAddress({ ...parsed, landmark: nearbyLandmark(results), lat: round(newLat), lng: round(newLng), placeId: r.place_id });
-        setQuery(parsed.line1);
+      const a = addressFrom(results);
+      if (a) {
+        latest.current.onAddress({ ...a, lat: round(newLat), lng: round(newLng) });
+        setQuery(a.line1);
         setOpen(false);
       }
     } catch {

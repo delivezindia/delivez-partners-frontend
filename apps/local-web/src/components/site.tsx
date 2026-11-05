@@ -2,6 +2,7 @@ import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { Check, ChevronDown, Globe, Menu, X } from 'lucide-react';
 import { Brand } from './ui';
+import { LocationButton } from './AppHeader';
 import { PARTNERS_URL } from '../lib/config';
 import { useAuth } from '../lib/auth-store';
 import { useI18n, type MsgKey } from '../lib/i18n';
@@ -99,8 +100,11 @@ function useClickOutside(ref: React.RefObject<HTMLElement>, onOutside: () => voi
   }, [ref, onOutside]);
 }
 
-/** Site header: yellow with the red rule, like the Partners site. `onCategory` lets the landing page react to a pick. */
-export function SiteNavbar({ onCategory }: { onCategory?: (v: Vertical | ShopPage) => void }) {
+/**
+ * Site header: yellow with the red rule, like the Partners site. `onCategory` lets the landing page react to a pick;
+ * `location` shows where we deliver (tap to change), as the shop pages' top bar does.
+ */
+export function SiteNavbar({ onCategory, location = false }: { onCategory?: (v: Vertical | ShopPage) => void; location?: boolean }) {
   const { pathname } = useLocation();
   const token = useAuth((s) => s.accessToken);
   const { t, lang, languages, setLanguage } = useI18n();
@@ -147,8 +151,9 @@ export function SiteNavbar({ onCategory }: { onCategory?: (v: Vertical | ShopPag
       <header className={`dz-header sticky top-0 z-50 transition-shadow ${scrolled ? 'shadow-md' : ''}`}>
         <nav className="mx-auto flex h-16 max-w-7xl items-center gap-3 px-4 sm:px-5" aria-label="Main">
           <Brand />
+          {location && <LocationButton className="flex-1 xl:max-w-[240px] xl:flex-initial" />}
 
-          <div className="ml-4 hidden items-center gap-0.5 lg:flex">
+          <div className="ml-4 hidden shrink-0 items-center gap-0.5 xl:flex">
             <div ref={catRef} className="relative">
               <button type="button" aria-expanded={catOpen} onClick={() => setCatOpen((o) => !o)} className={navCls}>
                 {t('lc.home.categories')} <ChevronDown className={`h-4 w-4 transition ${catOpen ? 'rotate-180' : ''}`} aria-hidden />
@@ -176,7 +181,7 @@ export function SiteNavbar({ onCategory }: { onCategory?: (v: Vertical | ShopPag
             </a>
           </div>
 
-          <div className="ml-auto flex items-center gap-2">
+          <div className="ml-auto flex shrink-0 items-center gap-2">
             <div ref={langRef} className="relative hidden sm:block">
               <button type="button" onClick={() => setLangOpen((o) => !o)} className="flex items-center gap-1 rounded-lg px-2 py-2 text-sm font-bold text-black hover:bg-black/5" aria-label={t('lc.acc.language')}>
                 <Globe className="h-[18px] w-[18px]" aria-hidden /> {lang}
@@ -214,12 +219,13 @@ export function SiteNavbar({ onCategory }: { onCategory?: (v: Vertical | ShopPag
                 <Link to="/login" className="hidden min-h-10 items-center rounded-[10px] border-[1.5px] border-black bg-white px-4 text-sm font-extrabold hover:bg-soft sm:inline-flex">
                   {t('lc.login')}
                 </Link>
-                <Link to="/signup" className="inline-flex min-h-10 items-center rounded-[10px] bg-dz-red px-4 text-sm font-extrabold text-white hover:bg-dz-red-deep">
+                {/* On a phone the location takes this room; sign-up stays in the menu. */}
+                <Link to="/signup" className={`${location ? 'hidden sm:inline-flex' : 'inline-flex'} min-h-10 items-center rounded-[10px] bg-dz-red px-4 text-sm font-extrabold text-white hover:bg-dz-red-deep`}>
                   {t('lc.auth.signup')}
                 </Link>
               </>
             )}
-            <button type="button" className="grid h-10 w-10 place-items-center rounded-lg hover:bg-black/5 lg:hidden" onClick={() => setMobileOpen(true)} aria-label={t('lc.site.menu')}>
+            <button type="button" className="grid h-10 w-10 place-items-center rounded-lg hover:bg-black/5 xl:hidden" onClick={() => setMobileOpen(true)} aria-label={t('lc.site.menu')}>
               <Menu className="h-6 w-6" />
             </button>
           </div>
@@ -227,7 +233,7 @@ export function SiteNavbar({ onCategory }: { onCategory?: (v: Vertical | ShopPag
       </header>
 
       {mobileOpen && (
-        <div className="fixed inset-0 z-[60] bg-black/50 lg:hidden" onClick={() => setMobileOpen(false)}>
+        <div className="fixed inset-0 z-[60] bg-black/50 xl:hidden" onClick={() => setMobileOpen(false)}>
           <div className="dz-rise absolute inset-y-0 right-0 flex w-[min(340px,88vw)] flex-col overflow-y-auto bg-white p-5" onClick={(e) => e.stopPropagation()} role="dialog" aria-label={t('lc.site.menu')}>
             <div className="flex items-center justify-between">
               <Brand />

@@ -5,6 +5,7 @@ import { LocateFixed } from 'lucide-react';
 import 'leaflet/dist/leaflet.css';
 import { api } from '../lib/api';
 import { MAPS_KEY, mapsAuthFailed } from '../lib/googleMaps';
+import { locateUnlessBlocked } from '../lib/location';
 import { GoogleMapPicker } from './GoogleMapPicker';
 
 export interface GeocodeResult {
@@ -56,6 +57,8 @@ export interface MapPickerProps {
   height?: string;
   hint?: string;
   placeholder?: string;
+  /** Opening without a pin: find the customer right away (unless they blocked location for the site). */
+  locateOnOpen?: boolean;
 }
 
 /**
@@ -77,6 +80,7 @@ function OsmMapPicker({
   height = 'h-72',
   hint = "Drag the pin to your building's entrance. Riders will come to this point.",
   placeholder = 'Search your area, street or building',
+  locateOnOpen = false,
 }: MapPickerProps) {
   const [query, setQuery] = useState('');
   const [results, setResults] = useState<GeocodeResult[]>([]);
@@ -127,6 +131,10 @@ function OsmMapPicker({
       { enableHighAccuracy: true, timeout: 10000 },
     );
   }
+  useEffect(() => {
+    if (locateOnOpen && lat == null) locateUnlessBlocked(useMyLocation);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   return (
     <div className="space-y-2">

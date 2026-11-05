@@ -1,6 +1,8 @@
 import { useEffect } from 'react';
 import { create } from 'zustand';
 import { createJSONStorage, persist } from 'zustand/middleware';
+import type { GeocodeResult } from '../components/MapPicker';
+import { api } from './api';
 import { useI18n } from './i18n';
 import { ADDRESS_LABEL } from './labels';
 import { useAddresses } from './queries';
@@ -42,8 +44,31 @@ export const fromAddress = (a: Address, title: string): DeliverTo => ({
   addressId: a.id,
 });
 
-/** Bengaluru — where the map opens before we know anything about the customer. */
+/** Bengaluru: where the map opens when not even the live cities are known yet. */
 export const DEFAULT_CENTER: [number, number] = [12.9716, 77.5946];
+
+/** Runs `locate` unless the customer has blocked location for this site (then the map just opens on the city). */
+export function locateUnlessBlocked(locate: () => void) {
+  void navigator.permissions?.query({ name: 'geolocation' }).then((p) => p.state !== 'denied' && locate(), () => {});
+}
+
+/**
+ * Header text for a looked-up spot: the area as the title, the street under it. When the street is just the area again
+ * (OpenStreetMap often has no road there), the first parts of the full address instead.
+ */
+export function placeLabel(r: GeocodeResult | null, fallback: string): Pick<DeliverTo, 'title' | 'line'> {
+  const title = r?.area?.split(',').pop()?.trim() || r?.city || fallback;
+  const line = r?.line1 && r.line1 !== title ? r.line1 : (r?.label?.split(',').slice(0, 3).join(',').trim() ?? '');
+  return { title, line };
+}
+
+/** The address at a point: from Google in the browser when the key works, else from the API (OpenStreetMap). */
+export async function reverseGeocode(lat: number, lng: number): Promise<GeocodeResult | null> {
+  // Loaded on first use, so the Maps loader stays out of every page's main bundle.
+  const g = await import('./googleMaps').then((m) => m.googleReverse(lat, lng)).catch(() => null);
+  if (g) return { ...g, lat, lng };
+  return api<GeocodeResult | null>(`/geo/reverse?lat=${lat}&lng=${lng}`).catch(() => null);
+}
 
 const metres = (a: { lat: number; lng: number }, b: { lat: number; lng: number }) => {
   const k = 111_320;

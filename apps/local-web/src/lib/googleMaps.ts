@@ -58,6 +58,20 @@ export function parseAddress(formatted: string, parts: { types: string[]; long_n
   };
 }
 
+/** The address in reverse-geocode results: the most precise street address, plus the nearest named place as a landmark. */
+export function addressFrom(results: google.maps.GeocoderResult[]) {
+  const r = results.find((x) => x.types.includes('street_address') || x.types.includes('premise')) ?? results[0];
+  return r ? { ...parseAddress(r.formatted_address, r.address_components), landmark: nearbyLandmark(results), placeId: r.place_id } : null;
+}
+
+/** The address at a point, from Google; null when there is no working key. */
+export async function googleReverse(lat: number, lng: number) {
+  if (!MAPS_KEY || authFailed) return null;
+  const { Geocoder } = await mapsLibrary('geocoding');
+  const { results } = await new Geocoder().geocode({ location: { lat, lng } });
+  return addressFrom(results);
+}
+
 /** The nearest named place among reverse-geocode results (a shop, temple, building…), for the landmark. */
 export function nearbyLandmark(results: { types: string[]; address_components: { long_name: string; types: string[] }[] }[]) {
   // A real place name: starts with a letter and has a few of them ("292/1" or "12A" is a plot number, not a landmark).

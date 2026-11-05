@@ -3,13 +3,13 @@ import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { ArrowLeft } from 'lucide-react';
 import { MapPicker, type GeocodeResult } from '../components/MapPicker';
 import { Field, TextInput, Toggle } from '../components/form';
-import { Button, ErrorText } from '../components/ui';
+import { Button, ErrorText, Skeleton } from '../components/ui';
 import { useAddressAutofill } from '../lib/addressAutofill';
 import { useAuth } from '../lib/auth-store';
 import { useI18n } from '../lib/i18n';
 import { ADDRESS_LABEL } from '../lib/labels';
-import { DEFAULT_CENTER, fromAddress, useDeliverTo } from '../lib/location';
-import { useAddresses, useSaveAddress } from '../lib/queries';
+import { DEFAULT_CENTER, fromAddress, placeLabel, useDeliverTo } from '../lib/location';
+import { useAddresses, useOverview, useSaveAddress } from '../lib/queries';
 import type { AddressLabel } from '../lib/types';
 import { messageOf, safeNext } from './Login';
 
@@ -28,10 +28,15 @@ export default function AddressEditor() {
   const addresses = useAddresses();
   const editing = id ? addresses.data?.find((a) => a.id === id) : undefined;
   const save = useSaveAddress();
+  // Before there is a pin, the map opens on the live city with the most shops (the list comes busiest first).
+  const overview = useOverview();
+  const busiest = overview.data?.cities[0];
+  const start: [number, number] = busiest ? [busiest.lat, busiest.lng] : DEFAULT_CENTER;
 
   const [pin, setPin] = useState<{ lat: number; lng: number } | null>(editing ? { lat: editing.lat, lng: editing.lng } : deliverTo.at ? { lat: deliverTo.at.lat, lng: deliverTo.at.lng } : null);
   const [placeId, setPlaceId] = useState<string | undefined>(editing?.placeId ?? undefined);
-  const [area, setArea] = useState('');
+  // The latest address looked up for the pin: names the spot in the header when a visitor delivers here.
+  const [found, setFound] = useState<GeocodeResult | null>(null);
   const [text, setText] = useState<Text>(() => (editing ? { ...EMPTY, ...Object.fromEntries(Object.entries(editing).filter(([k, v]) => k in EMPTY && v != null)) } : EMPTY) as Text);
   const [label, setLabel] = useState<AddressLabel>(editing?.label ?? 'HOME');
   const [isDefault, setIsDefault] = useState(editing?.isDefault ?? false);
@@ -44,7 +49,7 @@ export default function AddressEditor() {
 
   function onAddress(r: GeocodeResult) {
     setPlaceId(r.placeId);
-    setArea(r.area?.split(',').pop()?.trim() || r.city || '');
+    setFound(r);
     setText((cur) => merge(cur, { line2: r.line1, landmark: r.landmark, pincode: r.pincode, cityName: r.city, state: r.state }));
   }
   const set = (k: keyof Text) => (e: React.ChangeEvent<HTMLInputElement>) => setText((s) => ({ ...s, [k]: e.target.value }));
@@ -90,16 +95,22 @@ export default function AddressEditor() {
         <h1 className="text-2xl">{editing ? t('lc.addr.editTitle') : t('lc.addr.newTitle')}</h1>
       </header>
       <main className="mx-auto max-w-xl space-y-4 px-4 pt-4">
-        <MapPicker
-          lat={pin?.lat ?? null}
-          lng={pin?.lng ?? null}
-          fallbackCenter={DEFAULT_CENTER}
-          onChange={(lat, lng) => setPin({ lat, lng })}
-          onAddress={onAddress}
-          height="h-64"
-          hint={t('lc.addr.pinHint')}
-          placeholder={t('lc.addr.searchPlaceholder')}
-        />
+        {/* The map takes its starting point once, so it waits for the live cities when there is no pin yet. */}
+        {pin || !overview.isLoading ? (
+          <MapPicker
+            lat={pin?.lat ?? null}
+            lng={pin?.lng ?? null}
+            fallbackCenter={start}
+            locateOnOpen
+            onChange={(lat, lng) => setPin({ lat, lng })}
+            onAddress={onAddress}
+            height="h-64"
+            hint={t('lc.addr.pinHint')}
+            placeholder={t('lc.addr.searchPlaceholder')}
+          />
+        ) : (
+          <Skeleton className="h-64" />
+        )}
 
         {!token ? (
           <div className="space-y-3 rounded-2xl bg-white p-4 ring-1 ring-line">
@@ -108,7 +119,7 @@ export default function AddressEditor() {
               className="w-full"
               disabled={!pin}
               onClick={() => {
-                deliverTo.set({ lat: pin!.lat, lng: pin!.lng, title: area || text.cityName || t('lc.loc.pinned'), line: text.line2 });
+                deliverTo.set({ lat: pin!.lat, lng: pin!.lng, ...placeLabel(found, text.cityName || t('lc.loc.pinned')) });
                 navigate(next, { replace: true });
               }}
             >
