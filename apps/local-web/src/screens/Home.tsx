@@ -14,8 +14,8 @@ import { useI18n } from '../lib/i18n';
 import { KIND_LABEL, SHOP_PAGES, VERTICAL_LABEL, type ShopPage } from '../lib/labels';
 import { KIND_LOOK, VERTICAL_LOOK, VerticalIcon } from '../components/VerticalIcon';
 import { useAuth } from '../lib/auth-store';
-import { useDeliverTo } from '../lib/location';
-import { useNearby } from '../lib/queries';
+import { useDeliverTo, type DeliverTo } from '../lib/location';
+import { useNearby, useOverview } from '../lib/queries';
 import { useOrders } from '../lib/orders';
 import type { StoreCard, Vertical } from '../lib/types';
 
@@ -24,7 +24,11 @@ const ALL_VERTICALS: Vertical[] = ['EAT', 'GROCERY', 'PHARMACY', 'DIAGNOSTICS', 
 // L1 Home: greeting + search, live orders, categories, order again, then shops that deliver to (or are near) the chosen location.
 export default function Home() {
   const { t } = useI18n();
-  const at = useDeliverTo((s) => s.at);
+  const chosen = useDeliverTo((s) => s.at);
+  const overview = useOverview();
+  // No location chosen yet: the pages still open, showing shops around the busiest city, with a bar to set yours.
+  const city = overview.data?.cities[0];
+  const at: DeliverTo | null = chosen ?? (city ? { lat: city.lat, lng: city.lng, title: city.name, line: city.state } : null);
   const token = useAuth((s) => s.accessToken);
   const [params, setParams] = useSearchParams();
   const vertical = (ALL_VERTICALS.find((v) => v === params.get('v')) ?? null) as Vertical | null;
@@ -56,16 +60,18 @@ export default function Home() {
     setParams(p, { replace: true });
   };
 
-  // No location yet: the welcome page asks for one (a category in ?v= opens once it's set).
-  if (!at) return <Landing />;
+  // Still finding out which city to show (no location chosen): a blank page for a moment, not the welcome page.
+  if (!at) return overview.isLoading ? <div className="min-h-screen bg-soft" aria-busy /> : <Landing />;
+  const guest = chosen ? null : <BrowsingBar city={at.title} />;
   // Food, groceries, Street Cart and Rush have their own pages; the other kinds of shop use the list below.
-  if (vertical === 'EAT') return <Food at={at} />;
-  if (vertical === 'GROCERY') return <Grocery at={at} />;
-  if (page === 'STREET') return <Street at={at} />;
-  if (page === 'RUSH') return <Rush />;
+  if (vertical === 'EAT') return <>{<Food at={at} />}{guest}</>;
+  if (vertical === 'GROCERY') return <>{<Grocery at={at} />}{guest}</>;
+  if (page === 'STREET') return <>{<Street at={at} />}{guest}</>;
+  if (page === 'RUSH') return <>{<Rush />}{guest}</>;
 
   return (
     <div className="min-h-screen bg-soft pb-28">
+      {guest}
       <AppHeader wide />
       <Hero typed={typed} setTyped={setTyped} area={at.title} />
       <main className="relative mx-auto -mt-6 max-w-5xl px-4">
@@ -274,5 +280,22 @@ function StoreTile({ s }: { s: StoreCard }) {
         </p>
       </div>
     </Link>
+  );
+}
+
+/** Shown while no location is chosen: these are shops around a city, not the ones that deliver to you. */
+function BrowsingBar({ city }: { city: string }) {
+  const { t } = useI18n();
+  const back = `${location.pathname}${location.search}`;
+  return (
+    <div className="fixed inset-x-0 bottom-4 z-40 flex justify-center px-4" data-browsing-bar>
+      <div className="flex w-full max-w-xl items-center gap-3 rounded-2xl bg-black px-4 py-3 text-white shadow-[0_18px_40px_-12px_rgba(0,0,0,.55)]">
+        <MapPin className="h-5 w-5 shrink-0 text-dz-yellow" aria-hidden />
+        <p className="min-w-0 flex-1 text-sm font-semibold">{t('lc.browse.note', { city })}</p>
+        <Link to={`/addresses/new?next=${encodeURIComponent(back)}`} className="shrink-0 rounded-xl bg-dz-yellow px-3.5 py-2 text-sm font-black text-black">
+          {t('lc.browse.set')}
+        </Link>
+      </div>
+    </div>
   );
 }

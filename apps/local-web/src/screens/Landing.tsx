@@ -42,7 +42,8 @@ export default function Landing() {
 
   return (
     <div className="dz-now flex min-h-screen flex-col">
-      <SiteNavbar onCategory={() => askLocation()} location />
+      {/* A category opens its page straight away; without a location it shows shops around the busiest city. */}
+      <SiteNavbar onCategory={(v) => navigate(`/shops?v=${v}`)} location />
       <AroundProvider>
         <main className="flex-1">
           <NowHero onGps={gps} onGo={go} mapHref={mapHref} message={message} askLocation={askLocation} />
