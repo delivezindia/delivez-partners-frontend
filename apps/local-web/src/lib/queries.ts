@@ -15,6 +15,14 @@ export const nearbyQuery = (at: { lat: number; lng: number } | null, vertical: V
   enabled: !!at,
 });
 
+/** Every live shop in every city, each marked with whether it delivers to `at` and how far it is (home page list). */
+export const allShopsQuery = (at: { lat: number; lng: number } | null) => ({
+  queryKey: ['all-shops', at?.lat, at?.lng],
+  queryFn: () => api<{ stores: StoreCard[]; verticals: Vertical[] }>(`/local/stores?${new URLSearchParams({ lat: String(at!.lat), lng: String(at!.lng), all: '1' })}`),
+  enabled: !!at,
+  staleTime: 60_000,
+});
+
 export function useNearby(at: { lat: number; lng: number } | null, vertical: Vertical | null, q: string) {
   return useQuery({ ...nearbyQuery(at, vertical, q), placeholderData: (prev) => prev });
 }

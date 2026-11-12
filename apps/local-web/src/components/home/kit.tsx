@@ -216,6 +216,9 @@ export function BrandHead({ k, tag, title, intro }: { k: Kind; tag: string; titl
 /** An offer that names this shop, or this kind of shop (a general offer would tag every card). */
 export const offerAt = (s: StoreCard, offers: PublicOffer[]) => offers.find((o) => (o.shop ? o.shop === s.name : o.vertical === s.vertical))?.headline ?? null;
 
+/** Further than this, a card names the shop's area and city instead of the distance. */
+const FAR_KM = 50;
+
 /** Store card from the design: a coloured band with the shop's photo or icon, then name, rating, distance, time and fees. */
 export function StoreTile({ s, offer }: { s: StoreCard; offer?: string | null }) {
   const { t } = useI18n();
@@ -250,26 +253,32 @@ export function StoreTile({ s, offer }: { s: StoreCard; offer?: string | null })
             </span>
           )}
           <span className="inline-flex items-center gap-1">
-            <MapPin className="h-3.5 w-3.5 text-dz-red" aria-hidden /> {km(s.distanceKm)}
+            {/* A shop in another city: its place, not "1,587 km". */}
+            <MapPin className="h-3.5 w-3.5 text-dz-red" aria-hidden /> {s.distanceKm > FAR_KM && s.area ? s.area : km(s.distanceKm)}
           </span>
-          {!s.bookable && (
+          {!s.bookable && s.delivers && (
             <span className="inline-flex items-center gap-1">
               <Clock className="h-3.5 w-3.5 text-now-muted" aria-hidden /> {t('lc.store.mins', { n: s.etaMinutes })}
             </span>
           )}
         </span>
-        {!s.bookable && <small className="text-xs text-now-muted">{`${s.minOrderAmount ? t('lc.store.min', { amount: rupees(s.minOrderAmount) }) : t('lc.hm.noMin')} · ${s.deliveryFee ? t('lc.store.fee', { fee: rupees(s.deliveryFee) }) : t('lc.dash.free')}`}</small>}
+        {!s.bookable &&
+          (s.delivers ? (
+            <small className="text-xs text-now-muted">{`${s.minOrderAmount ? t('lc.store.min', { amount: rupees(s.minOrderAmount) }) : t('lc.hm.noMin')} · ${s.deliveryFee ? t('lc.store.fee', { fee: rupees(s.deliveryFee) }) : t('lc.dash.free')}`}</small>
+          ) : (
+            <small className="text-xs text-now-muted">{t('lc.store.noDelivery')}</small>
+          ))}
       </div>
     </Link>
   );
 }
 
 /** A grid of store cards with loading and empty states. */
-export function StoreGrid({ stores, empty, offers }: { stores: StoreCard[]; empty: string; offers: PublicOffer[] }) {
+export function StoreGrid({ stores, empty, offers, loading, error }: { stores: StoreCard[]; empty: string; offers: PublicOffer[]; loading?: boolean; error?: boolean }) {
   const { t } = useI18n();
   const a = useAround();
-  if (a.loading) return <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">{[0, 1, 2, 3].map((i) => <div key={i} className="h-56 animate-pulse rounded-[18px] bg-now-card" />)}</div>;
-  if (a.error) return <p className="rounded-2xl bg-now-card p-6 text-now-muted">{t('lc.hm.loadFail')}</p>;
+  if (loading ?? a.loading) return <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">{[0, 1, 2, 3].map((i) => <div key={i} className="h-56 animate-pulse rounded-[18px] bg-now-card" />)}</div>;
+  if (error ?? a.error) return <p className="rounded-2xl bg-now-card p-6 text-now-muted">{t('lc.hm.loadFail')}</p>;
   if (!stores.length) return <p className="rounded-2xl border border-now-line bg-now-card p-6 text-now-muted">{empty}</p>;
   return (
     <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4" data-store-grid>

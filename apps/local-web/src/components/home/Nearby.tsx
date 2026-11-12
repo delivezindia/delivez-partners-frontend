@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { useQueries } from '@tanstack/react-query';
+import { useQueries, useQuery } from '@tanstack/react-query';
 import {
   Apple,
   ArrowRight,
@@ -31,9 +31,9 @@ import { simpleLine } from '../../lib/cart';
 import { rupees } from '../../lib/format';
 import { useI18n, type MsgKey } from '../../lib/i18n';
 import { itemIcon } from '../../lib/icons';
-import { menuQuery, useOverview } from '../../lib/queries';
+import { allShopsQuery, menuQuery, useOverview } from '../../lib/queries';
 import type { Menu, Product, StoreCard, Vertical } from '../../lib/types';
-import { BrandHead, CityNote, NowLogo, NowSection, StoreGrid, inKind, offerAt, pill, placed, useAround } from './kit';
+import { BrandHead, NowLogo, NowSection, StoreGrid, inKind, offerAt, pill, placed, useAround } from './kit';
 
 // ---------------------------------------------------------------- Stores near you
 
@@ -52,34 +52,42 @@ const CATS: { k: string; label: MsgKey; test: (s: StoreCard) => boolean }[] = [
   { k: 'gifts', label: 'lc.hm.cat.gifts', test: (s) => s.storeType === 'FLOWER' || s.storeType === 'OTHER' || /gift|flower|bouquet|hamper/i.test(s.name) },
   { k: 'STREET', label: 'lc.hm.kind.STREET', test: (s) => inKind(s, 'STREET') },
 ];
+/** Shops shown before "View all". */
+const SHOPS_PAGE = 12;
 const MIX: Vertical[] = ['EAT', 'GROCERY', 'PHARMACY', 'LOCAL_STORES', 'DIAGNOSTICS'];
 
+/** Every live shop on Delivez, filtered by category (and sort / open / offers); the ones that deliver to you first. */
 export function StoresNear({ onStart }: { onStart: () => void }) {
   const { t } = useI18n();
   const a = useAround();
+  const allQ = useQuery({ ...allShopsQuery(a.at), placeholderData: (prev) => prev });
+  const source = allQ.data?.stores ?? [];
   const [sort, setSort] = useState('near');
   const [open, setOpen] = useState(false);
   const [offers, setOffers] = useState(false);
   const [free, setFree] = useState(false);
   const [cat, setCat] = useState('all');
   const [all, setAll] = useState(false);
-  const hasOffers = a.stores.some((s) => offerAt(s, a.offers));
-  const hasFree = a.stores.some((s) => !s.bookable && s.deliveryFee === 0);
-  const cats = CATS.filter((c) => c.k === 'all' || a.stores.some(c.test));
+  const hasOffers = source.some((s) => offerAt(s, a.offers));
+  const hasFree = source.some((s) => !s.bookable && s.delivers && s.deliveryFee === 0);
+  const cats = CATS.map((c) => ({ ...c, n: source.filter(c.test).length })).filter((c) => c.k === 'all' || c.n > 0);
   const test = CATS.find((c) => c.k === cat)?.test ?? (() => true);
-  let list = a.stores.filter((s) => test(s) && (!open || s.open) && (!offers || offerAt(s, a.offers)) && (!free || s.deliveryFee === 0));
-  list = [...list].sort((p, q) => (sort === 'fast' ? Number(q.open) - Number(p.open) || p.etaMinutes - q.etaMinutes : sort === 'top' ? (q.rating?.avg ?? 0) - (p.rating?.avg ?? 0) : p.distanceKm - q.distanceKm));
+  let list = source.filter((s) => test(s) && (!open || s.open) && (!offers || offerAt(s, a.offers)) && (!free || s.deliveryFee === 0));
+  // Shops that deliver to you always come before the ones further away.
+  list = [...list].sort((p, q) => Number(q.delivers) - Number(p.delivers) || (sort === 'fast' ? Number(q.open) - Number(p.open) || p.etaMinutes - q.etaMinutes : sort === 'top' ? (q.rating?.avg ?? 0) - (p.rating?.avg ?? 0) : p.distanceKm - q.distanceKm));
   // All categories, nearest first: take shops in turn from each kind, so the many labs don't fill the first row.
   if (cat === 'all' && sort === 'near') {
-    const by = MIX.map((v) => list.filter((s) => s.vertical === v));
-    const mixed: StoreCard[] = [];
-    for (let i = 0; mixed.length < list.length; i++) by.forEach((g) => g[i] && mixed.push(g[i]));
-    list = mixed;
+    const mix = (part: StoreCard[]) => {
+      const by = MIX.map((v) => part.filter((s) => s.vertical === v));
+      const out: StoreCard[] = [];
+      for (let i = 0; out.length < part.length; i++) by.forEach((g) => g[i] && out.push(g[i]));
+      return out;
+    };
+    list = [...mix(list.filter((s) => s.delivers)), ...mix(list.filter((s) => !s.delivers))];
   }
-  const shown = all ? list : list.slice(0, 8);
+  const shown = all ? list : list.slice(0, SHOPS_PAGE);
   return (
-    <NowSection id="stores" surface tag={t('lc.hm.near.tag')} title={t('lc.hm.near.title')} intro={placed(t, a.where, a.saved ? 'lc.hm.near.introTo' : 'lc.hm.near.introAround', 'lc.hm.near.introYou')}>
-      <CityNote />
+    <NowSection id="stores" surface tag={t('lc.hm.all.tag')} title={t('lc.hm.all.title')} intro={t('lc.hm.all.intro', { n: source.length })}>
       <div className="dz-scroll-x -mx-4 flex gap-1.5 overflow-x-auto px-4 pb-1 sm:mx-0 sm:flex-wrap sm:px-0" role="group" aria-label={t('lc.hm.sortFilter')}>
         {SORTS.map((x) => (
           <button key={x.k} type="button" aria-pressed={sort === x.k} onClick={() => setSort(x.k)} className={pill(sort === x.k)}>
@@ -103,15 +111,15 @@ export function StoresNear({ onStart }: { onStart: () => void }) {
       <div className="dz-scroll-x -mx-4 mb-4 mt-2 flex gap-1.5 overflow-x-auto px-4 pb-1 sm:mx-0 sm:flex-wrap sm:px-0" role="group" aria-label={t('lc.hm.category')}>
         {cats.map((c) => (
           <button key={c.k} type="button" aria-pressed={cat === c.k} onClick={() => (setCat(c.k), setAll(false))} className={pill(cat === c.k)}>
-            {t(c.label)}
+            {t(c.label)} <span className="opacity-60">{c.n}</span>
           </button>
         ))}
       </div>
-      <StoreGrid stores={shown} offers={a.offers} empty={t('lc.hm.near.empty')} />
+      <StoreGrid stores={shown} offers={a.offers} empty={t('lc.hm.near.empty')} loading={allQ.isLoading || !a.at} error={allQ.isError} />
       <div className="mt-4 flex flex-wrap gap-2">
-        {!all && list.length > 8 && (
+        {!all && list.length > SHOPS_PAGE && (
           <button type="button" onClick={() => setAll(true)} className="inline-flex min-h-12 items-center rounded-xl bg-black px-[18px] font-black text-dz-yellow">
-            {t('lc.hm.near.viewAll', { n: list.length })}
+            {t('lc.hm.all.viewAll', { n: list.length })}
           </button>
         )}
         {!a.saved && (
