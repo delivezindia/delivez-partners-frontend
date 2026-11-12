@@ -13,8 +13,8 @@ import type { Vertical } from '../lib/types';
 /* Public-site building blocks, matching the Delivez Partners site (apps/partners-web/src/site). */
 
 export const SITE_VERTICALS: Vertical[] = ['EAT', 'GROCERY', 'PHARMACY', 'DIAGNOSTICS', 'LOCAL_STORES'];
-/** The kinds of shop plus the Rush page: what the category menus list. */
-export const SITE_PAGES: (Vertical | ShopPage)[] = [...SITE_VERTICALS, 'RUSH'];
+/** The kinds of shop plus the Street Cart and Rush pages: what the category menus list. */
+export const SITE_PAGES: (Vertical | ShopPage)[] = [...SITE_VERTICALS, 'STREET', 'RUSH'];
 
 export function Section({ id, eyebrow, title, intro, children, className = '', center = false }: { id?: string; eyebrow?: string; title?: string; intro?: string; children: ReactNode; className?: string; center?: boolean }) {
   return (

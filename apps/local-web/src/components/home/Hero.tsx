@@ -125,7 +125,7 @@ const SHOPS: [Kind, MsgKey][] = [
   ['DIAGNOSTICS', 'lc.v.DIAGNOSTICS'],
   ['LOCAL_STORES', 'lc.v.LOCAL_STORES'],
 ];
-const APP_TILES: Kind[] = ['EAT', 'GROCERY', 'PHARMACY', 'DIAGNOSTICS', 'LOCAL_STORES', 'RUSH'];
+const APP_TILES: Kind[] = ['EAT', 'GROCERY', 'PHARMACY', 'DIAGNOSTICS', 'LOCAL_STORES', 'STREET'];
 
 /** The neighbourhood: a row of shops (one per kind), the app, a live-order card and a rider on the road. Illustration only. */
 function StreetScene() {
@@ -221,7 +221,7 @@ const BAR: [string, MsgKey][] = [
   ['shop', 'lc.hm.kind.GROCERY'],
   ['pharmacy', 'lc.hm.kind.PHARMACY'],
   ['localstores', 'lc.hm.kind.LOCAL_STORES'],
-  ['quick', 'lc.hm.bar.quick'],
+  ['street', 'lc.hm.kind.STREET'],
   ['gifts', 'lc.hm.cat.gifts'],
   ['specialty', 'lc.hm.bar.specialty'],
   ['offers', 'lc.hm.offers'],

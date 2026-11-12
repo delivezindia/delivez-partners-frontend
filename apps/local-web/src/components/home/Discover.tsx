@@ -34,7 +34,7 @@ import { itemIcon, storeLook } from '../../lib/icons';
 import { useOverview } from '../../lib/queries';
 import type { Vertical } from '../../lib/types';
 import { KIND_LOOK } from '../VerticalIcon';
-import { KINDS, NowLogo, NowSection, Soon, inKind, kindOf, placed, useAround, type Kind } from './kit';
+import { COMING_SOON, KINDS, NowLogo, NowSection, Soon, inKind, kindOf, placed, useAround, type Kind } from './kit';
 
 // ---------------------------------------------------------------- The app
 
@@ -46,12 +46,12 @@ const PHONE_TILES: { icon: LucideIcon; label: MsgKey; color: string }[] = [
   { icon: Pill, label: 'lc.hm.t.pharmacy', color: '#1E5BB8' },
   { icon: Store, label: 'lc.v.LOCAL_STORES', color: '#7A3FC0' },
   { icon: Gift, label: 'lc.hm.t.gifts', color: '#BE185D' },
-  { icon: Zap, label: 'lc.v.RUSH', color: '#7B2FD4' },
+  { icon: ShoppingCart, label: 'lc.v.STREET', color: '#C2470B' },
 ];
 const APP_FEATURES: { icon: LucideIcon; label: MsgKey; body: MsgKey }[] = [
   { icon: ShoppingBag, label: 'lc.hm.app.f1', body: 'lc.hm.app.f1b' },
   { icon: MapPin, label: 'lc.hm.app.f2', body: 'lc.hm.app.f2b' },
-  { icon: Zap, label: 'lc.hm.app.f3', body: 'lc.hm.app.f3b' },
+  { icon: ShoppingCart, label: 'lc.hm.app.f3', body: 'lc.hm.app.f3b' },
   { icon: Repeat, label: 'lc.hm.app.f4', body: 'lc.hm.app.f4b' },
 ];
 const PHONE_NAV: [LucideIcon, MsgKey][] = [
@@ -131,7 +131,7 @@ export function AppBand() {
               </div>
             </div>
           </div>
-          <Float className="left-0 top-[18%]" icon={Bike} title={t('lc.hm.rush.s4')} sub={t('lc.hm.app.fl1b')} />
+          <Float className="left-0 top-[18%]" icon={Bike} title={t('lc.hm.street.s4')} sub={t('lc.hm.app.fl1b')} />
           <Float className="bottom-[22%] right-0" icon={ShieldCheck} title={t('lc.hm.app.fl2')} sub={t('lc.hm.app.fl2b')} delay="1.2s" />
           <Float className="bottom-[8%] left-[4%]" icon={BadgePercent} title={t('lc.hm.app.fl3')} sub={t('lc.hm.app.fl3b')} delay="2.2s" />
         </div>
@@ -285,9 +285,10 @@ export function AreaCheck({ onStart }: { onStart: () => void }) {
 
 // ---------------------------------------------------------------- Shop by category
 
-/** What the Rush page offers, by type: its cart types. */
-const PAGE_TYPES: Record<'RUSH', MsgKey[]> = {
-  RUSH: ['lc.hm.t.fruit', 'lc.hm.t.vegetables', 'lc.hm.t.chaat', 'lc.hm.t.juice', 'lc.hm.t.tea', 'lc.hm.t.flowers', 'lc.hm.t.iceCream', 'lc.hm.t.tiffin', 'lc.hm.t.corn', 'lc.hm.t.milkDairy'],
+/** What each page offers, by type: what Rush stores will stock, and the Street Cart page's cart types. */
+const PAGE_TYPES: Record<'RUSH' | 'STREET', MsgKey[]> = {
+  RUSH: ['lc.hm.t.staples', 'lc.hm.t.fruitVeg', 'lc.hm.t.dairyBread', 'lc.hm.t.snacksDrinks', 'lc.hm.t.personalCare', 'lc.hm.t.household', 'lc.hm.t.baby', 'lc.hm.t.pet', 'lc.hm.t.health', 'lc.hm.t.electronics'],
+  STREET: ['lc.hm.t.fruit', 'lc.hm.t.vegetables', 'lc.hm.t.chaat', 'lc.hm.t.juice', 'lc.hm.t.tea', 'lc.hm.t.flowers', 'lc.hm.t.iceCream', 'lc.hm.t.tiffin', 'lc.hm.t.corn', 'lc.hm.t.milkDairy'],
 };
 /** Until shops of a kind are live, the kinds of shop it will have. */
 const PLANNED: Record<Vertical, MsgKey[]> = {
@@ -310,7 +311,7 @@ export function Categories() {
     const id = setInterval(() => setOn((k) => KINDS[(KINDS.findIndex((x) => x.k === k) + 1) % KINDS.length].k), 6000);
     return () => clearInterval(id);
   }, [auto]);
-  const count = (k: Kind) => (k === 'RUSH' ? null : (overview?.verticals[k]?.shops ?? null));
+  const count = (k: Kind) => (k === 'RUSH' ? 0 : k === 'STREET' ? null : (overview?.verticals[k]?.shops ?? null));
   const pick = (k: Kind) => (setAuto(false), setOn(k));
   return (
     <NowSection id="categories" tag={t('lc.hm.cats.tag')} title={t('lc.hm.cats.title')}>
@@ -374,7 +375,7 @@ function KindPanel({ k, onPick }: { k: Kind; onPick: (k: Kind) => void }) {
   const first = [...open].sort((p, q) => p.etaMinutes - q.etaMinutes)[0];
   // Shown in the reader's language; the icon is picked from the English name.
   const keyed = (key: MsgKey) => ({ name: t(key), en: en[key] });
-  const types = k === 'RUSH' ? PAGE_TYPES[k].map(keyed) : overview?.verticals[k]?.types.length ? overview.verticals[k].types.map((x) => ({ name: x.name, en: x.name })) : PLANNED[k].map(keyed);
+  const types = k === 'RUSH' || k === 'STREET' ? PAGE_TYPES[k].map(keyed) : overview?.verticals[k]?.types.length ? overview.verticals[k].types.map((x) => ({ name: x.name, en: x.name })) : PLANNED[k].map(keyed);
   const title = t(x.title);
   return (
     <div key={k} className="vp-up mt-3.5 grid overflow-hidden rounded-[24px] border border-now-line bg-now-card lg:grid-cols-[0.9fr_1.1fr]" data-kind-panel={k}>
@@ -387,7 +388,9 @@ function KindPanel({ k, onPick }: { k: Kind; onPick: (k: Kind) => void }) {
           <p className="flex items-center gap-2 text-xs font-extrabold uppercase tracking-[1px] text-now-muted">
             <i className={`h-2 w-2 rounded-full ${first ? 'bg-[#17803A]' : 'bg-neutral-400'}`} aria-hidden /> {placed(t, a.where, 'lc.hm.kp.quickest', 'lc.hm.kp.quickestYou')}
           </p>
-          {a.loading ? (
+          {COMING_SOON.includes(k) ? (
+            <p className="mt-3 text-sm text-now-muted">{t('lc.rush.soonShort')}</p>
+          ) : a.loading ? (
             <div className="mt-3 h-10 animate-pulse rounded-lg bg-now-surface" />
           ) : first ? (
             <>
@@ -453,4 +456,4 @@ function KindPanel({ k, onPick }: { k: Kind; onPick: (k: Kind) => void }) {
     </div>
   );
 }
-const liveShops = (k: Kind, o: NonNullable<ReturnType<typeof useOverview>['data']>) => (k === 'RUSH' ? null : (o.verticals[k]?.shops ?? 0));
+const liveShops = (k: Kind, o: NonNullable<ReturnType<typeof useOverview>['data']>) => (k === 'RUSH' ? 0 : k === 'STREET' ? null : (o.verticals[k]?.shops ?? 0));

@@ -1,11 +1,12 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Link, Navigate, useNavigate, useSearchParams } from 'react-router-dom';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { Bike, CalendarClock, Clock, LayoutGrid, MapPin, Search, Star, Store as StoreIcon, X } from 'lucide-react';
 import { AppHeader } from '../components/AppHeader';
 import Landing from './Landing';
 import Food from './Food';
 import Grocery from './Grocery';
 import Rush from './Rush';
+import Street from './Street';
 import { LiveOrders, OrderAgain } from '../components/OrderStrips';
 import { Skeleton } from '../components/ui';
 import { km, opensAtLabel, rupees } from '../lib/format';
@@ -55,18 +56,13 @@ export default function Home() {
     setParams(p, { replace: true });
   };
 
-  // Street Cart is part of Rush now: old links to it open Rush.
-  if (params.get('v') === 'STREET') {
-    const p = new URLSearchParams(params);
-    p.set('v', 'RUSH');
-    return <Navigate to={{ search: p.toString() }} replace />;
-  }
   // No location yet: the welcome page asks for one (a category in ?v= opens once it's set).
   if (!at) return <Landing />;
-  // Food, groceries and Rush have their own pages; the other kinds of shop use the list below.
+  // Food, groceries, Street Cart and Rush have their own pages; the other kinds of shop use the list below.
   if (vertical === 'EAT') return <Food at={at} />;
   if (vertical === 'GROCERY') return <Grocery at={at} />;
-  if (page === 'RUSH') return <Rush at={at} />;
+  if (page === 'STREET') return <Street at={at} />;
+  if (page === 'RUSH') return <Rush />;
 
   return (
     <div className="min-h-screen bg-soft pb-28">

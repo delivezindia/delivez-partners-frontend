@@ -18,6 +18,7 @@ import {
   Plus,
   Receipt,
   ShoppingBasket,
+  ShoppingCart,
   Soup,
   Star,
   Timer,
@@ -49,7 +50,7 @@ const CATS: { k: string; label: MsgKey; test: (s: StoreCard) => boolean }[] = [
   { k: 'DIAGNOSTICS', label: 'lc.hm.kind.DIAGNOSTICS', test: (s) => s.vertical === 'DIAGNOSTICS' },
   { k: 'LOCAL_STORES', label: 'lc.hm.kind.LOCAL_STORES', test: (s) => inKind(s, 'LOCAL_STORES') },
   { k: 'gifts', label: 'lc.hm.cat.gifts', test: (s) => s.storeType === 'FLOWER' || s.storeType === 'OTHER' || /gift|flower|bouquet|hamper/i.test(s.name) },
-  { k: 'RUSH', label: 'lc.hm.kind.RUSH', test: (s) => inKind(s, 'RUSH') },
+  { k: 'STREET', label: 'lc.hm.kind.STREET', test: (s) => inKind(s, 'STREET') },
 ];
 const MIX: Vertical[] = ['EAT', 'GROCERY', 'PHARMACY', 'LOCAL_STORES', 'DIAGNOSTICS'];
 
@@ -123,15 +124,15 @@ export function StoresNear({ onStart }: { onStart: () => void }) {
   );
 }
 
-// ---------------------------------------------------------------- Rush
+// ---------------------------------------------------------------- Street Cart
 
-const RUSH_STEPS: { icon: LucideIcon; label: MsgKey }[] = [
-  { icon: Receipt, label: 'lc.hm.rush.s1' },
-  { icon: ShoppingBasket, label: 'lc.hm.rush.s2' },
-  { icon: Package, label: 'lc.hm.rush.s3' },
-  { icon: Bike, label: 'lc.hm.rush.s4' },
+const STREET_STEPS: { icon: LucideIcon; label: MsgKey }[] = [
+  { icon: Receipt, label: 'lc.hm.street.s1' },
+  { icon: ShoppingBasket, label: 'lc.hm.street.s2' },
+  { icon: Package, label: 'lc.hm.street.s3' },
+  { icon: Bike, label: 'lc.hm.street.s4' },
 ];
-const RUSH_ITEMS: { icon: LucideIcon; label: MsgKey }[] = [
+const STREET_ITEMS: { icon: LucideIcon; label: MsgKey }[] = [
   { icon: Apple, label: 'lc.hm.t.fruit' },
   { icon: Carrot, label: 'lc.hm.t.vegetables' },
   { icon: Soup, label: 'lc.hm.t.chaat' },
@@ -141,52 +142,51 @@ const RUSH_ITEMS: { icon: LucideIcon; label: MsgKey }[] = [
   { icon: IceCreamCone, label: 'lc.hm.t.iceCream' },
   { icon: Milk, label: 'lc.hm.t.milkDairy' },
 ];
-const RUSH_CHIPS: MsgKey[] = ['lc.hm.t.fruit', 'lc.hm.t.vegetables', 'lc.hm.t.chaat', 'lc.hm.t.juice', 'lc.hm.t.tea', 'lc.hm.t.flowers', 'lc.hm.t.tiffin', 'lc.hm.t.corn'];
+const STREET_CHIPS: MsgKey[] = ['lc.hm.t.fruit', 'lc.hm.t.vegetables', 'lc.hm.t.chaat', 'lc.hm.t.juice', 'lc.hm.t.tea', 'lc.hm.t.flowers', 'lc.hm.t.tiffin', 'lc.hm.t.corn'];
 
-export function RushBand() {
+/** Street carts and society vendors near you, on the home page. */
+export function StreetBand() {
   const { t } = useI18n();
   const a = useAround();
   const [k, setK] = useState(0);
   useEffect(() => {
     if (matchMedia('(prefers-reduced-motion: reduce)').matches) return;
-    const id = setInterval(() => setK((n) => (n + 1) % RUSH_STEPS.length), 1800);
+    const id = setInterval(() => setK((n) => (n + 1) % STREET_STEPS.length), 1800);
     return () => clearInterval(id);
   }, []);
-  const shops = a.stores.filter((s) => inKind(s, 'RUSH'));
+  const shops = a.stores.filter((s) => inKind(s, 'STREET'));
   const open = shops.filter((s) => s.open).sort((p, q) => p.etaMinutes - q.etaMinutes);
   const first = open[0];
   const stats: [string, string][] = [
     [first ? t('lc.store.mins', { n: first.etaMinutes }) : '—', t('lc.hm.quickestNow')],
-    [String(shops.length), placed(t, a.where, 'lc.hm.rush.shops', 'lc.hm.rush.shopsYou')],
+    [String(shops.length), placed(t, a.where, 'lc.hm.street.shops', 'lc.hm.street.shopsYou')],
     [String(open.length), t('lc.street.statOpen')],
   ];
   return (
-    <section id="quick" className="scroll-mt-28 bg-now-bg px-4 py-[52px] sm:px-6">
+    <section id="street" className="scroll-mt-28 bg-now-bg px-4 py-[52px] sm:px-6">
       <div className="mx-auto grid max-w-[1280px] gap-4 lg:grid-cols-[1.05fr_0.95fr]">
-        <div className="relative flex flex-col gap-4 overflow-hidden rounded-[28px] p-7 text-white" style={{ background: 'linear-gradient(150deg,#2A0F4A 0%,#4B1B86 55%,#7B2FD4 100%)' }}>
-          <svg viewBox="0 0 24 24" className="pointer-events-none absolute -bottom-10 right-6 h-60 w-60 opacity-[0.08]" aria-hidden>
-            <path d="M13 2 3 14h9l-1 8 10-12h-9l1-8z" fill="#fff" />
-          </svg>
+        <div className="relative flex flex-col gap-4 overflow-hidden rounded-[28px] p-7 text-white" style={{ background: 'linear-gradient(150deg,#4A1A05 0%,#8A3208 55%,#C2470B 100%)' }}>
+          <ShoppingCart className="pointer-events-none absolute -bottom-10 right-6 h-60 w-60 text-white opacity-[0.08]" aria-hidden />
           <span className="w-fit rounded-2xl bg-dz-yellow px-3 py-2">
-            <NowLogo k="RUSH" className="h-[38px]" />
+            <NowLogo k="STREET" className="h-[38px]" />
           </span>
           <h2 className="text-[clamp(34px,3.8vw,52px)] leading-[0.95]">
-            {t('lc.hm.rush.title1')} <span className="text-dz-yellow">{t('lc.hm.rush.title2')}</span>
+            {t('lc.hm.street.title1')} <span className="text-dz-yellow">{t('lc.hm.street.title2')}</span>
           </h2>
-          <p className="max-w-[56ch] text-[#DCCFF2]">{t('lc.hm.rush.body')}</p>
+          <p className="max-w-[56ch] text-[#FFE3D2]">{t('lc.hm.street.body')}</p>
           <div className="flex flex-wrap gap-2">
-            {RUSH_CHIPS.map((x) => (
+            {STREET_CHIPS.map((x) => (
               <span key={x} className="rounded-full border border-white/20 bg-white/10 px-3 py-1.5 text-[13px] font-bold">
                 {t(x)}
               </span>
             ))}
           </div>
           <div className="mt-auto flex flex-wrap gap-2.5 pt-2">
-            <Link to="/shops?v=RUSH" className="inline-flex items-center gap-1.5 rounded-xl bg-dz-yellow px-[18px] py-3 text-sm font-black text-black transition hover:-translate-y-0.5" data-rush-cta>
-              {t('lc.hm.rush.cta')} <ArrowRight className="h-4 w-4" aria-hidden />
+            <Link to="/shops?v=STREET" className="inline-flex items-center gap-1.5 rounded-xl bg-dz-yellow px-[18px] py-3 text-sm font-black text-black transition hover:-translate-y-0.5" data-street-cta>
+              {t('lc.hm.street.cta')} <ArrowRight className="h-4 w-4" aria-hidden />
             </Link>
             <a href="#how" className="inline-flex items-center rounded-xl border-[1.5px] border-white/30 px-[18px] py-3 text-sm font-black text-white transition hover:border-white">
-              {t('lc.hm.rush.how')}
+              {t('lc.hm.street.how')}
             </a>
           </div>
         </div>
@@ -203,18 +203,18 @@ export function RushBand() {
             )}
           </div>
           <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
-            {RUSH_STEPS.map((s, i) => (
-              <div key={s.label} className={`rounded-2xl border p-3 text-[12.5px] transition duration-300 ${i <= k ? 'border-[#7B2FD4] bg-[#24133D] text-white' : 'border-[#262626] bg-[#181818] text-neutral-400'}`}>
+            {STREET_STEPS.map((s, i) => (
+              <div key={s.label} className={`rounded-2xl border p-3 text-[12.5px] transition duration-300 ${i <= k ? 'border-[#C2470B] bg-[#3D1A08] text-white' : 'border-[#262626] bg-[#181818] text-neutral-400'}`}>
                 <s.icon className="mb-1.5 h-5 w-5" aria-hidden />
                 {t(s.label)}
               </div>
             ))}
           </div>
           <div className="h-1.5 overflow-hidden rounded bg-[#222]">
-            <i className="block h-full bg-gradient-to-r from-[#7B2FD4] to-dz-yellow transition-all duration-500" style={{ width: `${((k + 1) / RUSH_STEPS.length) * 100}%` }} />
+            <i className="block h-full bg-gradient-to-r from-[#C2470B] to-dz-yellow transition-all duration-500" style={{ width: `${((k + 1) / STREET_STEPS.length) * 100}%` }} />
           </div>
           <div className="grid grid-cols-4 gap-2">
-            {RUSH_ITEMS.map((s) => (
+            {STREET_ITEMS.map((s) => (
               <span key={s.label} className="grid justify-items-center gap-1.5 rounded-2xl bg-[#181818] px-1 py-3 text-center text-[11.5px] text-neutral-300">
                 <s.icon className="h-6 w-6 text-dz-yellow" aria-hidden />
                 {t(s.label)}

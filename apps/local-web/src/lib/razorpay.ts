@@ -3,7 +3,9 @@ import { normalizeOrder, type CustomerOrder } from './orders';
 
 /** What the API returns to open Razorpay Checkout for an unpaid order. */
 export interface CheckoutParams {
-  gateway: 'RAZORPAY';
+  /** DUMMY: the server runs test payments; the app's own test screen opens instead of Razorpay. */
+  gateway: 'RAZORPAY' | 'DUMMY';
+  dummy?: { paymentId: string; signature: string };
   keyId: string;
   orderId: string;
   amount: number;
@@ -41,6 +43,10 @@ function loadCheckout() {
 
 /** Opens Razorpay Checkout. Resolves with the signed result, or null if the customer closed it without paying. */
 export async function openCheckout(p: CheckoutParams): Promise<Success | null> {
+  if (p.gateway === 'DUMMY' && p.dummy) {
+    const { openDummyCheckout } = await import('./dummyCheckout');
+    return openDummyCheckout({ ...p, dummy: p.dummy });
+  }
   const Razorpay = await loadCheckout();
   return new Promise<Success | null>((resolve) => {
     const rzp = new Razorpay({

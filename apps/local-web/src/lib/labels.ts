@@ -15,9 +15,12 @@ export const ADDRESS_LABEL: Record<AddressLabel, MsgKey> = {
   OTHER: 'lc.addr.OTHER',
 };
 
-/** The shop-list page that isn't one kind of shop: Rush (street carts and society vendors). */
-export type ShopPage = 'RUSH';
-export const SHOP_PAGES: ShopPage[] = ['RUSH'];
-export const PAGE_LABEL: Record<ShopPage, MsgKey> = { RUSH: 'lc.v.RUSH' };
+/**
+ * Pages that aren't one kind of shop: Street Cart (street and society vendors) and Rush (Delivez's own quick-commerce
+ * stores, stocked from Delivez warehouses; coming soon).
+ */
+export type ShopPage = 'STREET' | 'RUSH';
+export const SHOP_PAGES: ShopPage[] = ['STREET', 'RUSH'];
+export const PAGE_LABEL: Record<ShopPage, MsgKey> = { STREET: 'lc.v.STREET', RUSH: 'lc.v.RUSH' };
 /** Label for a kind of shop or one of those pages. */
 export const KIND_LABEL: Record<Vertical | ShopPage, MsgKey> = { ...VERTICAL_LABEL, ...PAGE_LABEL };

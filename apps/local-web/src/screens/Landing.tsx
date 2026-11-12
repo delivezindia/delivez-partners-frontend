@@ -7,7 +7,7 @@ import { AppBand, AreaCheck, Categories } from '../components/home/Discover';
 import { CartButton, NowBar, NowHero } from '../components/home/Hero';
 import { GiftsBand, LocalBand, PharmacyBand, SpecialtyBand } from '../components/home/Kinds';
 import { AroundProvider, scrollToId } from '../components/home/kit';
-import { FoodNear, RushBand, ShopProducts, StoresNear } from '../components/home/Nearby';
+import { FoodNear, ShopProducts, StoresNear, StreetBand } from '../components/home/Nearby';
 import { HowBand, OffersBand, SearchBand, TrackBand } from '../components/home/Order';
 import { useI18n } from '../lib/i18n';
 import { useDeliverTo } from '../lib/location';
@@ -51,7 +51,7 @@ export default function Landing() {
           <AreaCheck onStart={askLocation} />
           <Categories />
           <StoresNear onStart={askLocation} />
-          <RushBand />
+          <StreetBand />
           <ShopProducts />
           <FoodNear />
           <PharmacyBand />

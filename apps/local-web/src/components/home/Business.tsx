@@ -50,7 +50,8 @@ import { useI18n, type MsgKey } from '../../lib/i18n';
 import { KIND_LABEL } from '../../lib/labels';
 import { cityList, useOverview } from '../../lib/queries';
 import { KIND_LOOK } from '../VerticalIcon';
-import { NowLogo, NowSection, Soon, fit, kindOf, pill, placed, useAround, type Kind } from './kit';
+import { COMING_SOON, NowLogo, NowSection, Soon, fit, kindOf, pill, placed, useAround, type Kind } from './kit';
+import type { Vertical } from '../../lib/types';
 
 // ---------------------------------------------------------------- Merchants
 
@@ -480,13 +481,14 @@ const FAMILY: { k: Kind; name: string }[] = [
   { k: 'GROCERY', name: 'Delivez Now Grocery' },
   { k: 'PHARMACY', name: 'Delivez Now Pharmacy' },
   { k: 'LOCAL_STORES', name: 'Delivez Now Local Shop' },
+  { k: 'STREET', name: 'Delivez Now Street Cart' },
   { k: 'RUSH', name: 'Delivez Now Rush Store' },
 ];
 
 export function FamilyBand() {
   const { t } = useI18n();
   const overview = useOverview().data;
-  const none = (k: Kind) => k !== 'RUSH' && !!overview && !overview.verticals[k]?.shops;
+  const none = (k: Kind) => COMING_SOON.includes(k) || (k !== 'STREET' && !!overview && !overview.verticals[k as Vertical]?.shops);
   return (
     <NowSection id="now-family" tag={t('lc.hm.fam.tag')} title={t('lc.hm.fam.title')} intro={t('lc.hm.fam.intro')}>
       <div className="grid gap-3.5 sm:grid-cols-2 lg:grid-cols-3">
