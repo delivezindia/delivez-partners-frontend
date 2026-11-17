@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState, type FormEvent } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { useQueryClient } from '@tanstack/react-query';
-import { ArrowLeft, Briefcase, FlaskConical, Home, LifeBuoy, LogOut, MapPin, Pencil, Plus, Receipt, Trash2 } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Briefcase, FlaskConical, Home, LifeBuoy, LogOut, MapPin, Pencil, Plus, Receipt, Trash2 } from 'lucide-react';
 import { Field, Select, TextInput, Toggle } from '../components/form';
 import { Button, ErrorText } from '../components/ui';
 import { api } from '../lib/api';
@@ -14,6 +14,7 @@ import type { Me } from '../lib/types';
 import { messageOf, safeNext } from './Login';
 import { PushCard } from '../components/PushCard';
 import { disablePush } from '../lib/push';
+import { LiveMap } from '../components/LiveMap';
 
 const ICON = { HOME: Home, WORK: Briefcase, OTHER: MapPin };
 
@@ -122,7 +123,7 @@ export default function Account() {
                 <Link key={to} to={to} className="flex items-center gap-3 p-4 font-bold hover:bg-soft">
                   <Icon className="h-5 w-5 text-ink-2" aria-hidden />
                   <span className="flex-1">{label}</span>
-                  <span aria-hidden>→</span>
+                  <ArrowRight className="h-4 w-4 text-ink-2" aria-hidden />
                 </Link>
               ))}
             </nav>
@@ -134,6 +135,13 @@ export default function Account() {
                 </Link>
               </div>
               {addresses.data?.length === 0 && <p className="py-3 text-sm text-ink-2">{t('lc.acc.noAddresses')}</p>}
+              {!!addresses.data?.length && (
+                <LiveMap
+                  pins={addresses.data.map((a) => ({ id: a.id, at: { lat: a.lat, lng: a.lng }, kind: 'drop' as const, icon: ICON[a.label], label: t(ADDRESS_LABEL[a.label]) }))}
+                  label={t('lc.acc.addresses')}
+                  className="mb-2 aspect-[16/7] w-full rounded-2xl"
+                />
+              )}
               <ul className="divide-y divide-line">
                 {addresses.data?.map((a) => {
                   const Icon = ICON[a.label];

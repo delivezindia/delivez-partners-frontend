@@ -1,4 +1,5 @@
 import { forwardRef, type InputHTMLAttributes, type ReactNode, type SelectHTMLAttributes, type TextareaHTMLAttributes } from 'react';
+import { Minus, Plus } from 'lucide-react';
 
 export function Field({ label, hint, error, children, className = '' }: { label: string; hint?: string; error?: string; children: ReactNode; className?: string }) {
   return (
@@ -52,15 +53,15 @@ export function Stepper({ value, onChange, min, max, step = 1, unit }: { value: 
   const clamp = (v: number) => Math.min(max, Math.max(min, v));
   return (
     <div className="flex h-12 items-center overflow-hidden rounded-xl border border-neutral-300 bg-white">
-      <button type="button" className="h-full w-12 text-xl font-bold hover:bg-neutral-100" onClick={() => onChange(clamp(value - step))} aria-label="Decrease">
-        −
+      <button type="button" className="grid h-full w-12 place-items-center hover:bg-neutral-100" onClick={() => onChange(clamp(value - step))} aria-label="Decrease">
+        <Minus className="h-5 w-5" strokeWidth={2.6} aria-hidden />
       </button>
       <span className="flex-1 text-center text-lg font-semibold">
         {value}
         {unit && <span className="text-sm font-normal text-neutral-500"> {unit}</span>}
       </span>
-      <button type="button" className="h-full w-12 text-xl font-bold hover:bg-neutral-100" onClick={() => onChange(clamp(value + step))} aria-label="Increase">
-        +
+      <button type="button" className="grid h-full w-12 place-items-center hover:bg-neutral-100" onClick={() => onChange(clamp(value + step))} aria-label="Increase">
+        <Plus className="h-5 w-5" strokeWidth={2.6} aria-hidden />
       </button>
     </div>
   );

@@ -16,6 +16,7 @@ import {
   Search,
   ShoppingCart,
   Sparkles,
+  Star,
   Store,
   Timer,
   Truck,
@@ -124,7 +125,15 @@ export function SearchBand() {
                 </span>
                 <span className="min-w-0 flex-1">
                   <b className="block truncate">{s.name}</b>
-                  <small className="text-xs text-now-muted">{[km(s.distanceKm), s.open ? t('lc.store.mins', { n: s.etaMinutes }) : t('lc.hm.closed'), s.rating && `★ ${s.rating.avg.toFixed(1)}`].filter(Boolean).join(' · ')}</small>
+                  <small className="text-xs text-now-muted">
+                    {[km(s.distanceKm), s.open ? t('lc.store.mins', { n: s.etaMinutes }) : t('lc.hm.closed')].join(' · ')}
+                    {s.rating && (
+                      <>
+                        {' · '}
+                        <Star className="inline h-3 w-3 fill-current align-[-1px]" aria-hidden /> {s.rating.avg.toFixed(1)}
+                      </>
+                    )}
+                  </small>
                 </span>
                 <ArrowRight className="h-4 w-4 shrink-0" aria-hidden />
               </Link>

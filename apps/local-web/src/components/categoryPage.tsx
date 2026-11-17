@@ -1,6 +1,6 @@
 import { useEffect, useId, useRef, useState, type ReactNode } from 'react';
 import { Link } from 'react-router-dom';
-import { Plus, Search, X } from 'lucide-react';
+import { BellRing, Bike, Check, KeyRound, Minus, Package, Plus, Search, Tag, TrendingUp, X, type LucideIcon } from 'lucide-react';
 import { Modal } from './Modal';
 import { ProductSheet } from './ProductSheet';
 import { offerTitle } from './CouponBox';
@@ -197,12 +197,12 @@ export function HeroSearch({ value, onChange, placeholder, children }: { value: 
 }
 
 /** One line in the search drop-down: a link (open the shop) or a button (add it). */
-export function HitRow({ emoji, tint, title, sub, action, to, onClick }: { emoji: ReactNode; tint: string; title: string; sub: string; action: string; to?: string; onClick?: () => void }) {
+export function HitRow({ icon, tint, title, sub, action, to, onClick }: { icon: ReactNode; tint: string; title: string; sub: ReactNode; action: string; to?: string; onClick?: () => void }) {
   const cls = 'grid w-full grid-cols-[40px_1fr_auto] items-center gap-3 rounded-[10px] px-2.5 py-2 text-left text-[14.5px] text-black hover:bg-[#F7F7F5] focus-visible:bg-[#F7F7F5]';
   const body = (
     <>
-      <span className="grid h-10 w-10 place-items-center overflow-hidden rounded-[10px] text-[22px]" style={{ background: tint }} aria-hidden>
-        {emoji}
+      <span className="grid h-10 w-10 place-items-center overflow-hidden rounded-[10px]" style={{ background: tint }} aria-hidden>
+        {icon}
       </span>
       <span className="min-w-0">
         <span className="block truncate font-semibold">{title}</span>
@@ -232,15 +232,15 @@ export function NoHits() {
   );
 }
 
-const PILLS: { key: MsgKey; icon: string; bg: string; fg: string }[] = [
-  { key: 'lc.step.placed', icon: '🔔', bg: '#111111', fg: '#FFD400' },
-  { key: 'lc.step.preparing', icon: '📦', bg: '#17803A', fg: '#ffffff' },
-  { key: 'lc.step.onTheWay', icon: '🛵', bg: '#E8130F', fg: '#ffffff' },
-  { key: 'lc.step.delivered', icon: '✓', bg: '#FFD400', fg: '#111111' },
+const PILLS: { key: MsgKey; icon: LucideIcon; bg: string; fg: string }[] = [
+  { key: 'lc.step.placed', icon: BellRing, bg: '#111111', fg: '#FFD400' },
+  { key: 'lc.step.preparing', icon: Package, bg: '#17803A', fg: '#ffffff' },
+  { key: 'lc.step.onTheWay', icon: Bike, bg: '#E8130F', fg: '#ffffff' },
+  { key: 'lc.step.delivered', icon: Check, bg: '#FFD400', fg: '#111111' },
 ];
 
 /** "How it works": a little shop that keeps getting orders, next to the steps every order goes through. */
-export function HowBand({ art, awning, steps }: { art: string; awning: string; steps: MsgKey[] }) {
+export function HowBand({ art: Art, awning, steps }: { art: LucideIcon; awning: string; steps: MsgKey[] }) {
   const { t } = useI18n();
   const on = useCycle(steps.length, 2400);
   const bg = `vp-bg${useId().replace(/:/g, '')}`;
@@ -260,18 +260,17 @@ export function HowBand({ art, awning, steps }: { art: string; awning: string; s
             <path d="M30 130h240l-20-46H50z" fill={awning} />
             <path d="M30 130h240" stroke="#FFD400" strokeWidth="10" strokeDasharray="24 24" />
             <rect x="120" y="210" width="60" height="90" fill="#FFD400" />
-            <text x="150" y="190" textAnchor="middle" fontSize="40">
-              {art}
-            </text>
+            <Art x="126" y="148" size={48} color="#111" strokeWidth={1.8} />
           </svg>
           {PILLS.map((p, k) => (
             <span
               key={p.key}
-              className="vp-pill absolute left-1/2 whitespace-nowrap rounded-full px-[1.1em] py-[0.45em] font-extrabold leading-none"
+              className="vp-pill absolute left-1/2 inline-flex items-center gap-[0.4em] whitespace-nowrap rounded-full px-[1.1em] py-[0.45em] font-extrabold leading-none"
               style={{ top: `${19.4 + k * 16.7}%`, background: p.bg, color: p.fg, fontSize: 'max(10px, 2.05cqw)', animationDelay: `${k * 0.9}s` }}
               aria-hidden
             >
-              {p.icon} {t(p.key)}
+              <p.icon className="h-[1.1em] w-[1.1em] shrink-0" strokeWidth={2.6} />
+              {t(p.key)}
             </span>
           ))}
         </figure>
@@ -339,21 +338,19 @@ export function OfferTickets({ offers }: { offers: PublicOffer[] }) {
 }
 
 /** For shop owners: the big black tile, then the partner site, pricing, login and the other page. */
-export function PartnerTiles({ emoji, title, body, other, otherEmoji }: { emoji: string; title: string; body: string; other: Vertical; otherEmoji: string }) {
+export function PartnerTiles({ icon: Icon, title, body, other, otherIcon }: { icon: LucideIcon; title: string; body: string; other: Vertical; otherIcon: LucideIcon }) {
   const { t } = useI18n();
-  const small: { href: string; e: string; b: string; u: string; bg: string; inApp?: boolean }[] = [
-    { href: `${PARTNERS_URL}/how-it-works`, e: '📈', b: t('lc.vp.p.how'), u: t('lc.vp.p.howCta'), bg: '#FDE2E4' },
-    { href: `${PARTNERS_URL}/pricing`, e: '🏷️', b: t('lc.site.partnerPricing'), u: t('lc.vp.p.priceCta'), bg: '#FFF4C2' },
-    { href: `${PARTNERS_URL}/login`, e: '🔑', b: t('lc.site.partnerLogin'), u: t('lc.vp.p.loginCta'), bg: '#E3F4E8' },
-    { href: `/shops?v=${other}`, e: otherEmoji, b: t(VERTICAL_LABEL[other]), u: t('lc.site.browse'), bg: '#E5EDFF', inApp: true },
+  const small: { href: string; e: LucideIcon; b: string; u: string; bg: string; inApp?: boolean }[] = [
+    { href: `${PARTNERS_URL}/how-it-works`, e: TrendingUp, b: t('lc.vp.p.how'), u: t('lc.vp.p.howCta'), bg: '#FDE2E4' },
+    { href: `${PARTNERS_URL}/pricing`, e: Tag, b: t('lc.site.partnerPricing'), u: t('lc.vp.p.priceCta'), bg: '#FFF4C2' },
+    { href: `${PARTNERS_URL}/login`, e: KeyRound, b: t('lc.site.partnerLogin'), u: t('lc.vp.p.loginCta'), bg: '#E3F4E8' },
+    { href: `/shops?v=${other}`, e: otherIcon, b: t(VERTICAL_LABEL[other]), u: t('lc.site.browse'), bg: '#E5EDFF', inApp: true },
   ];
   const tile = 'grid min-h-[180px] content-between gap-2.5 rounded-3xl p-6 text-black transition hover:-translate-y-1';
   return (
     <div className="grid gap-3.5 md:grid-cols-[2fr_1fr_1fr] md:grid-rows-2" data-partner-tiles>
       <a href={PARTNERS_URL} className="grid min-h-[300px] content-between gap-2.5 rounded-3xl bg-black p-6 text-white md:row-span-2 md:min-h-[374px]">
-        <span className="text-[44px]" aria-hidden>
-          {emoji}
-        </span>
+        <Icon className="h-11 w-11 text-dz-yellow" strokeWidth={1.8} aria-hidden />
         <b className="vp-tight font-display text-[clamp(40px,4.4vw,64px)] text-dz-yellow">{title}</b>
         <span className="max-w-[440px] text-base text-[#CFCFCB]">{body}</span>
         <u className="justify-self-start border-b-2 border-current font-extrabold no-underline">{t('lc.land.shopCta')}</u>
@@ -361,9 +358,7 @@ export function PartnerTiles({ emoji, title, body, other, otherEmoji }: { emoji:
       {small.map((s) => {
         const inner = (
           <>
-            <span className="text-[44px]" aria-hidden>
-              {s.e}
-            </span>
+            <s.e className="h-11 w-11" strokeWidth={1.8} aria-hidden />
             <b className="vp-tight font-display text-3xl">{s.b}</b>
             <u className="justify-self-start border-b-2 border-current font-extrabold no-underline">{s.u}</u>
           </>
@@ -401,6 +396,7 @@ export function FaqDetails({ items }: { items: { q: string; a: string }[] }) {
 /** Card colour per page: black on Food, green on Grocery, purple on Rush, orange on Street Cart. */
 export type Tone = 'black' | 'green' | 'purple' | 'orange';
 const STEPPER_BG: Record<Tone, string> = { black: 'bg-black', green: 'bg-[#17803A]', purple: 'bg-[#7B2FD4]', orange: 'bg-[#C2470B]' };
+const TONE_INK: Record<Tone, string> = { black: '#111111', green: '#17803A', purple: '#7B2FD4', orange: '#C2470B' };
 const ADD_CLS: Record<Tone, string> = {
   black: 'border-2 border-black bg-white text-black hover:bg-black hover:text-white',
   green: 'border-[1.5px] border-[#17803A] bg-[#E3F4E8] text-[#17803A] hover:bg-[#17803A] hover:text-white',
@@ -412,14 +408,14 @@ const ADD_CLS: Record<Tone, string> = {
 export function CardStepper({ qty, max, onChange, label, tone }: { qty: number; max: number; onChange: (n: number) => void; label: string; tone: Tone }) {
   return (
     <span className={`inline-flex shrink-0 items-center overflow-hidden rounded-xl text-white ${STEPPER_BG[tone]}`} role="group" aria-label={label}>
-      <button type="button" className="h-[34px] w-8 text-[17px] font-black hover:bg-white/15" onClick={() => onChange(qty - 1)} aria-label={`− ${label}`}>
-        −
+      <button type="button" className="grid h-[34px] w-8 place-items-center hover:bg-white/15" onClick={() => onChange(qty - 1)} aria-label={`− ${label}`}>
+        <Minus className="h-4 w-4" strokeWidth={3} aria-hidden />
       </button>
       <b className="min-w-5 text-center text-sm tabular-nums" aria-live="polite">
         {qty}
       </b>
-      <button type="button" className="h-[34px] w-8 text-[17px] font-black hover:bg-white/15 disabled:opacity-40" disabled={qty >= max} onClick={() => onChange(qty + 1)} aria-label={`+ ${label}`}>
-        +
+      <button type="button" className="grid h-[34px] w-8 place-items-center hover:bg-white/15 disabled:opacity-40" disabled={qty >= max} onClick={() => onChange(qty + 1)} aria-label={`+ ${label}`}>
+        <Plus className="h-4 w-4" strokeWidth={3} aria-hidden />
       </button>
     </span>
   );
@@ -508,12 +504,12 @@ export function useBasket() {
 
 export type Basket = ReturnType<typeof useBasket>;
 
-/** A big emoji tile that filters the page (Rush categories, Street Cart cart types). */
-export function CatTile({ label, emoji, tint, on, onClick, accent, dark = false, count }: { label: string; emoji: string; tint: string; on: boolean; onClick: () => void; accent: string; dark?: boolean; count?: number }) {
+/** A big icon tile that filters the page (Street Cart cart types). */
+export function CatTile({ label, icon: Icon, tint, on, onClick, accent, dark = false, count }: { label: string; icon: LucideIcon; tint: string; on: boolean; onClick: () => void; accent: string; dark?: boolean; count?: number }) {
   return (
     <button type="button" aria-pressed={on} onClick={onClick} className="group grid w-[92px] shrink-0 justify-items-center gap-2 text-center text-[12.5px] font-extrabold leading-tight sm:w-auto">
-      <span className={`grid aspect-square w-full place-items-center rounded-[20px] text-[38px] transition group-hover:-translate-y-1 ${dark ? 'text-dz-yellow' : ''}`} style={{ background: tint, boxShadow: on ? `0 0 0 3px ${accent}` : undefined }} aria-hidden>
-        {emoji}
+      <span className={`grid aspect-square w-full place-items-center rounded-[20px] transition group-hover:-translate-y-1 ${dark ? 'text-dz-yellow' : ''}`} style={{ background: tint, color: dark ? undefined : accent, boxShadow: on ? `0 0 0 3px ${accent}` : undefined }} aria-hidden>
+        <Icon className="h-10 w-10" strokeWidth={1.8} />
       </span>
       <span className="line-clamp-2">{label}</span>
       {count !== undefined && <small className="-mt-1.5 text-[11.5px] font-bold text-ink-3">{count}</small>}
@@ -524,7 +520,7 @@ export function CatTile({ label, emoji, tint, on, onClick, accent, dark = false,
 export interface AroundPoint {
   id: string;
   name: string;
-  emoji: ReactNode;
+  icon: ReactNode;
   km: number;
   /** Degrees from north, as the API gives it. */
   bearing: number;
@@ -601,11 +597,11 @@ export function AroundMap({ points, picked, onPick, centre, accent, label }: { p
             data-pin={p.id}
           >
             <span
-              className={`grid place-items-center rounded-full bg-white transition ${on ? 'h-10 w-10 text-xl sm:h-12 sm:w-12 sm:text-2xl' : 'vp-bob h-7 w-7 text-base hover:scale-110 sm:h-9 sm:w-9 sm:text-lg'} ${p.open ? '' : 'opacity-60 grayscale'}`}
-              style={{ boxShadow: `0 0 0 ${on ? 4 : 2.5}px ${accent}`, animationDelay: `${(k % 5) * 0.45}s` }}
+              className={`grid place-items-center rounded-full bg-white transition [&>svg]:h-[55%] [&>svg]:w-[55%] ${on ? 'h-10 w-10 sm:h-12 sm:w-12' : 'vp-bob h-7 w-7 hover:scale-110 sm:h-9 sm:w-9'} ${p.open ? '' : 'opacity-60 grayscale'}`}
+              style={{ boxShadow: `0 0 0 ${on ? 4 : 2.5}px ${accent}`, color: accent, animationDelay: `${(k % 5) * 0.45}s` }}
               aria-hidden
             >
-              {p.emoji}
+              {p.icon}
             </span>
             {on && <small className="absolute top-[calc(100%+6px)] whitespace-nowrap rounded-full bg-black px-2 py-0.5 text-[11.5px] font-extrabold text-white">{`${p.name} · ${km(p.km)}`}</small>}
           </button>
@@ -615,16 +611,16 @@ export function AroundMap({ points, picked, onPick, centre, accent, label }: { p
   );
 }
 
-/** A product on a page that mixes shops (Rush, Street Cart): picture or emoji with a tag on it, the shop, price and ADD. */
-export function ItemCard({ p, shop, emoji, tint, tag, tone, basket }: { p: Product; shop: Shop; emoji: string; tint: string; tag?: string; tone: Tone; basket: Basket }) {
+/** A product on a page that mixes shops (Street Cart): picture or icon with a tag on it, the shop, price and ADD. */
+export function ItemCard({ p, shop, icon: Icon, tint, tag, tone, basket }: { p: Product; shop: Shop; icon: LucideIcon; tint: string; tag?: string; tone: Tone; basket: Basket }) {
   const { t } = useI18n();
   const qty = basket.qtyOf(shop.id, p.id);
   const price = simpleLine(p).unitPrice;
   const off = p.mrp && p.mrp > price ? Math.round(((p.mrp - price) / p.mrp) * 100) : 0;
   return (
     <div className="flex flex-col gap-1.5 rounded-[18px] border border-line bg-white p-2.5" data-item={p.id}>
-      <div className="relative grid aspect-square place-items-center overflow-hidden rounded-[14px] text-[50px]" style={{ background: tint }}>
-        {p.imageUrl ? <img src={p.imageUrl} alt="" loading="lazy" className="h-full w-full object-cover" /> : <span aria-hidden>{emoji}</span>}
+      <div className="relative grid aspect-square place-items-center overflow-hidden rounded-[14px]" style={{ background: tint }}>
+        {p.imageUrl ? <img src={p.imageUrl} alt="" loading="lazy" className="h-full w-full object-cover" /> : <Icon className="h-12 w-12" style={{ color: TONE_INK[tone] }} strokeWidth={1.8} aria-hidden />}
         {tag && <span className={`absolute bottom-2 left-2 rounded-[7px] px-[7px] py-0.5 text-[10.5px] font-extrabold text-white ${STEPPER_BG[tone]}`}>{tag}</span>}
         {off > 0 && <span className="absolute right-2 top-2 rounded-[7px] bg-black px-[7px] py-0.5 text-[10.5px] font-extrabold text-dz-yellow">{t('lc.off', { n: off })}</span>}
       </div>

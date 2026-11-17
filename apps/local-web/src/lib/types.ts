@@ -21,6 +21,9 @@ export interface StoreCard {
   distanceKm: number;
   /** Which way the shop is from the address, in degrees (0 = north, 90 = east). */
   bearing: number;
+  /** Where the shop is (older API: missing). */
+  lat?: number;
+  lng?: number;
   open: boolean;
   /** When today's opening hours end ("HH:MM", shop's local time); null without set hours or when closed. */
   closesAt: string | null;
@@ -76,6 +79,8 @@ export interface Menu {
     logoUrl: string | null;
     coverUrl: string | null;
     address: string;
+    lat?: number | null;
+    lng?: number | null;
     open: boolean;
     busy: boolean;
     opensAt: import('./format').Opening | null;

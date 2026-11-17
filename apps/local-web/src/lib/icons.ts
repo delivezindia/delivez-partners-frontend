@@ -8,6 +8,7 @@ import {
   Beef,
   Bike,
   BookOpen,
+  Brush,
   Cable,
   CakeSlice,
   Candy,
@@ -21,6 +22,7 @@ import {
   Croissant,
   CupSoda,
   Drumstick,
+  Droplet,
   Egg,
   EggFried,
   FlaskConical,
@@ -31,11 +33,13 @@ import {
   Gift,
   GlassWater,
   Grape,
+  Ham,
   Headphones,
   HeartPulse,
   IceCreamCone,
   Lamp,
   Leaf,
+  LeafyGreen,
   Lightbulb,
   Milk,
   Nut,
@@ -47,9 +51,11 @@ import {
   Salad,
   Sandwich,
   Shirt,
+  Shell,
   ShoppingBasket,
   ShoppingCart,
   Smartphone,
+  Snowflake,
   Soup,
   Sparkles,
   SprayCan,
@@ -66,7 +72,7 @@ import type { StoreCard, Vertical } from './types';
 
 /*
  * Icons for shops and products while they have no photos (one icon set, lucide): picked from the shop's type, or words
- * in the dish, product or aisle name. First match wins. The emoji in lib/emoji.ts are for the category pages.
+ * in the dish, product or aisle name. First match wins.
  */
 
 /** A colour and icon per kind of shop (store type), for the coloured band on store cards. */
@@ -189,3 +195,99 @@ const PRODUCTS: [RegExp, LucideIcon][] = [
 export function itemIcon(name: string, aisle = '', fallback: LucideIcon = ShoppingBasket): LucideIcon {
   return PRODUCTS.find(([re]) => re.test(name))?.[1] ?? PRODUCTS.find(([re]) => re.test(aisle))?.[1] ?? fallback;
 }
+
+/** Dishes and cuisines on the Food and Street Cart pages: "Paneer Tikka Roll" → Sandwich, "South Indian" → EggFried. */
+const FOOD: [RegExp, LucideIcon][] = [
+  [/biri?y?ani|pulao/i, CookingPot],
+  [/roll|wrap|kathi|shawarma|frankie/i, Sandwich],
+  [/dosa|idli|vada|uttapam|south indian|udupi/i, EggFried],
+  [/pizza/i, Pizza],
+  [/noodle|chinese|chowmein|hakka|manchurian/i, Soup],
+  [/momo|dumpling/i, Soup],
+  [/burger/i, Sandwich],
+  [/fries|fast food/i, Popcorn],
+  [/sandwich|toast/i, Sandwich],
+  [/coffee|caf[eé]|chai|\btea\b|beverage/i, Coffee],
+  [/shake|smoothie|juice|lassi|mojito|soda/i, CupSoda],
+  [/ice ?cream|kulfi|sundae/i, IceCreamCone],
+  [/cake|dessert|sweet|bakery|bakers|pastry|brownie|cookie|mithai/i, CakeSlice],
+  [/salad|healthy/i, Salad],
+  [/thali|meal|combo/i, UtensilsCrossed],
+  [/chicken|tandoor|kebab|kabab|tikka|seekh|grill/i, Drumstick],
+  [/mutton|keema|meat/i, Ham],
+  [/fish|prawn|seafood|coastal/i, Fish],
+  [/\begg|omelette/i, Egg],
+  [/paneer/i, Milk],
+  [/chole|rajma|dal\b|curry|north indian|punjabi|mughlai/i, CookingPot],
+  [/paratha|naan|roti|kulcha/i, Wheat],
+  [/rice|chawal|khichdi/i, CookingPot],
+  [/chaat|pani ?puri|samosa|street|pav/i, Popcorn],
+  [/andhra|chettinad|spicy/i, Flame],
+  [/bowl/i, Soup],
+  [/breakfast/i, EggFried],
+];
+const pick = (list: [RegExp, LucideIcon][], text: string) => list.find(([re]) => re.test(text))?.[1];
+
+/** A dish or a cuisine. */
+export const foodIcon = (text: string): LucideIcon => pick(FOOD, text) ?? UtensilsCrossed;
+
+/** [match, icon, tint] — aisles carry a tint so their products share it. */
+const AISLES: [RegExp, LucideIcon, string][] = [
+  [/fruit/i, Apple, '#E3F4E8'],
+  [/vegetable|veggies|sabzi|greens/i, Carrot, '#E3F4E8'],
+  [/dairy|milk|egg/i, Milk, '#EEF3FF'],
+  [/bakery|bread/i, Croissant, '#FFF8EC'],
+  [/staple|atta|rice|dal|pulse|grain|flour/i, Wheat, '#FFF4C2'],
+  [/oil|ghee/i, Droplet, '#FFF4C2'],
+  [/masala|spice/i, Flame, '#FFE8D6'],
+  [/snack|namkeen|biscuit/i, Popcorn, '#FDE2E4'],
+  [/beverage|drink|juice|tea|coffee/i, CupSoda, '#FDE2E4'],
+  [/sweet|chocolate/i, Candy, '#FDE2E4'],
+  [/instant|ready|noodle/i, Soup, '#FFE8D6'],
+  [/frozen|ice ?cream/i, Snowflake, '#E5EDFF'],
+  [/meat|chicken|fish|mutton/i, Drumstick, '#FFE8D6'],
+  [/personal|beauty|bath|hygiene/i, Bath, '#F3E8FF'],
+  [/clean|laundry|detergent/i, SprayCan, '#E5EDFF'],
+  [/home care|household|home/i, Brush, '#F2F2EF'],
+  [/baby/i, Baby, '#FFF8EC'],
+  [/pet/i, PawPrint, '#FFE8D6'],
+];
+
+/** A grocery aisle: icon and tile colour. */
+export function aisleLook(name: string): { icon: LucideIcon; tint: string } {
+  const hit = AISLES.find(([re]) => re.test(name));
+  return { icon: hit?.[1] ?? ShoppingCart, tint: hit?.[2] ?? '#F2F2EF' };
+}
+
+/** A grocery product, falling back to its aisle. */
+export const productIcon = (name: string, aisle: string) => itemIcon(name, '', aisleLook(aisle).icon);
+
+/** Anything a shop sells: a dish if it reads like one, otherwise a grocery product or its aisle. */
+export const menuItemIcon = (name: string, aisle: string) => pick(FOOD, name) ?? productIcon(name, aisle);
+
+/** Aisles of fresh produce and dairy get the "Fresh" tag. */
+export const isFreshAisle = (name: string) => /fruit|vegetable|veggies|sabzi|greens|dairy|milk|egg|bakery|bread|meat|fish|chicken/i.test(name);
+
+const TINTS = ['#FDE2E4', '#FFF4C2', '#E3F4E8', '#FFF8EC', '#F3E8FF', '#E5EDFF', '#FFE8D6', '#F2F2EF'];
+/** The same soft colour for the same shop every time. */
+export const tintFor = (id: string) => TINTS[[...id].reduce((n, c) => (n * 31 + c.charCodeAt(0)) >>> 0, 7) % TINTS.length];
+
+const VENDORS: [RegExp, LucideIcon][] = [
+  [/chaat|pani ?puri|golgappa|tikki|bhel/i, Popcorn],
+  [/dairy|milk|doodh/i, Milk],
+  [/coconut|nariyal/i, Shell],
+  [/juice|sugarcane|ganna/i, CupSoda],
+  [/fruit|phal/i, Cherry],
+  [/vegetable|sabzi|veggies/i, LeafyGreen],
+  [/\btea\b|chai|coffee/i, Coffee],
+  [/flower|phool|mala|garland/i, Flower2],
+  [/kulfi|ice ?cream|gola/i, IceCreamCone],
+  [/corn|bhutta/i, Wheat],
+  [/momo/i, Soup],
+  [/dosa|idli|tiffin|breakfast|poha/i, EggFried],
+  [/vada ?pav/i, Sandwich],
+];
+
+/** A street or society vendor, from its name and what it says it sells. */
+export const vendorIcon = (text: string): LucideIcon => pick(VENDORS, text) ?? ShoppingCart;
+

@@ -8,7 +8,9 @@ import type { MsgKey } from './i18n';
 import type { Vertical } from './types';
 import { useLiveRoom } from './live';
 
-export type Blocker = 'STORE_CLOSED' | 'DELIVERY_NOT_OFFERED' | 'ADDRESS_REQUIRED' | 'OUT_OF_RANGE' | 'BELOW_MINIMUM' | 'LAB_BOOKING' | 'RX_REQUIRED' | 'NO_PHARMACIST' | 'ITEMS';
+export type LatLng = { lat: number; lng: number };
+
+export type Blocker ='STORE_CLOSED' | 'DELIVERY_NOT_OFFERED' | 'ADDRESS_REQUIRED' | 'OUT_OF_RANGE' | 'BELOW_MINIMUM' | 'LAB_BOOKING' | 'RX_REQUIRED' | 'NO_PHARMACIST' | 'ITEMS';
 export type Problem = {
   productId: string;
   code: 'GONE' | 'UNAVAILABLE' | 'OUT_OF_STOCK' | 'FEW_LEFT' | 'OPTIONS_CHANGED' | 'MAX_QTY';
@@ -113,8 +115,11 @@ export interface CustomerOrder {
     vertical: Vertical;
     address: string | null;
     phone: string | null;
+    at?: LatLng | null;
   };
   address: string | null;
+  /** Where it's being delivered (delivery orders). */
+  dropAt?: LatLng | null;
   items: {
     id: string;
     productId: string;
@@ -148,7 +153,7 @@ export interface CustomerOrder {
     unpaid: number;
   } | null;
   note: string | null;
-  rider: { name: string | null; phone: string; status: string } | null;
+  rider: { name: string | null; phone: string; status: string; at?: LatLng | null; seenAt?: string | null } | null;
   timeline?: { status: OrderStatus; at: string }[];
   rx: { status: string; rejectionReason: string | null } | null;
   substitutions: Substitution[];
@@ -221,7 +226,8 @@ export function useOrder(id: string) {
     queryKey: ['order', id],
     queryFn: async () => normalizeOrder(await api<CustomerOrder>(`/local/orders/${encodeURIComponent(id)}`)),
     enabled: !!id,
-    refetchInterval: (q) => (q.state.data && !q.state.data.active ? false : live.current ? 60_000 : 8_000),
+    // A rider on the map moves without a socket event: check every 15 s while one is out with the order.
+    refetchInterval: (q) => (q.state.data && !q.state.data.active ? false : q.state.data?.rider?.at ? 15_000 : live.current ? 60_000 : 8_000),
   });
   const orderId = q.data?.active ? q.data.id : null;
   live.current = useLiveRoom(orderId && `order:${orderId}`, ['order', id]);

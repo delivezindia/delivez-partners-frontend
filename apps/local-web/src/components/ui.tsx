@@ -1,5 +1,6 @@
 import type { ButtonHTMLAttributes, ReactNode } from 'react';
 import { Link } from 'react-router-dom';
+import { Minus, Plus } from 'lucide-react';
 
 /** DELIVEZ wordmark (italic, condensed, red) — the customer app has no product pill. */
 export function Brand({ size = 'sm', to = '/' }: { size?: 'sm' | 'lg'; to?: string }) {
@@ -65,14 +66,14 @@ export function QtyStepper({ qty, onChange, max, label, size = 'md' }: { qty: nu
   const h = size === 'sm' ? 'h-9' : 'h-10';
   return (
     <div className={`inline-flex ${h} items-center overflow-hidden rounded-lg border-[1.5px] border-dz-green bg-dz-green-soft font-extrabold text-dz-green`} role="group" aria-label={label}>
-      <button type="button" className="h-full w-9 text-lg hover:bg-dz-green hover:text-white" onClick={() => onChange(qty - 1)} aria-label={`− ${label}`}>
-        −
+      <button type="button" className="grid h-full w-9 place-items-center hover:bg-dz-green hover:text-white" onClick={() => onChange(qty - 1)} aria-label={`− ${label}`}>
+        <Minus className="h-4 w-4" strokeWidth={3} aria-hidden />
       </button>
       <span className="min-w-6 text-center tabular-nums" aria-live="polite">
         {qty}
       </span>
-      <button type="button" className="h-full w-9 text-lg hover:bg-dz-green hover:text-white disabled:opacity-40" disabled={qty >= max} onClick={() => onChange(qty + 1)} aria-label={`+ ${label}`}>
-        +
+      <button type="button" className="grid h-full w-9 place-items-center hover:bg-dz-green hover:text-white disabled:opacity-40" disabled={qty >= max} onClick={() => onChange(qty + 1)} aria-label={`+ ${label}`}>
+        <Plus className="h-4 w-4" strokeWidth={3} aria-hidden />
       </button>
     </div>
   );

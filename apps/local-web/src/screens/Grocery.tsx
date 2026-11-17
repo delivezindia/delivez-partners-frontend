@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
-import { Store as StoreIcon } from 'lucide-react';
+import { Bike, CalendarDays, Check, Coffee, CookingPot, EggFried, Handshake, LeafyGreen, ReceiptText, Repeat, Salad, ShoppingBag, ShoppingCart, Soup, Store as StoreIcon, Timer, Wheat, type LucideIcon } from 'lucide-react';
 import { AppHeader } from '../components/AppHeader';
 import {
   AddButton,
@@ -28,12 +28,13 @@ import { LiveOrders, OrderAgain } from '../components/OrderStrips';
 import { Skeleton } from '../components/ui';
 import { useAuth } from '../lib/auth-store';
 import { simpleLine } from '../lib/cart';
-import { aisleLook, isFreshAisle, productEmoji } from '../lib/emoji';
 import { km, opensAtLabel, rupees } from '../lib/format';
 import { useI18n, type MsgKey } from '../lib/i18n';
 import type { DeliverTo } from '../lib/location';
 import { menuQuery, useNearby, useOffers, useOverview, type PublicOffer } from '../lib/queries';
 import type { Menu, Product, StoreCard } from '../lib/types';
+import { ShopsMap } from '../components/LiveMap';
+import { aisleLook, isFreshAisle, productIcon } from '../lib/icons';
 
 const GREEN = '#17803A';
 /** "Under ₹50". */
@@ -43,7 +44,7 @@ type Sort = 'rel' | 'low' | 'high' | 'disc';
 interface Aisle {
   key: string;
   name: string;
-  emoji: string;
+  icon: LucideIcon;
   tint: string;
   products: Product[];
 }
@@ -101,7 +102,7 @@ export default function Grocery({ at }: { at: DeliverTo }) {
   }, [data, t]);
   const aisleOf = useMemo(() => new Map(aisles.flatMap((a) => a.products.map((p) => [p.id, a.name] as const))), [aisles]);
   // The basket in the hero fills with this shop's first items, at their real prices.
-  const art = useMemo(() => (data?.products ?? []).filter((p) => p.available).slice(0, 8).map((p) => ({ emoji: productEmoji(p.name, aisleOf.get(p.id) ?? ''), price: simpleLine(p).unitPrice })), [data, aisleOf]);
+  const art = useMemo(() => (data?.products ?? []).filter((p) => p.available).slice(0, 8).map((p) => ({ icon: productIcon(p.name, aisleOf.get(p.id) ?? ''), price: simpleLine(p).unitPrice })), [data, aisleOf]);
 
   const productHits = data && searching ? data.products.filter((p) => oneTap(p) && `${p.name} ${aisleOf.get(p.id) ?? ''}`.toLowerCase().includes(needle)).slice(0, 8) : [];
   const elsewhere = searching ? (found.data?.stores ?? []).filter((s) => s.id !== card?.id).slice(0, 3) : [];
@@ -136,7 +137,7 @@ export default function Grocery({ at }: { at: DeliverTo }) {
               {productHits.map((p) => (
                 <HitRow
                   key={p.id}
-                  emoji={p.imageUrl ? <img src={p.imageUrl} alt="" className="h-full w-full object-cover" /> : productEmoji(p.name, aisleOf.get(p.id) ?? '')}
+                  icon={p.imageUrl ? <img src={p.imageUrl} alt="" className="h-full w-full object-cover" /> : <ProductIcon name={p.name} aisle={aisleOf.get(p.id) ?? ''} className="h-5 w-5" />}
                   tint={aisleLook(aisleOf.get(p.id) ?? '').tint}
                   title={p.name}
                   sub={t('lc.vp.at', { price: rupees(simpleLine(p).unitPrice), store: data!.store.name })}
@@ -147,7 +148,7 @@ export default function Grocery({ at }: { at: DeliverTo }) {
               {elsewhere.map((s) => (
                 <HitRow
                   key={s.id}
-                  emoji="🏪"
+                  icon={<StoreIcon className="h-5 w-5 text-[#17803A]" strokeWidth={1.8} aria-hidden />}
                   tint="#E3F4E8"
                   title={s.name}
                   sub={[s.open ? t('lc.store.mins', { n: s.etaMinutes }) : t('lc.store.closed'), km(s.distanceKm)].join(' · ')}
@@ -171,7 +172,13 @@ export default function Grocery({ at }: { at: DeliverTo }) {
         </div>
       )}
 
-      <HowBand art="🛒" awning={GREEN} steps={['lc.site.t1', 'lc.site.t3', 'lc.site.t4', 'lc.site.t5']} />
+      <HowBand art={ShoppingCart} awning={GREEN} steps={['lc.site.t1', 'lc.site.t3', 'lc.site.t4', 'lc.site.t5']} />
+
+      {shops.length > 0 && (
+        <Band id="shops-map">
+          <ShopsMap at={at} stores={shops} accent={GREEN} title={t('lc.map.shops')} />
+        </Band>
+      )}
 
       {nearby.isLoading || (card && menu.isLoading) ? (
         <Band id="categories">
@@ -218,7 +225,7 @@ export default function Grocery({ at }: { at: DeliverTo }) {
       </Band>
 
       <Band id="partner">
-        <PartnerTiles emoji="🏪" title={t('lc.groc.pTitle')} body={t('lc.groc.pBody')} other="EAT" otherEmoji="🍛" />
+        <PartnerTiles icon={StoreIcon} title={t('lc.groc.pTitle')} body={t('lc.groc.pBody')} other="EAT" otherIcon={CookingPot} />
       </Band>
 
       <Band id="faq" paper>
@@ -231,14 +238,18 @@ export default function Grocery({ at }: { at: DeliverTo }) {
   );
 }
 
-/** Yellow "🛵 Delivering to Home · 19 min · from Ravi SuperMart". */
+/** A grocery product's icon, in the page's green. */
+function ProductIcon({ name, aisle, className }: { name: string; aisle: string; className: string }) {
+  const Icon = productIcon(name, aisle);
+  return <Icon className={className} style={{ color: GREEN }} strokeWidth={1.8} aria-hidden />;
+}
+
+/** Yellow "Delivering to Home · 19 min · from Ravi SuperMart" with a rider. */
 function EtaPill({ card, area }: { card: StoreCard; area: string }) {
   const { t, locale } = useI18n();
   return (
     <div className="mb-3.5 inline-flex items-center gap-3 rounded-2xl bg-dz-yellow px-4 py-2.5 text-black" data-eta>
-      <span className="text-[28px]" aria-hidden>
-        🛵
-      </span>
+      <Bike className="h-7 w-7 shrink-0" strokeWidth={2.2} aria-hidden />
       <span>
         <small className="block text-[13px] font-extrabold">{t('lc.dash.deliveringTo', { area })}</small>
         <b className="block font-display text-[34px] leading-none tabular-nums">{card.open ? t('lc.store.mins', { n: card.etaMinutes }) : card.opensAt ? t('lc.store.opensAt', { time: opensAtLabel(card.opensAt, locale, t('lc.today'), t('lc.tomorrow')) }) : t('lc.store.closed')}</b>
@@ -260,7 +271,7 @@ const SPOTS: [number, number][] = [
 ];
 
 /** Items drop into the basket one by one and the total ticks up. */
-function BasketArt({ items }: { items: { emoji: string; price: number }[] }) {
+function BasketArt({ items }: { items: { icon: LucideIcon; price: number }[] }) {
   const { t } = useI18n();
   const [n, setN] = useState(0);
   useEffect(() => {
@@ -277,8 +288,8 @@ function BasketArt({ items }: { items: { emoji: string; price: number }[] }) {
     <div className="relative mx-auto hidden aspect-[1.1] w-full max-w-[300px] sm:block lg:max-w-[440px]" aria-hidden>
       <div className="absolute inset-x-[8%] bottom-[6%] h-[52%] rounded-[20px_20px_60px_60px] bg-gradient-to-b from-[#C9A26B] to-[#8A6A3B] shadow-[0_30px_60px_rgba(0,0,0,0.35)] before:absolute before:inset-x-[-4%] before:top-[-10px] before:h-[22px] before:rounded-xl before:bg-[#A7834E] before:content-['']" />
       {items.slice(0, n).map((it, i) => (
-        <span key={i} className="vp-drop absolute leading-none [text-shadow:0_10px_14px_rgba(0,0,0,0.3)]" style={{ left: `${SPOTS[i][0]}%`, top: `${SPOTS[i][1]}%`, fontSize: 'clamp(46px, 6vw, 74px)' }}>
-          {it.emoji}
+        <span key={i} className="vp-drop absolute grid place-items-center rounded-2xl bg-white p-2 shadow-[0_10px_14px_rgba(0,0,0,0.3)]" style={{ left: `${SPOTS[i][0]}%`, top: `${SPOTS[i][1]}%` }}>
+          <it.icon className="h-[clamp(34px,4.4vw,56px)] w-[clamp(34px,4.4vw,56px)]" style={{ color: GREEN }} strokeWidth={1.8} />
         </span>
       ))}
       <div className="absolute right-0 top-[4%] rounded-[14px] bg-white px-3 py-2.5 text-[13px] font-extrabold text-black shadow-[0_14px_30px_rgba(0,0,0,0.25)]">
@@ -316,7 +327,7 @@ function ShopPicker({ shops, current, onPick }: { shops: StoreCard[]; current: S
 function Shelf({ menu, aisles, aisleOf, basket, canOrder, picker }: { menu: Menu; aisles: Aisle[]; aisleOf: Map<string, string>; basket: Basket; canOrder: boolean; picker: React.ReactNode }) {
   const { t, locale } = useI18n();
   const shop = menu.store;
-  const all: Aisle = { key: 'all', name: t('lc.home.all'), emoji: '🛒', tint: '#FFF4C2', products: menu.products };
+  const all: Aisle = { key: 'all', name: t('lc.home.all'), icon: ShoppingCart, tint: '#FFF4C2', products: menu.products };
   const [on, setOn] = useState('all');
   const [only, setOnly] = useState({ offer: false, cheap: false, fresh: false });
   const [sort, setSort] = useState<Sort>('rel');
@@ -334,8 +345,8 @@ function Shelf({ menu, aisles, aisleOf, basket, canOrder, picker }: { menu: Menu
 
   const tile = (a: Aisle, onClick: () => void, pressed?: boolean) => (
     <button key={a.key} type="button" aria-pressed={pressed} onClick={onClick} className="group grid justify-items-center gap-2 text-center text-[12.5px] font-extrabold leading-tight">
-      <span className={`grid aspect-square w-full place-items-center rounded-[20px] text-[40px] transition group-hover:-translate-y-1 ${pressed ? 'shadow-[0_0_0_3px_#17803A]' : ''}`} style={{ background: a.tint }} aria-hidden>
-        {a.emoji}
+      <span className={`grid aspect-square w-full place-items-center rounded-[20px] transition group-hover:-translate-y-1 ${pressed ? 'shadow-[0_0_0_3px_#17803A]' : ''}`} style={{ background: a.tint, color: GREEN }} aria-hidden>
+        <a.icon className="h-10 w-10" strokeWidth={1.8} />
       </span>
       {a.name}
     </button>
@@ -357,7 +368,7 @@ function Shelf({ menu, aisles, aisleOf, basket, canOrder, picker }: { menu: Menu
               on === a.key,
             ),
           )}
-          {hasMonthly && tile({ key: 'monthly', name: t('lc.groc.monthly'), emoji: '🗓️', tint: '#FFD400', products: [] }, () => scrollTo('monthly'))}
+          {hasMonthly && tile({ key: 'monthly', name: t('lc.groc.monthly'), icon: CalendarDays, tint: '#FFD400', products: [] }, () => scrollTo('monthly'))}
         </div>
       </Band>
 
@@ -372,8 +383,8 @@ function Shelf({ menu, aisles, aisleOf, basket, canOrder, picker }: { menu: Menu
                 onClick={() => setOn(a.key)}
                 className={`grid w-[180px] shrink-0 grid-cols-[36px_1fr] items-center gap-2.5 rounded-xl p-2 text-left text-[13.5px] font-bold lg:w-auto ${on === a.key ? 'bg-[#E3F4E8] text-[#0E4F23] shadow-[inset_4px_0_0_#17803A]' : 'hover:bg-soft'}`}
               >
-                <span className="grid h-9 w-9 place-items-center rounded-[10px] text-xl" style={{ background: a.tint }} aria-hidden>
-                  {a.emoji}
+                <span className="grid h-9 w-9 place-items-center rounded-[10px]" style={{ background: a.tint, color: GREEN }} aria-hidden>
+                  <a.icon className="h-5 w-5" strokeWidth={2} />
                 </span>
                 <span className="min-w-0 truncate">
                   {a.name} <span className="font-semibold text-ink-3">{a.products.length}</span>
@@ -388,8 +399,8 @@ function Shelf({ menu, aisles, aisleOf, basket, canOrder, picker }: { menu: Menu
               </p>
             )}
             <div className="mb-3 flex flex-wrap items-center gap-1.5" role="group" aria-label={t('lc.vp.filters')}>
-              <h3 className="vp-tight mr-auto font-display text-[30px]">
-                {current.emoji} {current.name}
+              <h3 className="vp-tight mr-auto inline-flex items-center gap-2 font-display text-[30px]">
+                <current.icon className="h-7 w-7 shrink-0" style={{ color: GREEN }} strokeWidth={2} aria-hidden /> {current.name}
               </h3>
               <FilterChip on={only.offer} onClick={() => setOnly({ ...only, offer: !only.offer })}>
                 {t('lc.groc.fOffer')}
@@ -439,11 +450,13 @@ function GroceryCard({ p, shop, aisle, basket, canOrder }: { p: Product; shop: M
   const look = aisleLook(aisle);
   return (
     <div className={`flex flex-col gap-1.5 rounded-[18px] border border-line bg-white p-2.5 ${p.available ? '' : 'opacity-70'}`} data-grocery={p.id}>
-      <div className={`relative grid aspect-square place-items-center overflow-hidden rounded-[14px] text-[56px] ${p.available ? '' : 'grayscale'}`} style={{ background: look.tint }} aria-hidden>
-        {p.imageUrl ? <img src={p.imageUrl} alt="" loading="lazy" className="h-full w-full object-cover" /> : productEmoji(p.name, aisle)}
+      <div className={`relative grid aspect-square place-items-center overflow-hidden rounded-[14px] ${p.available ? '' : 'grayscale'}`} style={{ background: look.tint }} aria-hidden>
+        {p.imageUrl ? <img src={p.imageUrl} alt="" loading="lazy" className="h-full w-full object-cover" /> : <ProductIcon name={p.name} aisle={aisle} className="h-14 w-14" />}
         {mrp && off(p) > 0 && <span className="absolute left-0 top-2.5 rounded-r-lg bg-[#17803A] px-2 py-[3px] text-[11px] font-extrabold text-white">{t('lc.off', { n: off(p) })}</span>}
         {isFreshAisle(aisle) && <span className="absolute right-2 top-2 rounded-[7px] bg-dz-yellow px-[7px] py-0.5 text-[10.5px] font-extrabold text-black">{t('lc.groc.fresh')}</span>}
-        <span className="absolute bottom-2 left-2 rounded-[7px] bg-white px-[7px] py-0.5 text-[10.5px] font-extrabold text-black">⏱ {t('lc.store.mins', { n: shop.etaMinutes })}</span>
+        <span className="absolute bottom-2 left-2 inline-flex items-center gap-1 rounded-[7px] bg-white px-[7px] py-0.5 text-[10.5px] font-extrabold text-black">
+          <Timer className="h-3 w-3" strokeWidth={2.6} /> {t('lc.store.mins', { n: shop.etaMinutes })}
+        </span>
       </div>
       <b className="line-clamp-2 min-h-[35px] text-sm leading-tight">{p.name}</b>
       {p.variants.length > 1 ? (
@@ -535,8 +548,8 @@ function Monthly({ menu, aisleOf, basket, canOrder }: { menu: Menu; aisleOf: Map
             const aisle = aisleOf.get(p.id) ?? '';
             return (
               <div key={p.id} className={`grid grid-cols-[44px_1fr_auto_auto] items-center gap-3 rounded-[14px] border border-line bg-white px-3 py-2 text-sm transition ${r.on ? '' : 'opacity-45'}`} data-monthly={p.id}>
-                <span className="grid h-11 w-11 place-items-center rounded-xl text-2xl" style={{ background: aisleLook(aisle).tint }} aria-hidden>
-                  {productEmoji(p.name, aisle)}
+                <span className="grid h-11 w-11 place-items-center rounded-xl" style={{ background: aisleLook(aisle).tint }} aria-hidden>
+                  <ProductIcon name={p.name} aisle={aisle} className="h-6 w-6" />
                 </span>
                 <span className="min-w-0">
                   <b className="block truncate">{p.name}</b>
@@ -568,14 +581,14 @@ function Monthly({ menu, aisleOf, basket, canOrder }: { menu: Menu; aisleOf: Map
 }
 
 /** Dishes and the items this shop has for them; the first ingredient is the one the dish can't do without. */
-const RECIPES: { name: MsgKey; e: string; need: RegExp[]; any?: boolean }[] = [
-  { name: 'lc.groc.r.chai', e: '🫖', need: [/\btea\b|chai patti/i, /milk/i, /sugar/i, /ginger/i] },
-  { name: 'lc.groc.r.dal', e: '🍲', need: [/toor|arhar|moong|masoor|\bdal\b/i, /onion/i, /tomato/i, /ghee|\boil\b/i, /\bsalt\b/i] },
-  { name: 'lc.groc.r.paratha', e: '🫓', need: [/atta|wheat flour/i, /potato|aloo/i, /butter|ghee/i, /onion/i] },
-  { name: 'lc.groc.r.pulao', e: '🍚', need: [/basmati|\brice\b/i, /onion/i, /tomato/i, /\boil\b|ghee/i, /\bsalt\b/i] },
-  { name: 'lc.groc.r.omelette', e: '🍳', need: [/\beggs?\b/i, /bread/i, /butter/i, /onion/i] },
-  { name: 'lc.groc.r.bhindi', e: '🥘', need: [/lady ?finger|bhindi|okra/i, /onion/i, /\boil\b/i, /\bsalt\b/i] },
-  { name: 'lc.groc.r.fruit', e: '🥗', need: [/banana/i, /apple/i, /pomegranate|anar/i, /papaya|mango|grape|orange/i], any: true },
+const RECIPES: { name: MsgKey; e: LucideIcon; need: RegExp[]; any?: boolean }[] = [
+  { name: 'lc.groc.r.chai', e: Coffee, need: [/\btea\b|chai patti/i, /milk/i, /sugar/i, /ginger/i] },
+  { name: 'lc.groc.r.dal', e: Soup, need: [/toor|arhar|moong|masoor|\bdal\b/i, /onion/i, /tomato/i, /ghee|\boil\b/i, /\bsalt\b/i] },
+  { name: 'lc.groc.r.paratha', e: Wheat, need: [/atta|wheat flour/i, /potato|aloo/i, /butter|ghee/i, /onion/i] },
+  { name: 'lc.groc.r.pulao', e: CookingPot, need: [/basmati|\brice\b/i, /onion/i, /tomato/i, /\boil\b|ghee/i, /\bsalt\b/i] },
+  { name: 'lc.groc.r.omelette', e: EggFried, need: [/\beggs?\b/i, /bread/i, /butter/i, /onion/i] },
+  { name: 'lc.groc.r.bhindi', e: LeafyGreen, need: [/lady ?finger|bhindi|okra/i, /onion/i, /\boil\b/i, /\bsalt\b/i] },
+  { name: 'lc.groc.r.fruit', e: Salad, need: [/banana/i, /apple/i, /pomegranate|anar/i, /papaya|mango|grape|orange/i], any: true },
 ];
 
 function Recipes({ menu, basket, canOrder }: { menu: Menu; basket: Basket; canOrder: boolean }) {
@@ -597,9 +610,7 @@ function Recipes({ menu, basket, canOrder }: { menu: Menu; basket: Basket; canOr
           const missing = r.items.filter((p) => !basket.qtyOf(shop.id, p.id));
           return (
             <div key={r.name} className="grid content-start gap-2.5 rounded-[22px] border-[1.5px] border-line bg-white p-[18px]" data-recipe={r.name}>
-              <span className="text-[56px] leading-none" aria-hidden>
-                {r.e}
-              </span>
+              <r.e className="h-14 w-14" style={{ color: GREEN }} strokeWidth={1.6} aria-hidden />
               <b className="vp-tight font-display text-2xl">{t(r.name)}</b>
               <ul className="grid gap-1 text-[13.5px]">
                 {r.items.map((p) => {
@@ -607,7 +618,7 @@ function Recipes({ menu, basket, canOrder }: { menu: Menu; basket: Basket; canOr
                   return (
                     <li key={p.id} className={`flex justify-between gap-2 ${have ? 'font-bold text-[#17803A]' : ''}`}>
                       <span>
-                        {have ? '✓ ' : ''}
+                        {have && <Check className="mr-1 inline h-3.5 w-3.5 align-[-2px]" strokeWidth={3} aria-hidden />}
                         {p.name}
                       </span>
                       <span>{rupees(simpleLine(p).unitPrice)}</span>
@@ -632,12 +643,12 @@ function Recipes({ menu, basket, canOrder }: { menu: Menu; basket: Basket; canOr
 }
 
 /** How a grocery order really goes: order, packing, swaps you approve, the rider, the check at the door. */
-const JOURNEY: { e: string; title: MsgKey; body: MsgKey }[] = [
-  { e: '🧾', title: 'lc.groc.j1', body: 'lc.site.t1' },
-  { e: '🛍️', title: 'lc.groc.j2', body: 'lc.groc.j2b' },
-  { e: '🔁', title: 'lc.groc.j3', body: 'lc.groc.j3b' },
-  { e: '🛵', title: 'lc.groc.j4', body: 'lc.site.t4' },
-  { e: '🤝', title: 'lc.site.f3', body: 'lc.ret.body' },
+const JOURNEY: { e: LucideIcon; title: MsgKey; body: MsgKey }[] = [
+  { e: ReceiptText, title: 'lc.groc.j1', body: 'lc.site.t1' },
+  { e: ShoppingBag, title: 'lc.groc.j2', body: 'lc.groc.j2b' },
+  { e: Repeat, title: 'lc.groc.j3', body: 'lc.groc.j3b' },
+  { e: Bike, title: 'lc.groc.j4', body: 'lc.site.t4' },
+  { e: Handshake, title: 'lc.site.f3', body: 'lc.ret.body' },
 ];
 
 function Journey() {
@@ -650,9 +661,7 @@ function Journey() {
         {JOURNEY.map((j, i) => (
           <li key={j.title} className={`grid content-start gap-2 p-5 transition-colors duration-300 ${i === on ? 'bg-[#E3F4E8]' : 'bg-white'}`}>
             <em className="font-display text-[13px] uppercase not-italic text-[#17803A]">{t('lc.groc.step', { n: i + 1 })}</em>
-            <span className="text-[40px] leading-none" aria-hidden>
-              {j.e}
-            </span>
+            <j.e className="h-10 w-10" style={{ color: GREEN }} strokeWidth={1.8} aria-hidden />
             <b className="font-display text-[21px]">{t(j.title)}</b>
             <small className="text-[13.5px] text-ink-2">{t(j.body)}</small>
           </li>

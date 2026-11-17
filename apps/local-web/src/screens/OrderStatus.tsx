@@ -14,6 +14,8 @@ import { CANCEL_REASON, normalizeOrder, PAY_LABEL, STATUS_LABEL, STEPS, useOrder
 import { messageOf } from './Login';
 import { useReorder } from '../lib/reorder';
 import { payWithRazorpay, type CheckoutParams } from '../lib/razorpay';
+import { LiveMap } from '../components/LiveMap';
+import { VERTICAL_LOOK } from '../components/VerticalIcon';
 
 // L2/L3 Order status: where it is, the code for the door / counter, what was ordered.
 export default function OrderStatus() {
@@ -128,6 +130,20 @@ export default function OrderStatus() {
         )}
 
         {o.active && <PushCard compact />}
+
+        {o.active && (o.store.at || o.dropAt) && (
+          <LiveMap
+            pins={[
+              ...(o.store.at ? [{ id: 'shop', at: o.store.at, kind: 'shop' as const, label: o.store.name, icon: VERTICAL_LOOK[o.store.vertical].icon, color: VERTICAL_LOOK[o.store.vertical].accent }] : []),
+              ...(o.dropAt ? [{ id: 'drop', at: o.dropAt, kind: 'drop' as const }] : []),
+              ...(o.rider?.at ? [{ id: 'rider', at: o.rider.at, kind: 'rider' as const, label: o.rider.name ?? undefined }] : []),
+            ]}
+            picked="shop"
+            route
+            label={t('lc.map.order')}
+            className="aspect-[16/10] w-full rounded-2xl ring-1 ring-line"
+          />
+        )}
 
         {o.rider && o.active && (
           <section className="flex items-center gap-3 rounded-2xl bg-white p-4 ring-1 ring-line">

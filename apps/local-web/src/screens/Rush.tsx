@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { ArrowRight, Baby, Bike, Croissant, Cpu, HeartPulse, Home, PackageCheck, PawPrint, Pill, Popcorn, ShoppingBasket, ShoppingCart, Smartphone, Sparkles, Store, Warehouse, Wheat, Apple, type LucideIcon } from 'lucide-react';
+import { ArrowRight, Baby, Bandage, Bath, Battery, Bike, Bone, Cookie, Croissant, CupSoda, Cpu, HeartPulse, Home, Milk, PackageCheck, PawPrint, Pill, Popcorn, ShoppingBasket, ShoppingCart, Smartphone, Sparkles, SprayCan, Store, Warehouse, Wheat, Apple, type LucideIcon } from 'lucide-react';
 import { AppHeader } from '../components/AppHeader';
 import { Band, Crumbs, FaqDetails, KindBadge, SectionHead } from '../components/categoryPage';
 import { useI18n, type MsgKey } from '../lib/i18n';
@@ -130,7 +130,7 @@ export default function Rush() {
 
 /** A Delivez warehouse: shelves of stock, a packing table and a rider leaving. Illustration only. */
 function WarehouseArt() {
-  const boxes = ['🍚', '🥛', '🍞', '🍪', '🧴', '🧻', '🍼', '🦴', '🩹', '🔋', '🍎', '🥤'];
+  const boxes = [Wheat, Milk, Croissant, Cookie, Bath, SprayCan, Baby, Bone, Bandage, Battery, Apple, CupSoda];
   return (
     <div className="relative hidden aspect-[1.35] overflow-hidden rounded-3xl sm:block" aria-hidden data-rush-art>
       <svg viewBox="0 0 540 400" className="block h-full w-full">
@@ -144,12 +144,10 @@ function WarehouseArt() {
         {[0, 1].map((row) => (
           <g key={row} transform={`translate(28 ${140 + row * 82})`}>
             <rect width="484" height="8" y="66" fill="#2A0F4A" />
-            {boxes.slice(row * 6, row * 6 + 6).map((b, i) => (
-              <g key={b} transform={`translate(${i * 81} 0)`}>
+            {boxes.slice(row * 6, row * 6 + 6).map((Box, i) => (
+              <g key={i} transform={`translate(${i * 81} 0)`}>
                 <rect width="70" height="64" rx="8" fill="#fff" stroke="#000" strokeWidth="2.5" />
-                <text x="35" y="44" textAnchor="middle" fontSize="30">
-                  {b}
-                </text>
+                <Box x="19" y="16" size={32} color={PURPLE} strokeWidth={1.8} />
               </g>
             ))}
           </g>
@@ -162,9 +160,7 @@ function WarehouseArt() {
             <text x="-9" y="2" textAnchor="middle" fontSize="8" fontWeight="900">
               RUSH
             </text>
-            <text x="16" y="6" fontSize="26">
-              🛵
-            </text>
+            <Bike x="10" y="-20" size={30} color="#000" strokeWidth={2.2} />
           </g>
         </g>
       </svg>

@@ -1,5 +1,5 @@
 import { Link, useLocation } from 'react-router-dom';
-import { ShoppingBag } from 'lucide-react';
+import { ArrowRight, ShoppingBag } from 'lucide-react';
 import { cartCount, cartTotal, useCart } from '../lib/cart';
 import { rupees } from '../lib/format';
 import { useI18n } from '../lib/i18n';
@@ -21,7 +21,9 @@ export function CartBar() {
           <b className="block">{t('lc.cart.bar', { n, total: rupees(cartTotal(lines)) })}</b>
           <span className="block truncate text-xs text-white/80">{t('lc.cart.from', { store: storeName ?? '' })}</span>
         </span>
-        <span className="font-extrabold">{lab ? t('lc.lb.next') : t('lc.cart.view')} →</span>
+        <span className="inline-flex items-center gap-1.5 font-extrabold">
+          {lab ? t('lc.lb.next') : t('lc.cart.view')} <ArrowRight className="h-4 w-4" strokeWidth={2.6} aria-hidden />
+        </span>
       </Link>
     </div>
   );

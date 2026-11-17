@@ -1,7 +1,7 @@
 import { useMemo, useState, type ReactNode } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { useQueries } from '@tanstack/react-query';
-import { Store as StoreIcon } from 'lucide-react';
+import { ArrowRight, Bike, Check, Cherry, Coffee, CupSoda, EggFried, Flower2, IceCreamCone, LeafyGreen, LockKeyhole, Milk, PenLine, Plus, Popcorn, Shell, ShoppingCart, Star, Store as StoreIcon, UtensilsCrossed, Wheat, type LucideIcon } from 'lucide-react';
 import { AppHeader } from '../components/AppHeader';
 import {
   AroundMap,
@@ -32,12 +32,13 @@ import { Skeleton } from '../components/ui';
 import { useAuth } from '../lib/auth-store';
 import { simpleLine, useCart } from '../lib/cart';
 import { PARTNERS_URL } from '../lib/config';
-import { itemEmoji, tintFor, vendorEmoji } from '../lib/emoji';
 import { km, opensAtLabel, rupees } from '../lib/format';
 import { useI18n, type MsgKey } from '../lib/i18n';
 import type { DeliverTo } from '../lib/location';
 import { menuQuery, useNearby, useOffers, useOverview } from '../lib/queries';
 import type { Menu, StoreCard } from '../lib/types';
+import { LiveMap, type LatLng } from '../components/LiveMap';
+import { menuItemIcon, storeLook, tintFor, vendorIcon } from '../lib/icons';
 
 const ORANGE = '#C2470B';
 /** "Under 1 km". */
@@ -48,24 +49,29 @@ const TOP = 4;
 const MENUS = 8;
 const KIND: Record<string, MsgKey> = { STREET_VENDOR: 'lc.street.t.STREET_VENDOR', SOCIETY_VENDOR: 'lc.street.t.SOCIETY_VENDOR' };
 const isVendor = (s: StoreCard) => s.storeType in KIND;
-const look = (s: StoreCard) => vendorEmoji(`${s.name} ${s.description ?? ''} ${s.cuisines.join(' ')}`);
+const look = (s: StoreCard) => vendorIcon(`${s.name} ${s.description ?? ''} ${s.cuisines.join(' ')}`);
+
+/** An icon in the page's orange. */
+function Glyph({ icon: Icon, className }: { icon: LucideIcon; className: string }) {
+  return <Icon className={className} style={{ color: ORANGE }} strokeWidth={1.8} aria-hidden />;
+}
 
 /**
  * Kinds of cart, found in what a vendor says about itself and the sections of its menu. A vendor can be more than one
  * (a chaat cart that also sells kulfi).
  */
 type CartType = 'fruit' | 'veg' | 'chaat' | 'juice' | 'tea' | 'flower' | 'kulfi' | 'tiffin' | 'corn' | 'dairy';
-const TYPES: { k: CartType; label: MsgKey; emoji: string; tint: string; re: RegExp }[] = [
-  { k: 'fruit', label: 'lc.street.c.fruit', emoji: '🍉', tint: '#E3F4E8', re: /fruit|mango|banana|papaya|guava|melon|phal\b/i },
-  { k: 'veg', label: 'lc.street.c.veg', emoji: '🥬', tint: '#EAF7E1', re: /vegetable|veggie|sabzi|sabji|greens/i },
-  { k: 'chaat', label: 'lc.street.c.chaat', emoji: '🥙', tint: '#FFF4C2', re: /chaat|pani ?puri|golgapp|puchka|bhel|tikki|samosa|vada ?pav|pav bhaji|momo|snack/i },
-  { k: 'juice', label: 'lc.street.c.juice', emoji: '🥥', tint: '#E5F6F2', re: /juice|coconut|nariyal|sugarcane|ganna|lassi|shake|sherbet|sharbat/i },
-  { k: 'tea', label: 'lc.street.c.tea', emoji: '☕', tint: '#F2E9DF', re: /\btea\b|chai|coffee/i },
-  { k: 'flower', label: 'lc.street.c.flower', emoji: '🌼', tint: '#FFE8D6', re: /flower|phool|garland|gajra|\bmala\b/i },
-  { k: 'kulfi', label: 'lc.street.c.kulfi', emoji: '🍧', tint: '#FDE2E4', re: /kulfi|ice ?cream|falooda|\bgola\b/i },
-  { k: 'tiffin', label: 'lc.street.c.tiffin', emoji: '🫓', tint: '#FFF1D6', re: /tiffin|breakfast|idli|dosa|poha|paratha|upma/i },
-  { k: 'corn', label: 'lc.street.c.corn', emoji: '🌽', tint: '#F2F2EF', re: /\bcorn\b|bhutta|grill|kebab|tandoor/i },
-  { k: 'dairy', label: 'lc.street.c.dairy', emoji: '🥛', tint: '#EEF3FF', re: /dairy|milk|doodh|curd|dahi|paneer/i },
+const TYPES: { k: CartType; label: MsgKey; icon: LucideIcon; tint: string; re: RegExp }[] = [
+  { k: 'fruit', label: 'lc.street.c.fruit', icon: Cherry, tint: '#E3F4E8', re: /fruit|mango|banana|papaya|guava|melon|phal\b/i },
+  { k: 'veg', label: 'lc.street.c.veg', icon: LeafyGreen, tint: '#EAF7E1', re: /vegetable|veggie|sabzi|sabji|greens/i },
+  { k: 'chaat', label: 'lc.street.c.chaat', icon: Popcorn, tint: '#FFF4C2', re: /chaat|pani ?puri|golgapp|puchka|bhel|tikki|samosa|vada ?pav|pav bhaji|momo|snack/i },
+  { k: 'juice', label: 'lc.street.c.juice', icon: CupSoda, tint: '#E5F6F2', re: /juice|coconut|nariyal|sugarcane|ganna|lassi|shake|sherbet|sharbat/i },
+  { k: 'tea', label: 'lc.street.c.tea', icon: Coffee, tint: '#F2E9DF', re: /\btea\b|chai|coffee/i },
+  { k: 'flower', label: 'lc.street.c.flower', icon: Flower2, tint: '#FFE8D6', re: /flower|phool|garland|gajra|\bmala\b/i },
+  { k: 'kulfi', label: 'lc.street.c.kulfi', icon: IceCreamCone, tint: '#FDE2E4', re: /kulfi|ice ?cream|falooda|\bgola\b/i },
+  { k: 'tiffin', label: 'lc.street.c.tiffin', icon: EggFried, tint: '#FFF1D6', re: /tiffin|breakfast|idli|dosa|poha|paratha|upma/i },
+  { k: 'corn', label: 'lc.street.c.corn', icon: Wheat, tint: '#F2F2EF', re: /\bcorn\b|bhutta|grill|kebab|tandoor/i },
+  { k: 'dairy', label: 'lc.street.c.dairy', icon: Milk, tint: '#EEF3FF', re: /dairy|milk|doodh|curd|dahi|paneer/i },
 ];
 const typesOf = (s: StoreCard, m: Menu | undefined) => {
   const text = [s.name, s.description ?? '', ...s.cuisines, ...(m?.categories.map((c) => c.name) ?? [])].join(' ');
@@ -159,7 +165,7 @@ export default function Street({ at }: { at: DeliverTo }) {
               {vendorHits.map((s) => (
                 <HitRow
                   key={s.id}
-                  emoji={look(s)}
+                  icon={<Glyph icon={look(s)} className="h-5 w-5" />}
                   tint={tintFor(s.id)}
                   title={s.name}
                   sub={[t(KIND[s.storeType]), km(s.distanceKm), s.open ? t('lc.store.mins', { n: s.etaMinutes }) : t('lc.store.closed')].join(' · ')}
@@ -170,7 +176,7 @@ export default function Street({ at }: { at: DeliverTo }) {
               {itemHits.map(({ p, m }) => (
                 <HitRow
                   key={p.id}
-                  emoji={p.imageUrl ? <img src={p.imageUrl} alt="" className="h-full w-full object-cover" /> : itemEmoji(p.name, aisleOf(m, p.categoryId))}
+                  icon={p.imageUrl ? <img src={p.imageUrl} alt="" className="h-full w-full object-cover" /> : <Glyph icon={menuItemIcon(p.name, aisleOf(m, p.categoryId))} className="h-5 w-5" />}
                   tint={tintFor(m.store.id)}
                   title={p.name}
                   sub={t('lc.vp.at', { price: rupees(simpleLine(p).unitPrice), store: m.store.name })}
@@ -200,9 +206,9 @@ export default function Street({ at }: { at: DeliverTo }) {
         <SectionHead title={t('lc.street.listTitle')} intro={t('lc.street.listIntro')} />
         {types.length > 0 && (
           <div className="dz-scroll-x -mx-4 mb-4 flex gap-2.5 overflow-x-auto px-4 pb-2 pt-1 sm:mx-0 sm:grid sm:grid-cols-6 sm:px-0 lg:grid-cols-11" role="group" aria-label={t('lc.street.typesLabel')}>
-            <CatTile label={t('lc.street.c.all')} emoji="🛒" tint="#000" on={!f.type} onClick={() => setF({ ...f, type: null })} accent={ORANGE} dark count={vendors.length} />
+            <CatTile label={t('lc.street.c.all')} icon={ShoppingCart} tint="#000" on={!f.type} onClick={() => setF({ ...f, type: null })} accent={ORANGE} dark count={vendors.length} />
             {types.map((ty) => (
-              <CatTile key={ty.k} label={t(ty.label)} emoji={ty.emoji} tint={ty.tint} on={f.type === ty.k} onClick={() => setF({ ...f, type: f.type === ty.k ? null : ty.k })} accent={ORANGE} count={ty.n} />
+              <CatTile key={ty.k} label={t(ty.label)} icon={ty.icon} tint={ty.tint} on={f.type === ty.k} onClick={() => setF({ ...f, type: f.type === ty.k ? null : ty.k })} accent={ORANGE} count={ty.n} />
             ))}
           </div>
         )}
@@ -270,7 +276,7 @@ export default function Street({ at }: { at: DeliverTo }) {
       {vendors.length > 0 && (
         <Band id="vendors" paper>
           <SectionHead title={t('lc.street.mapTitle')} intro={t('lc.street.mapIntro')} />
-          <VendorMap vendors={vendors} menus={byId} basket={basket} centre={at.title} />
+          <VendorMap vendors={vendors} menus={byId} basket={basket} centre={at.title} at={at} />
         </Band>
       )}
 
@@ -279,7 +285,7 @@ export default function Street({ at }: { at: DeliverTo }) {
           <SectionHead title={t('lc.street.itemsTitle')} intro={t('lc.street.itemsIntro')} />
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4 min-[73.8125rem]:grid-cols-6">
             {items.slice(0, 18).map(({ p, m }) => (
-              <ItemCard key={p.id} p={p} shop={m.store} emoji={itemEmoji(p.name, aisleOf(m, p.categoryId))} tint={tintFor(m.store.id)} tag={t('lc.store.mins', { n: m.store.etaMinutes })} tone="orange" basket={basket} />
+              <ItemCard key={p.id} p={p} shop={m.store} icon={menuItemIcon(p.name, aisleOf(m, p.categoryId))} tint={tintFor(m.store.id)} tag={t('lc.store.mins', { n: m.store.etaMinutes })} tone="orange" basket={basket} />
             ))}
           </div>
         </Band>
@@ -293,7 +299,7 @@ export default function Street({ at }: { at: DeliverTo }) {
         </div>
       </Band>
 
-      <HowBand art="🛒" awning={ORANGE} steps={['lc.site.t1', 'lc.site.t2', 'lc.site.t3', 'lc.site.t4']} />
+      <HowBand art={ShoppingCart} awning={ORANGE} steps={['lc.site.t1', 'lc.site.t2', 'lc.site.t3', 'lc.site.t4']} />
 
       {token && (
         <div className="mx-auto max-w-[1320px] px-4 pb-6 sm:px-6">
@@ -345,7 +351,7 @@ export default function Street({ at }: { at: DeliverTo }) {
       </Band>
 
       <Band id="partner" paper>
-        <PartnerTiles emoji="🛒" title={t('lc.street.pTitle')} body={t('lc.street.pBody')} other="EAT" otherEmoji="🍽️" />
+        <PartnerTiles icon={ShoppingCart} title={t('lc.street.pTitle')} body={t('lc.street.pBody')} other="EAT" otherIcon={UtensilsCrossed} />
       </Band>
 
       <Band id="faq">
@@ -370,7 +376,7 @@ function Stat({ n, label }: { n: ReactNode; label: string }) {
 /** A street of stalls: the nearest real vendors (sign, what they sell, open or not), faded stalls in the empty spots. */
 function StreetArt({ vendors }: { vendors: StoreCard[] }) {
   const { t } = useI18n();
-  const filler = ['🍉', '🥥', '🌼', '☕'];
+  const filler = [Cherry, Shell, Flower2, Coffee];
   const sign = (s: string) => (s.length > 14 ? `${s.slice(0, 13)}…` : s).toUpperCase();
   return (
     <div className="relative hidden aspect-[1.35] overflow-hidden rounded-3xl sm:block" aria-hidden data-street-art>
@@ -380,6 +386,7 @@ function StreetArt({ vendors }: { vendors: StoreCard[] }) {
         <rect y="320" width="540" height="6" fill="#FFD400" opacity=".7" />
         {[12, 144, 276, 408].map((x, i) => {
           const v = vendors[i];
+          const Icon = v ? look(v) : filler[i];
           return (
             <g key={x} opacity={v ? 1 : 0.4}>
               <rect x={x} y="70" width="120" height="180" fill={v ? tintFor(v.id) : '#FFF4E6'} stroke="#000" strokeWidth="3" />
@@ -395,9 +402,7 @@ function StreetArt({ vendors }: { vendors: StoreCard[] }) {
                   </text>
                 </>
               )}
-              <text x={x + 60} y="182" textAnchor="middle" fontSize="50">
-                {v ? look(v) : filler[i]}
-              </text>
+              <Icon x={x + 36} y="134" size={48} color="#000" strokeWidth={1.8} />
               {v && (
                 <>
                   <rect x={x + 22} y="200" width="76" height="22" rx="4" fill={v.open ? '#17803A' : '#5E5E5A'} />
@@ -415,9 +420,7 @@ function StreetArt({ vendors }: { vendors: StoreCard[] }) {
             <text x="-9" y="2" textAnchor="middle" fontSize="8" fontWeight="900">
               DELIVEZ
             </text>
-            <text x="16" y="6" fontSize="26">
-              🛵
-            </text>
+            <Bike x="10" y="-20" size={30} color="#000" strokeWidth={2.2} />
           </g>
         </g>
       </svg>
@@ -431,8 +434,14 @@ function VendorCard({ s }: { s: StoreCard }) {
   const when = s.open ? t('lc.store.mins', { n: s.etaMinutes }) : s.opensAt ? t('lc.store.opensAt', { time: opensAtLabel(s.opensAt, locale, t('lc.today'), t('lc.tomorrow')) }) : t('lc.store.closed');
   return (
     <Link to={`/s/${s.slug ?? s.id}`} className="grid grid-cols-[96px_1fr] items-center gap-3.5 rounded-[22px] border border-line bg-white p-3.5 transition hover:-translate-y-[3px] hover:shadow-[0_16px_30px_rgba(0,0,0,0.08)]" data-vendor={s.id}>
-      <span className="relative grid h-24 w-24 place-items-center rounded-[20px] text-[48px]" style={{ background: tintFor(s.id) }}>
-        {img ? <img src={img} alt="" loading="lazy" className={`absolute inset-0 h-full w-full rounded-[20px] object-cover ${s.open ? '' : 'grayscale'}`} /> : <span className={s.open ? '' : 'grayscale'} aria-hidden>{look(s)}</span>}
+      <span className="relative grid h-24 w-24 place-items-center rounded-[20px]" style={{ background: tintFor(s.id) }}>
+        {img ? (
+          <img src={img} alt="" loading="lazy" className={`absolute inset-0 h-full w-full rounded-[20px] object-cover ${s.open ? '' : 'grayscale'}`} />
+        ) : (
+          <span className={s.open ? '' : 'grayscale'} aria-hidden>
+            <Glyph icon={look(s)} className="h-12 w-12" />
+          </span>
+        )}
         <i className="absolute -bottom-1.5 left-1/2 -translate-x-1/2 whitespace-nowrap rounded-full px-2 py-0.5 text-[10.5px] font-black not-italic text-white" style={{ background: s.open ? '#17803A' : '#5E5E5A' }}>
           {s.open ? t('lc.street.open') : t('lc.street.closed')}
         </i>
@@ -441,7 +450,12 @@ function VendorCard({ s }: { s: StoreCard }) {
         <b className="block truncate text-[17px]">{s.name}</b>
         <small className="block truncate text-[13px] text-ink-2">{[t(KIND[s.storeType]), s.description].filter(Boolean).join(' · ')}</small>
         <span className="mt-1.5 flex flex-wrap items-center gap-1.5 text-[13px] font-bold">
-          {s.rating && <em className="rounded-[7px] bg-[#17803A] px-[7px] py-px text-xs not-italic text-white">★ {s.rating.avg.toFixed(1)}</em>}
+          {s.rating && (
+            <em className="inline-flex items-center gap-0.5 rounded-[7px] bg-[#17803A] px-[7px] py-px text-xs not-italic text-white">
+              <Star className="h-3 w-3 fill-current" aria-hidden />
+              {s.rating.avg.toFixed(1)}
+            </em>
+          )}
           <span className="rounded-[7px] bg-[#F7F7F5] px-[7px] py-0.5">{km(s.distanceKm)}</span>
           <span className={`rounded-[7px] bg-[#F7F7F5] px-[7px] py-0.5 ${s.open ? '' : 'text-dz-red'}`}>{when}</span>
         </span>
@@ -451,21 +465,37 @@ function VendorCard({ s }: { s: StoreCard }) {
 }
 
 /** Every vendor on a map around your address, at its real distance and direction; pick one to see what it sells. */
-function VendorMap({ vendors, menus, basket, centre }: { vendors: StoreCard[]; menus: Map<string, Menu>; basket: Basket; centre: string }) {
+function VendorMap({ vendors, menus, basket, centre, at }: { vendors: StoreCard[]; menus: Map<string, Menu>; basket: Basket; centre: string; at: LatLng }) {
   const { t } = useI18n();
   const [picked, setPicked] = useState(vendors[0].id);
   const sel = vendors.find((v) => v.id === picked) ?? vendors[0];
   const menu = menus.get(sel.id);
+  const SelIcon = look(sel);
+  const pin = (v: StoreCard) => {
+    const Icon = look(v);
+    return <Icon strokeWidth={2.2} />;
+  };
   return (
     <div className="grid gap-5 lg:grid-cols-[1.2fr_0.8fr]">
       <div className="grid content-start gap-2">
-        <AroundMap
-          points={vendors.map((v) => ({ id: v.id, name: v.name, emoji: look(v), km: v.distanceKm, bearing: v.bearing, open: v.open }))}
+        <LiveMap
+          pins={[
+            { id: 'you', at, kind: 'you' },
+            ...vendors.filter((v) => v.lat != null && v.lng != null).map((v) => ({ id: v.id, at: { lat: v.lat!, lng: v.lng! }, kind: 'shop' as const, label: v.name, icon: storeLook(v).icon, color: ORANGE, dim: !v.open })),
+          ]}
           picked={sel.id}
           onPick={setPicked}
-          centre={centre}
-          accent={ORANGE}
           label={t('lc.street.mapTitle')}
+          fallback={
+            <AroundMap
+              points={vendors.map((v) => ({ id: v.id, name: v.name, icon: pin(v), km: v.distanceKm, bearing: v.bearing, open: v.open }))}
+              picked={sel.id}
+              onPick={setPicked}
+              centre={centre}
+              accent={ORANGE}
+              label={t('lc.street.mapTitle')}
+            />
+          }
         />
         <small className="text-[13px] text-ink-2">{t('lc.street.mapNote')}</small>
       </div>
@@ -474,8 +504,8 @@ function VendorMap({ vendors, menus, basket, centre }: { vendors: StoreCard[]; m
         <span className="text-sm text-[#A5A5A0]">
           {t(KIND[sel.storeType])} · {km(sel.distanceKm)} · {sel.open ? t('lc.store.mins', { n: sel.etaMinutes }) : t('lc.store.closed')}
         </span>
-        <h3 className="vp-tight font-display text-3xl">
-          {look(sel)} {sel.name}
+        <h3 className="vp-tight flex items-center gap-2.5 font-display text-3xl">
+          <SelIcon className="h-7 w-7 shrink-0 text-dz-yellow" strokeWidth={2} aria-hidden /> {sel.name}
         </h3>
         {!menu ? (
           <Skeleton className="h-40 rounded-2xl bg-white/10" />
@@ -486,10 +516,11 @@ function VendorMap({ vendors, menus, basket, centre }: { vendors: StoreCard[]; m
               .slice(0, 5)
               .map((p) => {
                 const qty = basket.qtyOf(menu.store.id, p.id);
+                const Icon = menuItemIcon(p.name, menu.categories.find((c) => c.id === p.categoryId)?.name ?? '');
                 return (
                   <li key={p.id} className="grid grid-cols-[40px_1fr_auto] items-center gap-2.5 rounded-xl bg-[#161616] px-2.5 py-2 text-sm">
-                    <span className="text-center text-2xl" aria-hidden>
-                      {itemEmoji(p.name, menu.categories.find((c) => c.id === p.categoryId)?.name ?? '')}
+                    <span className="grid place-items-center text-dz-yellow" aria-hidden>
+                      <Icon className="h-6 w-6" strokeWidth={1.8} />
                     </span>
                     <span className="min-w-0">
                       <span className="block truncate font-semibold">{p.name}</span>
@@ -505,8 +536,8 @@ function VendorMap({ vendors, menus, basket, centre }: { vendors: StoreCard[]; m
               })}
           </ul>
         )}
-        <Link to={`/s/${sel.slug ?? sel.id}`} className="justify-self-start rounded-xl bg-dz-yellow px-4 py-2.5 font-extrabold text-black">
-          {t('lc.vp.menu')} →
+        <Link to={`/s/${sel.slug ?? sel.id}`} className="inline-flex items-center gap-1.5 justify-self-start rounded-xl bg-dz-yellow px-4 py-2.5 font-extrabold text-black">
+          {t('lc.vp.menu')} <ArrowRight className="h-4 w-4" strokeWidth={2.6} aria-hidden />
         </Link>
       </aside>
     </div>
@@ -519,7 +550,9 @@ function CodeCard() {
   const token = useAuth((s) => s.accessToken);
   return (
     <div className="flex flex-col gap-3.5 rounded-3xl bg-black p-6 text-white" data-code-card>
-      <h3 className="vp-tight font-display text-[28px]">🔐 {t('lc.street.codeTitle')}</h3>
+      <h3 className="vp-tight flex items-center gap-2.5 font-display text-[28px]">
+        <LockKeyhole className="h-7 w-7 shrink-0 text-dz-yellow" strokeWidth={2.2} aria-hidden /> {t('lc.street.codeTitle')}
+      </h3>
       <p className="text-[#CFCFCB]">{t('lc.site.f4b')}</p>
       <div className="flex items-center gap-2" aria-hidden>
         {[0, 1, 2, 3].map((k) => (
@@ -530,8 +563,8 @@ function CodeCard() {
       </div>
       <small className="text-[#A5A5A0]">{t('lc.street.codeWhere')}</small>
       {token && (
-        <Link to="/orders" className="self-start rounded-xl bg-dz-yellow px-4 py-2.5 font-extrabold text-black">
-          {t('lc.street.codeOrders')} →
+        <Link to="/orders" className="inline-flex items-center gap-1.5 self-start rounded-xl bg-dz-yellow px-4 py-2.5 font-extrabold text-black">
+          {t('lc.street.codeOrders')} <ArrowRight className="h-4 w-4" strokeWidth={2.6} aria-hidden />
         </Link>
       )}
       <small className="mt-auto border-t border-white/10 pt-3 text-[#A5A5A0]">{t('lc.street.codePickup')}</small>
@@ -553,15 +586,17 @@ function AskCard() {
   const toggle = (text: string) => setNote((parts.includes(text) ? parts.filter((x) => x !== text) : [...parts, text]).join(', ').slice(0, NOTE_MAX));
   return (
     <div className="grid content-start gap-3.5 rounded-3xl bg-dz-yellow p-6 text-black" data-ask-card>
-      <h3 className="vp-tight font-display text-[28px]">✍️ {t('lc.street.askTitle')}</h3>
+      <h3 className="vp-tight flex items-center gap-2.5 font-display text-[28px]">
+        <PenLine className="h-7 w-7 shrink-0" strokeWidth={2.2} aria-hidden /> {t('lc.street.askTitle')}
+      </h3>
       <p>{t('lc.street.askBody')}</p>
       <div className="flex flex-wrap gap-1.5" role="group" aria-label={t('lc.street.askIdeas')}>
         {ASKS.map((k) => {
           const text = t(k);
           const on = parts.includes(text);
           return (
-            <button key={k} type="button" aria-pressed={on} onClick={() => toggle(text)} className={`rounded-full border-[1.5px] border-black px-3 py-1.5 text-[13px] font-bold transition ${on ? 'bg-black text-dz-yellow' : 'bg-white/60 hover:bg-white'}`}>
-              {on ? '✓ ' : '+ '}
+            <button key={k} type="button" aria-pressed={on} onClick={() => toggle(text)} className={`inline-flex items-center gap-1 rounded-full border-[1.5px] border-black px-3 py-1.5 text-[13px] font-bold transition ${on ? 'bg-black text-dz-yellow' : 'bg-white/60 hover:bg-white'}`}>
+              {on ? <Check className="h-3.5 w-3.5" strokeWidth={3} aria-hidden /> : <Plus className="h-3.5 w-3.5" strokeWidth={3} aria-hidden />}
               {text}
             </button>
           );

@@ -19,6 +19,7 @@ import { nextDays, type CollectionType, type LabBooking } from '../lib/labs';
 import { useDeliverTo } from '../lib/location';
 import { useMe, useMenu } from '../lib/queries';
 import { messageOf } from './Login';
+import { PlaceMap } from '../components/LiveMap';
 
 const GENDER = { F: 'lc.lb.gF', M: 'lc.lb.gM', O: 'lc.lb.gO' } as const;
 const PAY_ICON = { UPI: Smartphone, CARD: CreditCard, NETBANKING: Building2 } as const;
@@ -217,6 +218,11 @@ export default function LabBook() {
                 </div>
               )}
               {type === 'WALK_IN' && <p className="mt-3 rounded-xl bg-soft p-3 text-sm text-ink-2">{data.store.address}</p>}
+              {type === 'WALK_IN' && data.store.lat != null && data.store.lng != null && (
+                <div className="mt-3">
+                  <PlaceMap at={{ lat: data.store.lat, lng: data.store.lng }} name={data.store.name} label={t('lc.map.labHere')} color="#0E7490" />
+                </div>
+              )}
             </section>
 
             {type && (

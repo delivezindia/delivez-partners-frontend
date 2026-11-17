@@ -12,6 +12,7 @@ import { rupees } from '../lib/format';
 import { useI18n } from '../lib/i18n';
 import { PAY_LABEL } from '../lib/orders';
 import { LAB_STATUS, LAB_STEPS, nextDays, useLabBooking, type LabBooking } from '../lib/labs';
+import { PlaceMap } from '../components/LiveMap';
 import { messageOf } from './Login';
 
 // A lab booking: slot, booking code for the collector / desk, progress, report.
@@ -146,6 +147,7 @@ export default function Booking() {
             {b.collectionType === 'HOME' ? <Home className="mt-0.5 h-4 w-4 shrink-0" aria-hidden /> : <StoreIcon className="mt-0.5 h-4 w-4 shrink-0" aria-hidden />}
             <span className="text-ink-2">{b.collectionType === 'HOME' ? b.address : b.lab.address}</span>
           </p>
+          {b.collectionType !== 'HOME' && b.lab.at && <PlaceMap at={b.lab.at} name={b.lab.name} label={t('lc.map.labHere')} color="#0E7490" />}
           <p className="flex items-start gap-2">
             <UserRound className="mt-0.5 h-4 w-4 shrink-0" aria-hidden />
             <span className="text-ink-2">{[b.patient.name, b.patient.age ? t('lc.lb.years', { n: b.patient.age }) : null].filter(Boolean).join(' · ')}</span>

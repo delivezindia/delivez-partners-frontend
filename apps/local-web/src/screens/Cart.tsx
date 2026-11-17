@@ -17,6 +17,7 @@ import { useI18n, type MsgKey } from '../lib/i18n';
 import { useDeliverTo } from '../lib/location';
 import { normalizeOrder, toItems, useQuote, type Blocker, type CouponProblem, type CustomerOrder, type PayMethod, type Problem, PAY_LABEL, PAY_METHODS } from '../lib/orders';
 import { messageOf } from './Login';
+import { LiveMap } from '../components/LiveMap';
 
 const BLOCKER: Partial<Record<Blocker, MsgKey>> = {
   STORE_CLOSED: 'lc.co.b.closed',
@@ -205,6 +206,9 @@ export default function Cart() {
               </Link>
             )}
           </section>
+          {at?.addressId && (
+            <LiveMap pins={[{ id: 'drop', at: { lat: at.lat, lng: at.lng }, kind: 'drop', label: at.title }]} picked="drop" zoom={16} label={t('lc.co.deliverTo', { place: at.title })} className="aspect-[16/7] w-full rounded-2xl ring-1 ring-line" />
+          )}
 
           {cart.storeId && !!q?.rxItems.length && <RxUpload presignPath={`/local/pharmacies/${cart.storeId}/rx-upload`} files={rxFiles} onChange={setRxFiles} items={q.rxItems} />}
 

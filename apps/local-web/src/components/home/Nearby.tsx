@@ -31,6 +31,7 @@ import { simpleLine } from '../../lib/cart';
 import { rupees } from '../../lib/format';
 import { useI18n, type MsgKey } from '../../lib/i18n';
 import { itemIcon } from '../../lib/icons';
+import { ShopsMap } from '../LiveMap';
 import { allShopsQuery, menuQuery, useOverview } from '../../lib/queries';
 import type { Menu, Product, StoreCard, Vertical } from '../../lib/types';
 import { BrandHead, NowLogo, NowSection, StoreGrid, inKind, offerAt, pill, placed, useAround } from './kit';
@@ -115,6 +116,11 @@ export function StoresNear({ onStart }: { onStart: () => void }) {
           </button>
         ))}
       </div>
+      {a.at && list.length > 0 && (
+        <div className="mb-4">
+          <ShopsMap at={a.at} stores={list} />
+        </div>
+      )}
       <StoreGrid stores={shown} offers={a.offers} empty={t('lc.hm.near.empty')} loading={allQ.isLoading || !a.at} error={allQ.isError} />
       <div className="mt-4 flex flex-wrap gap-2">
         {!all && list.length > SHOPS_PAGE && (

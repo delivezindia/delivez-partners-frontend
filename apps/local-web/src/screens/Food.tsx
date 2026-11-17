@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState, type ReactNode } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { useQueries } from '@tanstack/react-query';
-import { Store as StoreIcon } from 'lucide-react';
+import { ArrowRight, Bike, ChefHat, Flame, ReceiptText, ShoppingCart, Star, Store as StoreIcon, UtensilsCrossed, Zap, type LucideIcon } from 'lucide-react';
 import { AppHeader } from '../components/AppHeader';
 import {
   AddButton,
@@ -30,15 +30,16 @@ import { LiveOrders, OrderAgain } from '../components/OrderStrips';
 import { Skeleton, VegMark } from '../components/ui';
 import { useAuth } from '../lib/auth-store';
 import { needsOptions, simpleLine } from '../lib/cart';
-import { foodEmoji, tintFor } from '../lib/emoji';
 import { km, opensAtLabel, rupees } from '../lib/format';
 import { useI18n, type MsgKey } from '../lib/i18n';
 import type { DeliverTo } from '../lib/location';
 import { menuQuery, useNearby, useOffers, useOverview, type PublicOffer } from '../lib/queries';
 import type { Menu, Product, StoreCard } from '../lib/types';
+import { ShopsMap } from '../components/LiveMap';
+import { foodIcon, tintFor } from '../lib/icons';
 
 const RED = '#E8130F';
-/** "Under 30 min" and the ⚡ badge. */
+/** "Under 30 min" and the Zap badge. */
 const FAST = 30;
 /** "Rated 4+". */
 const TOP = 4;
@@ -129,10 +130,10 @@ export default function Food({ at }: { at: DeliverTo }) {
   const best = stores.filter((s) => s.rating).sort((a, b) => b.rating!.avg - a.rating!.avg)[0];
 
   const collections = [
-    { title: t('lc.food.c.fast'), bg: RED, e: '⚡', n: stores.filter(isFast).length, set: { fast: true, sort: 'time' as Sort } },
-    { title: t('lc.food.c.top'), bg: '#17803A', e: '⭐', n: stores.filter(isTop).length, set: { top: true, sort: 'rating' as Sort } },
-    { title: t('lc.food.t.CLOUD_KITCHEN'), bg: '#2A0F4A', e: '🍱', n: stores.filter((s) => s.storeType === 'CLOUD_KITCHEN').length, set: { kitchen: 'CLOUD_KITCHEN' } },
-    { title: t('lc.food.fOpen'), bg: '#F26B1D', e: '🔥', n: stores.filter((s) => s.open).length, set: { open: true } },
+    { title: t('lc.food.c.fast'), bg: RED, e: Zap, n: stores.filter(isFast).length, set: { fast: true, sort: 'time' as Sort } },
+    { title: t('lc.food.c.top'), bg: '#17803A', e: Star, n: stores.filter(isTop).length, set: { top: true, sort: 'rating' as Sort } },
+    { title: t('lc.food.t.CLOUD_KITCHEN'), bg: '#2A0F4A', e: ChefHat, n: stores.filter((s) => s.storeType === 'CLOUD_KITCHEN').length, set: { kitchen: 'CLOUD_KITCHEN' } },
+    { title: t('lc.food.fOpen'), bg: '#F26B1D', e: Flame, n: stores.filter((s) => s.open).length, set: { open: true } },
   ].filter((c) => c.n > 0);
 
   const faq = [
@@ -169,10 +170,14 @@ export default function Food({ at }: { at: DeliverTo }) {
               {shopHits.map((s) => (
                 <HitRow
                   key={s.id}
-                  emoji={foodEmoji(`${s.cuisines[0] ?? ''} ${s.name}`)}
+                  icon={<FoodIcon text={`${s.cuisines[0] ?? ''} ${s.name}`} className="h-5 w-5" />}
                   tint={tintFor(s.id)}
                   title={s.name}
-                  sub={[s.cuisines.slice(0, 2).join(', '), s.rating && `★ ${s.rating.avg.toFixed(1)}`, s.open ? t('lc.store.mins', { n: s.etaMinutes }) : t('lc.store.closed')].filter(Boolean).join(' · ')}
+                  sub={
+                    <>
+                      {[s.cuisines.slice(0, 2).join(', '), s.rating && <Rating key="r" avg={s.rating.avg} />, s.open ? t('lc.store.mins', { n: s.etaMinutes }) : t('lc.store.closed')].filter(Boolean).flatMap((x, i) => (i ? [' · ', x] : [x]))}
+                    </>
+                  }
                   action={t('lc.vp.menu')}
                   to={`/s/${s.slug ?? s.id}`}
                 />
@@ -180,7 +185,7 @@ export default function Food({ at }: { at: DeliverTo }) {
               {dishHits.map(({ p, m }) => (
                 <HitRow
                   key={p.id}
-                  emoji={p.imageUrl ? <img src={p.imageUrl} alt="" className="h-full w-full object-cover" /> : foodEmoji(p.name)}
+                  icon={p.imageUrl ? <img src={p.imageUrl} alt="" className="h-full w-full object-cover" /> : <FoodIcon text={p.name} className="h-5 w-5" />}
                   tint={tintFor(m.store.id)}
                   title={p.name}
                   sub={t('lc.vp.at', { price: rupees(simpleLine(p).unitPrice), store: m.store.name })}
@@ -197,19 +202,21 @@ export default function Food({ at }: { at: DeliverTo }) {
             </div>
           </div>
           <Plate
-            emoji={foodEmoji(word)}
+            icon={foodIcon(word)}
             chips={[
               fastest && (
                 <>
-                  🛵 <b className="font-display text-xl">{t('lc.store.mins', { n: fastest.etaMinutes })}</b> {fastest.name}
+                  <Bike className="h-4 w-4 shrink-0 text-[#E8130F]" strokeWidth={2.4} aria-hidden /> <b className="font-display text-xl">{t('lc.store.mins', { n: fastest.etaMinutes })}</b> {fastest.name}
                 </>
               ),
               best?.rating && (
                 <>
-                  ⭐ <b className="font-display text-xl">{best.rating.avg.toFixed(1)}</b> {best.name}
+                  <Star className="h-4 w-4 shrink-0 fill-current text-[#F5A300]" aria-hidden /> <b className="font-display text-xl">{best.rating.avg.toFixed(1)}</b> {best.name}
                 </>
               ),
-              <>🧾 {t('lc.site.c2')}</>,
+              <>
+                <ReceiptText className="h-4 w-4 shrink-0 text-[#17803A]" strokeWidth={2.4} aria-hidden /> {t('lc.site.c2')}
+              </>,
             ]}
           />
         </div>
@@ -221,15 +228,15 @@ export default function Food({ at }: { at: DeliverTo }) {
         </div>
       )}
 
-      <HowBand art="🍱" awning={RED} steps={['lc.site.t1', 'lc.site.t2', 'lc.site.t3', 'lc.site.t4']} />
+      <HowBand art={ChefHat} awning={RED} steps={['lc.site.t1', 'lc.site.t2', 'lc.site.t3', 'lc.site.t4']} />
 
       <Band id="restaurants" className="pt-10 sm:pt-10">
         <SectionHead title={t('lc.food.mindTitle')} intro={t('lc.food.mindIntro')} />
         {cuisines.length > 0 && (
           <div className="dz-scroll-x -mx-4 flex gap-2.5 overflow-x-auto px-4 pb-3 pt-1" role="group" aria-label={t('lc.food.cuisines')}>
-            <Cuisine label={t('lc.home.all')} emoji="🍽️" on={!f.cuisine} onClick={() => setF({ ...f, cuisine: null })} />
+            <Cuisine label={t('lc.home.all')} icon={UtensilsCrossed} on={!f.cuisine} onClick={() => setF({ ...f, cuisine: null })} />
             {cuisines.map((c) => (
-              <Cuisine key={c} label={c} emoji={foodEmoji(c)} on={f.cuisine === c} onClick={() => setF({ ...f, cuisine: f.cuisine === c ? null : c })} />
+              <Cuisine key={c} label={c} icon={foodIcon(c)} on={f.cuisine === c} onClick={() => setF({ ...f, cuisine: f.cuisine === c ? null : c })} />
             ))}
           </div>
         )}
@@ -261,6 +268,12 @@ export default function Food({ at }: { at: DeliverTo }) {
           />
         </div>
 
+        {shown.length > 0 && (
+          <div className="mb-6">
+            <ShopsMap at={at} stores={shown} accent={RED} />
+          </div>
+        )}
+
         {nearby.isLoading ? (
           <div className="grid gap-[18px] sm:grid-cols-2 lg:grid-cols-3 min-[73.8125rem]:grid-cols-4">
             {[0, 1, 2, 3].map((i) => (
@@ -279,9 +292,7 @@ export default function Food({ at }: { at: DeliverTo }) {
           </div>
         ) : !shown.length ? (
           <div className="rounded-3xl bg-soft p-10 text-center text-ink-2">
-            <div className="text-[52px]" aria-hidden>
-              🍽️
-            </div>
+            <UtensilsCrossed className="mx-auto mb-2 h-[52px] w-[52px] text-ink-2" strokeWidth={1.8} aria-hidden />
             {t('lc.food.none')}{' '}
             <button type="button" onClick={() => setF(NO_FILTERS)} className="font-extrabold text-black underline">
               {t('lc.vp.clear')}
@@ -314,10 +325,10 @@ export default function Food({ at }: { at: DeliverTo }) {
                 style={{ background: c.bg }}
               >
                 <b className="vp-tight relative max-w-[70%] font-display text-[28px]">{c.title}</b>
-                <small className="relative text-[13.5px] font-bold">{c.n === 1 ? t('lc.vp.place1') : t('lc.vp.places', { n: c.n })} →</small>
-                <span className="absolute bottom-0 right-2 text-[84px] leading-none" aria-hidden>
-                  {c.e}
-                </span>
+                <small className="relative inline-flex items-center gap-1 text-[13.5px] font-bold">
+                  {c.n === 1 ? t('lc.vp.place1') : t('lc.vp.places', { n: c.n })} <ArrowRight className="h-4 w-4" strokeWidth={2.6} aria-hidden />
+                </small>
+                <c.e className="absolute bottom-2 right-3 h-[72px] w-[72px] opacity-90" strokeWidth={1.6} aria-hidden />
               </button>
             ))}
           </div>
@@ -347,7 +358,7 @@ export default function Food({ at }: { at: DeliverTo }) {
       </Band>
 
       <Band id="partner">
-        <PartnerTiles emoji="👨‍🍳" title={t('lc.food.pTitle')} body={t('lc.food.pBody')} other="GROCERY" otherEmoji="🛒" />
+        <PartnerTiles icon={ChefHat} title={t('lc.food.pTitle')} body={t('lc.food.pBody')} other="GROCERY" otherIcon={ShoppingCart} />
       </Band>
 
       <Band id="faq" paper>
@@ -369,16 +380,32 @@ function Stat({ n, label }: { n: ReactNode; label: string }) {
   );
 }
 
+/** A dish or cuisine icon, in the page's red. */
+function FoodIcon({ text, className }: { text: string; className: string }) {
+  const Icon = foodIcon(text);
+  return <Icon className={className} style={{ color: RED }} strokeWidth={1.8} aria-hidden />;
+}
+
+/** A rating as a filled star and the number ("4.3"). */
+function Rating({ avg }: { avg: number }) {
+  return (
+    <span className="inline-flex items-center gap-0.5 align-[-1px]">
+      <Star className="h-[0.9em] w-[0.9em] fill-current" aria-hidden />
+      {avg.toFixed(1)}
+    </span>
+  );
+}
+
 /** The spinning plate, with three facts from the restaurants near you. */
-function Plate({ emoji, chips }: { emoji: string; chips: ReactNode[] }) {
+function Plate({ icon: Icon, chips }: { icon: LucideIcon; chips: ReactNode[] }) {
   const spots = ['left-[-2%] top-[12%]', 'right-[-4%] top-[40%]', 'left-[6%] bottom-[6%]'];
   return (
     <div className="relative mx-auto hidden aspect-square w-full max-w-[320px] sm:block lg:max-w-[460px]" aria-hidden>
       <div
         className="absolute inset-[8%] grid place-items-center rounded-full shadow-[0_40px_80px_rgba(0,0,0,0.35)]"
-        style={{ background: 'radial-gradient(circle at 50% 45%, #fff 0 56%, #F2F2EF 57% 64%, #fff 65%)', fontSize: 'clamp(110px, 14vw, 190px)' }}
+        style={{ background: 'radial-gradient(circle at 50% 45%, #fff 0 56%, #F2F2EF 57% 64%, #fff 65%)' }}
       >
-        <span className="vp-spin inline-block leading-none">{emoji}</span>
+        <Icon className="vp-spin h-[clamp(96px,12vw,170px)] w-[clamp(96px,12vw,170px)]" style={{ color: RED }} strokeWidth={1.5} />
       </div>
       {chips.map(
         (c, i) =>
@@ -392,11 +419,11 @@ function Plate({ emoji, chips }: { emoji: string; chips: ReactNode[] }) {
   );
 }
 
-function Cuisine({ label, emoji, on, onClick }: { label: string; emoji: string; on: boolean; onClick: () => void }) {
+function Cuisine({ label, icon: Icon, on, onClick }: { label: string; icon: LucideIcon; on: boolean; onClick: () => void }) {
   return (
     <button type="button" aria-pressed={on} onClick={onClick} className="group grid w-[104px] shrink-0 justify-items-center gap-2 text-center text-[13.5px] font-extrabold">
-      <span className={`grid h-[88px] w-[88px] place-items-center rounded-full border-[3px] text-[44px] transition group-hover:scale-105 ${on ? 'border-[#E8130F] bg-[#FDE2E4]' : 'border-transparent bg-[#F7F7F5]'}`} aria-hidden>
-        {emoji}
+      <span className={`grid h-[88px] w-[88px] place-items-center rounded-full border-[3px] text-[#E8130F] transition group-hover:scale-105 ${on ? 'border-[#E8130F] bg-[#FDE2E4]' : 'border-transparent bg-[#F7F7F5]'}`} aria-hidden>
+        <Icon className="h-11 w-11" strokeWidth={1.8} />
       </span>
       <span className="line-clamp-2 leading-tight">{label}</span>
     </button>
@@ -410,22 +437,30 @@ function RestaurantCard({ s, offer }: { s: StoreCard; offer?: PublicOffer }) {
   const band = offer ? offerTitle(t, offer) : !s.open ? (s.opensAt ? t('lc.store.opensAt', { time: opensAtLabel(s.opensAt, locale, t('lc.today'), t('lc.tomorrow')) }) : t('lc.store.closed')) : null;
   return (
     <Link to={`/s/${s.slug ?? s.id}`} className="group grid content-start gap-2.5 rounded-[20px] transition hover:-translate-y-1" data-restaurant={s.id}>
-      <span className="relative grid aspect-[4/3] place-items-center overflow-hidden rounded-[20px] text-[76px]" style={{ background: tintFor(s.id) }}>
+      <span className="relative grid aspect-[4/3] place-items-center overflow-hidden rounded-[20px]" style={{ background: tintFor(s.id) }}>
         {img ? (
           <img src={img} alt="" loading="lazy" className={`absolute inset-0 h-full w-full object-cover transition duration-500 group-hover:scale-105 ${s.open ? '' : 'grayscale'}`} />
         ) : (
           <span className={`transition duration-500 group-hover:scale-110 ${s.open ? '' : 'grayscale'}`} aria-hidden>
-            {foodEmoji(`${s.cuisines[0] ?? ''} ${s.name}`)}
+            <FoodIcon text={`${s.cuisines[0] ?? ''} ${s.name}`} className="h-[72px] w-[72px]" />
           </span>
         )}
         {s.busy && <span className="absolute left-2.5 top-2.5 rounded-lg bg-amber-400 px-2 py-[3px] text-[11px] font-extrabold text-black">{t('lc.store.busy')}</span>}
-        {isFast(s) && <span className="absolute right-2.5 top-2.5 rounded-lg bg-dz-yellow px-2 py-[3px] text-[11px] font-extrabold text-black">⚡ {t('lc.food.fast')}</span>}
+        {isFast(s) && (
+          <span className="absolute right-2.5 top-2.5 inline-flex items-center gap-1 rounded-lg bg-dz-yellow px-2 py-[3px] text-[11px] font-extrabold text-black">
+            <Zap className="h-3 w-3 fill-current" aria-hidden /> {t('lc.food.fast')}
+          </span>
+        )}
         {band && <span className="vp-tight absolute inset-x-0 bottom-0 bg-gradient-to-b from-transparent to-black/80 px-3.5 pb-2.5 pt-[26px] text-left font-display text-[21px] text-white">{band}</span>}
       </span>
       <span className="min-w-0">
         <b className="block truncate text-[17.5px]">{s.name}</b>
         <span className="mt-0.5 flex items-center gap-2 text-sm font-bold">
-          {s.rating && <em className="rounded-[7px] bg-[#17803A] px-[7px] py-px text-[12.5px] not-italic text-white">★ {s.rating.avg.toFixed(1)}</em>}
+          {s.rating && (
+            <em className="rounded-[7px] bg-[#17803A] px-[7px] py-px text-[12.5px] not-italic text-white">
+              <Rating avg={s.rating.avg} />
+            </em>
+          )}
           {s.open ? t('lc.store.mins', { n: s.etaMinutes }) : <span className="text-dz-red">{t('lc.store.closed')}</span>}
         </span>
         <small className="block truncate text-[13.5px] text-ink-2">{s.cuisines.join(' · ') || t('lc.v.EAT')}</small>
@@ -440,8 +475,8 @@ function DishCard({ p, shop, basket }: { p: Product; shop: Menu['store']; basket
   const qty = basket.qtyOf(shop.id, p.id);
   return (
     <div className="flex flex-col gap-1.5 rounded-[20px] border border-line bg-white p-2.5" data-dish={p.id}>
-      <div className="grid aspect-[1.3] place-items-center overflow-hidden rounded-[14px] text-[62px]" style={{ background: tintFor(shop.id) }} aria-hidden>
-        {p.imageUrl ? <img src={p.imageUrl} alt="" loading="lazy" className="h-full w-full object-cover" /> : foodEmoji(p.name)}
+      <div className="grid aspect-[1.3] place-items-center overflow-hidden rounded-[14px]" style={{ background: tintFor(shop.id) }} aria-hidden>
+        {p.imageUrl ? <img src={p.imageUrl} alt="" loading="lazy" className="h-full w-full object-cover" /> : <FoodIcon text={p.name} className="h-14 w-14" />}
       </div>
       <span className="flex items-start gap-1.5">
         <span className="mt-0.5">
@@ -451,7 +486,12 @@ function DishCard({ p, shop, basket }: { p: Product; shop: Menu['store']; basket
       </span>
       <Link to={`/s/${shop.slug ?? shop.id}`} className="truncate text-[12.5px] text-ink-2 hover:text-black hover:underline">
         {shop.name}
-        {shop.rating ? ` · ★ ${shop.rating.avg.toFixed(1)}` : ''}
+        {shop.rating && (
+          <>
+            {' · '}
+            <Rating avg={shop.rating.avg} />
+          </>
+        )}
       </Link>
       <div className="mt-auto flex items-center justify-between gap-2 pt-1">
         <span className="font-black">{rupees(simpleLine(p).unitPrice)}</span>

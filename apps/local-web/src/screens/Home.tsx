@@ -18,6 +18,7 @@ import { useDeliverTo, type DeliverTo } from '../lib/location';
 import { useNearby, useOverview } from '../lib/queries';
 import { useOrders } from '../lib/orders';
 import type { StoreCard, Vertical } from '../lib/types';
+import { ShopsMap } from '../components/LiveMap';
 
 const ALL_VERTICALS: Vertical[] = ['EAT', 'GROCERY', 'PHARMACY', 'DIAGNOSTICS', 'LOCAL_STORES'];
 
@@ -117,13 +118,18 @@ export default function Home() {
             <p className="mx-auto mt-1 max-w-sm text-sm text-ink-2">{q ? t('lc.home.noMatchBody') : t('lc.home.noneBody')}</p>
           </div>
         ) : (
-          <ul className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {stores.map((s) => (
-              <li key={s.id}>
-                <StoreTile s={s} />
-              </li>
-            ))}
-          </ul>
+          <>
+            <div className="mb-5">
+              <ShopsMap at={at} stores={stores} />
+            </div>
+            <ul className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+              {stores.map((s) => (
+                <li key={s.id}>
+                  <StoreTile s={s} />
+                </li>
+              ))}
+            </ul>
+          </>
         )}
       </main>
     </div>

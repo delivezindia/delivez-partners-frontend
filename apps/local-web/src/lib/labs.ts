@@ -16,7 +16,7 @@ export interface LabBooking {
   collectionType: CollectionType;
   slotStart: string;
   slotMinutes: number;
-  lab: { id: string; name: string; slug: string | null; phone: string | null; address: string | null };
+  lab: { id: string; name: string; slug: string | null; phone: string | null; address: string | null; at?: { lat: number; lng: number } | null };
   patient: { name: string; age: number | null; gender: 'F' | 'M' | 'O' | null };
   address: string | null;
   tests: { id: string; name: string; price: number; sampleType: string | null; fastingHours: number | null; reportHours: number | null }[];

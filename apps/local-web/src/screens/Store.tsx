@@ -14,6 +14,7 @@ import { VerticalIcon } from '../components/VerticalIcon';
 import { useDeliverTo } from '../lib/location';
 import { useMenu } from '../lib/queries';
 import type { Menu, Product } from '../lib/types';
+import { PlaceMap } from '../components/LiveMap';
 
 // L1 Store: one shop's menu / shelf, add to basket.
 export default function Store() {
@@ -111,6 +112,11 @@ export default function Store() {
             <MapPin className="mt-0.5 h-4 w-4 shrink-0" aria-hidden /> {s.address}
             {s.distanceKm != null && <span className="shrink-0 font-semibold">· {km(s.distanceKm)}</span>}
           </p>
+          {s.lat != null && s.lng != null && (
+            <div className="mt-3">
+              <PlaceMap at={{ lat: s.lat, lng: s.lng }} name={s.name} label={t('lc.map.shopHere')} />
+            </div>
+          )}
           <div className="mt-3 flex flex-wrap gap-2 text-sm font-semibold">
             {s.open ? (
               // No delivery time for an address the shop doesn't deliver to.
