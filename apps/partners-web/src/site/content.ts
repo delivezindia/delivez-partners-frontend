@@ -202,7 +202,7 @@ export const SERVICES: Service[] = [
     ],
     features: [
       { icon: IconBike, title: 'Delivery or pickup-only', body: 'Use Delivez riders, or let customers collect from your shop with a pickup OTP.' },
-      { icon: IconSpark, title: 'Soft launch', body: 'Readiness 60–79? Go live in a 2 km radius with a “New on Delivez” badge while you finish setup.' },
+      { icon: IconSpark, title: 'Soft launch', body: 'Readiness 60–74? Go live in a 2 km radius with a “New on Delivez” badge while you finish setup.' },
       { icon: IconDoc, title: 'Catalogue in minutes', body: 'Add products one by one or paste a list from Excel.' },
       { icon: IconChart, title: 'Simple analytics', body: 'Orders, top items and on-time performance at a glance.', soon: true },
     ],
@@ -264,7 +264,7 @@ export const ONBOARDING_FLOW = [
   { title: 'Tell us about your business', body: 'Pick your business type; the steps adapt to it.' },
   { title: 'Pin your shop & add items', body: 'Drop a pin on the map, set your hours, add your menu or products.' },
   { title: 'Upload documents', body: 'Take photos of your licences. Pending documents never block your setup.' },
-  { title: 'Get verified & go live', body: 'Our team reviews within 24 hours. Readiness 80+ goes live; 60–79 soft-launches.' },
+  { title: 'Get verified & go live', body: 'Our team reviews within 24 hours. Readiness 75+ goes live; 60–74 soft-launches.' },
 ];
 
 export const COMMERCIALS = [

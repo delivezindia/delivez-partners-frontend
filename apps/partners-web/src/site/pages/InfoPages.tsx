@@ -20,8 +20,8 @@ export function HowItWorks() {
         </ol>
         <div className="mt-8 grid gap-4 md:grid-cols-3">
           {[
-            { score: '80+', title: 'Live', body: 'Visible to every customer in your delivery radius.' },
-            { score: '60–79', title: 'Soft launch', body: '“New on Delivez” badge and a 2 km radius while you finish setup.' },
+            { score: '75+', title: 'Live', body: 'Visible to every customer in your delivery radius.' },
+            { score: '60–74', title: 'Soft launch', body: '“New on Delivez” badge and a 2 km radius while you finish setup.' },
             { score: 'Below 60', title: 'Finish setup', body: 'We show exactly what is missing, with one-tap links to fix it.' },
           ].map((g) => (
             <div key={g.title} className="rounded-2xl bg-neutral-50 p-5">

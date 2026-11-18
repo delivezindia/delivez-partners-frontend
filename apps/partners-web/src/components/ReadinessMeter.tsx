@@ -36,7 +36,7 @@ export function ReadinessMeter({ readiness, onFix }: { readiness: Readiness; onF
         <div>
           <p className="text-sm text-neutral-500">Readiness score</p>
           <p className={`font-semibold ${GATE_TEXT[readiness.gate].cls}`}>{GATE_TEXT[readiness.gate].label}</p>
-          <p className="text-xs text-neutral-500">80+ live · 60–79 soft launch</p>
+          <p className="text-xs text-neutral-500">75+ live · 60–74 soft launch</p>
         </div>
       </div>
       <ul className="mt-4 space-y-2">

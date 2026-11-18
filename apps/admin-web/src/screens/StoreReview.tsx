@@ -294,7 +294,7 @@ export default function StoreReview() {
           {o && (
             <Card title="Readiness">
               <p className="text-4xl font-black" style={{ fontStretch: '74%' }}>
-                <span className={o.readiness.score >= 80 ? 'text-dz-green' : o.readiness.score >= 60 ? 'text-amber-700' : 'text-dz-red'}>{o.readiness.score}</span>
+                <span className={o.readiness.score >= 75 ? 'text-dz-green' : o.readiness.score >= 60 ? 'text-amber-700' : 'text-dz-red'}>{o.readiness.score}</span>
                 <span className="text-lg text-ink-3">/100</span>
               </p>
               <ul className="mt-3 space-y-1.5 text-sm">
