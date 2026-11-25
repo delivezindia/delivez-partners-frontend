@@ -26,6 +26,9 @@ import AmStore from './screens/am/AmStore';
 import AmAlerts from './screens/am/AmAlerts';
 import AmTasks from './screens/am/AmTasks';
 import AmProfile from './screens/am/AmProfile';
+import RiderApplications from './screens/RiderApplications';
+import DriverAssignment from './screens/DriverAssignment';
+import RiderReview from './screens/RiderReview';
 
 const queryClient = new QueryClient({ defaultOptions: { queries: { staleTime: 15_000, retry: 1 } } });
 
@@ -55,6 +58,9 @@ export default function App() {
               {import.meta.env.DEV && <Route path="/dev/messages" element={<DevMessages />} />}
               <Route path="/documents" element={<Documents />} />
               <Route path="/stores/:storeId" element={<StoreReview />} />
+              <Route path="/dispatch" element={<DriverAssignment />} />
+              <Route path="/riders" element={<RiderApplications />} />
+              <Route path="/riders/:id" element={<RiderReview />} />
             </Route>
             {/* Account manager mobile view */}
             <Route element={<RequireAuth><AmShell /></RequireAuth>}>

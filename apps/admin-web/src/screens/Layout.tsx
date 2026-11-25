@@ -1,8 +1,8 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { Navigate, NavLink, Outlet, useNavigate } from 'react-router-dom';
-import { Activity, BadgePercent, BarChart3, ClipboardList, FileCheck2, LayoutDashboard, LifeBuoy, Map, MessageSquareText, ScrollText, ShieldCheck, Store, Users, type LucideIcon } from 'lucide-react';
+import { Navigate, NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom';
+import { Activity, BadgePercent, Bike, BarChart3, ClipboardList, FileCheck2, LayoutDashboard, LifeBuoy, Map, MessageSquareText, ScrollText, ShieldCheck, Store, Truck, Users, type LucideIcon } from 'lucide-react';
 import { api, useAuth } from '../lib/api';
-import { CAN, can, type AdminMe, type AdminRole } from '../lib/types';
+import { CAN, can, DISPATCH_ONLY, type AdminMe, type AdminRole } from '../lib/types';
 import { Brand } from '../components/ui';
 import { AdminBell } from '../components/AdminBell';
 import { disablePush } from '../lib/push';
@@ -13,6 +13,8 @@ const NAV: { to: string; label: string; icon: LucideIcon; end?: boolean; roles?:
   { to: '/', label: 'Dashboard', icon: LayoutDashboard, end: true },
   { to: '/stores', label: 'Stores', icon: Store },
   { to: '/orders', label: 'Orders', icon: ClipboardList },
+  { to: '/dispatch', label: 'Driver assignment', icon: Truck },
+  { to: '/riders', label: 'Riders', icon: Bike },
   { to: '/support', label: 'Support', icon: LifeBuoy },
   { to: '/reports', label: 'Reports', icon: BarChart3 },
   { to: '/coupons', label: 'Coupons', icon: BadgePercent, roles: CAN.couponsView },
@@ -30,11 +32,14 @@ export default function Layout() {
   const { data: me, isLoading } = useMe();
   const qc = useQueryClient();
   const navigate = useNavigate();
+  const location = useLocation();
   const isAm = me?.role === 'ACCOUNT_MANAGER';
-  // Only once we know who this is: account managers can't read the console's data (they'd just get 403s).
-  const pending = useQuery({ queryKey: ['documents', 'PENDING'], queryFn: () => api<{ superseded: boolean }[]>('/admin/documents?status=PENDING'), refetchInterval: 30_000, enabled: !!me && !isAm });
+  // City dispatchers get the Driver assignment screen and nothing else.
+  const dispatchOnly = can(me?.role, DISPATCH_ONLY);
+  // Only once we know who this is: account managers and dispatchers can't read the console's data (they'd just get 403s).
+  const pending = useQuery({ queryKey: ['documents', 'PENDING'], queryFn: () => api<{ superseded: boolean }[]>('/admin/documents?status=PENDING'), refetchInterval: 30_000, enabled: !!me && !isAm && !dispatchOnly });
   const pendingCount = pending.data?.filter((d) => !d.superseded).length ?? 0;
-  const nav = NAV.filter((n) => !n.roles || can(me?.role, n.roles));
+  const nav = dispatchOnly ? NAV.filter((n) => n.to === '/dispatch') : NAV.filter((n) => !n.roles || can(me?.role, n.roles));
 
   async function logout() {
     await disablePush();
@@ -63,6 +68,7 @@ export default function Layout() {
   // render nothing, so a console page (and its data requests) doesn't start for someone who can't see it.
   if (isLoading) return <div className="min-h-screen bg-soft" />;
   if (isAm) return <Navigate to="/am" replace />;
+  if (dispatchOnly && location.pathname !== '/dispatch') return <Navigate to="/dispatch" replace />;
 
   return (
     <div className="min-h-screen bg-soft">
@@ -75,7 +81,7 @@ export default function Layout() {
               <span className="hidden text-right leading-tight sm:block">
                 <b className="block">{me.user.fullName ?? me.user.phone}</b>
                 <span className="text-xs">
-                  {me.role.replace(/_/g, ' ')} · {me.allCities ? 'All cities' : me.cities.map((c) => c.name).join(', ')}
+                  {me.role === 'DISPATCHER' ? 'City dispatcher' : me.role.replace(/_/g, ' ')} · {me.allCities ? 'All cities' : me.cities.map((c) => c.name).join(', ')}
                 </span>
               </span>
             )}

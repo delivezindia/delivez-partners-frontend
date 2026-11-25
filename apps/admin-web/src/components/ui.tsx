@@ -104,7 +104,7 @@ export const ago = (d: string) => {
   return h < 48 ? `${h} h ago` : `${Math.round(h / 24)} days ago`;
 };
 
-export function PageHead({ title, sub, actions }: { title: string; sub?: string; actions?: ReactNode }) {
+export function PageHead({ title, sub, actions }: { title: string; sub?: ReactNode; actions?: ReactNode }) {
   return (
     <div className="flex flex-wrap items-end justify-between gap-3">
       <div>

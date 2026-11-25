@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Plus } from 'lucide-react';
 import { api, errorText } from '../lib/api';
-import { ALL_ROLES, type AdminRole, type City, type TeamMember } from '../lib/types';
+import { ALL_ROLES, DISPATCH_ONLY, type AdminRole, type City, type TeamMember } from '../lib/types';
 import { Button, Card, ErrorBox, Field, fmtDate, inputCls, Modal, PageHead, Switch } from '../components/ui';
 import { useMe } from './Layout';
 
@@ -18,7 +18,9 @@ const ROLE_HELP: Record<AdminRole, string> = {
   SALES_AGENT: 'No console access yet',
   AUDITOR: 'View; audit log',
   ACCOUNT_MANAGER: 'Mobile view of assigned stores only: health, churn risk, calls, tasks; can adjust prep time',
+  DISPATCHER: 'City dispatcher: only Driver assignment, only for the cities ticked below (assign, change, remove drivers)',
 };
+const roleName = (r: AdminRole) => (r === 'DISPATCHER' ? 'city dispatcher' : r.replace(/_/g, ' ').toLowerCase());
 const SENIOR: AdminRole[] = ['FOUNDER', 'HEAD_OF_OPS'];
 
 // Admin team: who can use the console, with what role and in which cities.
@@ -70,7 +72,7 @@ export default function Team() {
                       <span className="text-xs text-ink-3">{m.phone}</span>
                     </td>
                     <td className="py-3">
-                      <b>{m.role.replace(/_/g, ' ').toLowerCase()}</b>
+                      <b>{roleName(m.role)}</b>
                       <span className="block text-xs text-ink-3">{ROLE_HELP[m.role]}</span>
                     </td>
                     <td className="py-3">{m.cities.length ? m.cities.join(', ') : 'All cities'}</td>
@@ -112,6 +114,7 @@ function AdminForm({ member, cities, roles, onClose }: { member: TeamMember | nu
     onSuccess: () => (qc.invalidateQueries({ queryKey: ['team'] }), onClose()),
   });
   const flip = (id: string) => setCityIds((c) => (c.includes(id) ? c.filter((x) => x !== id) : [...c, id]));
+  const cityBound = DISPATCH_ONLY.includes(role);
 
   return (
     <Modal title={member ? `Edit ${member.fullName ?? member.phone}` : 'Add admin'} onClose={onClose}>
@@ -130,16 +133,18 @@ function AdminForm({ member, cities, roles, onClose }: { member: TeamMember | nu
           <select className={inputCls} value={role} onChange={(e) => setRole(e.target.value as AdminRole)}>
             {roles.map((r) => (
               <option key={r} value={r}>
-                {r.replace(/_/g, ' ').toLowerCase()}
+                {roleName(r)}
               </option>
             ))}
           </select>
         </Field>
         <div>
-          <p className="text-sm font-bold">Cities</p>
-          <p className="text-xs text-ink-3">Leave all unticked for access to every city.</p>
+          <p className="text-sm font-bold">Cities{cityBound && <span className="text-dz-red"> *</span>}</p>
+          <p className={`text-xs ${cityBound && !cityIds.length ? 'font-semibold text-dz-red' : 'text-ink-3'}`}>
+            {cityBound ? 'Tick the city (or cities) this dispatcher works for. They will only see these cities.' : 'Leave all unticked for access to every city.'}
+          </p>
           <div className="mt-2 flex flex-wrap gap-2">
-            {cities.map((c) => (
+            {cities.filter((c) => c.isActive || cityIds.includes(c.id)).map((c) => (
               <label key={c.id} className={`flex cursor-pointer items-center gap-2 rounded-full border-[1.5px] px-3 py-1.5 text-sm font-semibold ${cityIds.includes(c.id) ? 'border-black bg-dz-yellow-soft' : 'border-line'}`}>
                 <input type="checkbox" checked={cityIds.includes(c.id)} onChange={() => flip(c.id)} className="accent-[var(--color-dz-red)]" />
                 {c.name}
@@ -152,7 +157,7 @@ function AdminForm({ member, cities, roles, onClose }: { member: TeamMember | nu
           <Button variant="outline" onClick={onClose}>
             Cancel
           </Button>
-          <Button disabled={save.isPending || (!member && (!phone.trim() || name.trim().length < 2))} onClick={() => save.mutate()}>
+          <Button disabled={save.isPending || (cityBound && !cityIds.length) || (!member && (!phone.trim() || name.trim().length < 2))} onClick={() => save.mutate()} data-save-admin>
             {save.isPending ? 'Saving…' : member ? 'Save' : 'Add admin'}
           </Button>
         </div>

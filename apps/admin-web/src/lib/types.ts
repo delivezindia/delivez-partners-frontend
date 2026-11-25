@@ -1,4 +1,4 @@
-export type AdminRole = 'FOUNDER' | 'HEAD_OF_OPS' | 'REGIONAL_HEAD' | 'CITY_OPS' | 'COMPLIANCE' | 'FINANCE' | 'LEGAL' | 'SUPPORT' | 'SALES_AGENT' | 'AUDITOR' | 'ACCOUNT_MANAGER';
+export type AdminRole = 'FOUNDER' | 'HEAD_OF_OPS' | 'REGIONAL_HEAD' | 'CITY_OPS' | 'COMPLIANCE' | 'FINANCE' | 'LEGAL' | 'SUPPORT' | 'SALES_AGENT' | 'AUDITOR' | 'ACCOUNT_MANAGER' | 'DISPATCHER';
 export type StoreStatus = 'DRAFT' | 'SUBMITTED' | 'UNDER_REVIEW' | 'LIVE' | 'LIMITED' | 'PAUSED' | 'SUSPENDED' | 'REJECTED' | 'CLOSED';
 export type DocStatus = 'PENDING' | 'UNDER_REVIEW' | 'VERIFIED' | 'REJECTED' | 'EXPIRED';
 
@@ -20,9 +20,15 @@ export const CAN = {
   audit: ['FOUNDER', 'HEAD_OF_OPS', 'COMPLIANCE', 'LEGAL', 'AUDITOR'] as AdminRole[],
   /** Cancel orders (mirrors ORDER_OPS on the API). */
   orderOps: ['FOUNDER', 'HEAD_OF_OPS', 'REGIONAL_HEAD', 'CITY_OPS', 'SUPPORT'] as AdminRole[],
+  /** Review, approve and suspend riders (mirrors MANAGE_RIDERS on the API). */
+  riders: ['FOUNDER', 'HEAD_OF_OPS', 'REGIONAL_HEAD', 'CITY_OPS', 'COMPLIANCE'] as AdminRole[],
+  /** Assign / change / remove drivers (mirrors DISPATCH on the API). */
+  dispatch: ['FOUNDER', 'HEAD_OF_OPS', 'REGIONAL_HEAD', 'CITY_OPS', 'DISPATCHER'] as AdminRole[],
 };
 export const can = (role: AdminRole | undefined, list: AdminRole[]) => !!role && list.includes(role);
-export const ALL_ROLES: AdminRole[] = ['FOUNDER', 'HEAD_OF_OPS', 'REGIONAL_HEAD', 'CITY_OPS', 'COMPLIANCE', 'FINANCE', 'LEGAL', 'SUPPORT', 'SALES_AGENT', 'AUDITOR', 'ACCOUNT_MANAGER'];
+export const ALL_ROLES: AdminRole[] = ['FOUNDER', 'HEAD_OF_OPS', 'REGIONAL_HEAD', 'CITY_OPS', 'DISPATCHER', 'COMPLIANCE', 'FINANCE', 'LEGAL', 'SUPPORT', 'SALES_AGENT', 'AUDITOR', 'ACCOUNT_MANAGER'];
+/** City dispatchers only get the Driver assignment screen, and must be given at least one city. */
+export const DISPATCH_ONLY: AdminRole[] = ['DISPATCHER'];
 
 export interface AdminMe {
   user: { id: string; phone: string; fullName: string | null };
