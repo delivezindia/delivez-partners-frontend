@@ -1,0 +1,1672 @@
+{
+  "info": {
+    "name": "Delivez — Rider: live on production (Food, Pharmacy, Grocery)",
+    "_postman_id": "e4b9c1f3-6d2a-4f8e-a1c7-3b5d9e2f7a41",
+    "description": "Only the rider APIs that are **deployed on https://dispatch.delivez.com today** (checked 2026-11-28), for the finished Delivez Now modules:\n- **Food Delivery** (shops with vertical `EAT`, rider module `food`)\n- **Pharmacy** and **Grocery Delivery** (vertical `PHARMACY` / `GROCERY`, rider module `quickCommerce`)\n\nSign-up is in *Delivez — Driver (Rider) Registration*. The rider must be **approved** for the module.\n\n1. Production environment → set `riderPhone` → *1. Sign-in* (SMS code into `otpCode`).\n2. *2. Online & GPS* → Go online, GPS ping.\n3. Open the module folder: Current offer → Accept → steps. At the shop show `handover.code`; the **shop** enters it (= picked up). At the door put the customer's code in `deliveryCode`.\n\nComing with the next server update (in *Delivez — Rider App (work)*): item check, delivery photos, contactless / safe drop, Food packaging check and \"food is late\", UPI collection, history, earnings, attendance, company vehicles.\n\n⚠ Production: real SMS, real orders. Use a test rider.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{riderToken}}",
+        "type": "string"
+      }
+    ]
+  },
+  "variable": [
+    {
+      "key": "requestId",
+      "value": ""
+    },
+    {
+      "key": "otpCode",
+      "value": ""
+    },
+    {
+      "key": "riderToken",
+      "value": ""
+    },
+    {
+      "key": "riderRefreshToken",
+      "value": ""
+    },
+    {
+      "key": "adminRequestId",
+      "value": ""
+    },
+    {
+      "key": "adminOtpCode",
+      "value": ""
+    },
+    {
+      "key": "adminToken",
+      "value": ""
+    },
+    {
+      "key": "now",
+      "value": ""
+    },
+    {
+      "key": "uploadUrl",
+      "value": ""
+    },
+    {
+      "key": "selfieKey",
+      "value": ""
+    },
+    {
+      "key": "vehiclePhotoKey",
+      "value": ""
+    },
+    {
+      "key": "proofKey",
+      "value": ""
+    },
+    {
+      "key": "vehicleId",
+      "value": ""
+    },
+    {
+      "key": "vehicleCheckIds",
+      "value": ""
+    },
+    {
+      "key": "vehicleReturnCheckIds",
+      "value": ""
+    },
+    {
+      "key": "vehicleCheckIdsJson",
+      "value": ""
+    },
+    {
+      "key": "vehicleReturnCheckIdsJson",
+      "value": ""
+    },
+    {
+      "key": "shiftId",
+      "value": ""
+    },
+    {
+      "key": "offerId",
+      "value": ""
+    },
+    {
+      "key": "taskId",
+      "value": ""
+    },
+    {
+      "key": "taskLines",
+      "value": ""
+    },
+    {
+      "key": "itemsJson",
+      "value": ""
+    }
+  ],
+  "item": [
+    {
+      "name": "0. Server",
+      "description": "Is the API up?",
+      "item": [
+        {
+          "name": "Health",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status 200/201', () => pm.expect(pm.response.code).to.be.oneOf([200,201]));",
+                  "pm.test('database up', () => pm.expect(pm.response.json().db).to.eql('up'));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Idempotency-Key",
+                "value": "{{$guid}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/v1/health",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "v1",
+                "health"
+              ]
+            },
+            "auth": {
+              "type": "noauth"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "1. Sign-in",
+      "description": "Same as registration, `app: \"RIDER\"`. `GET /rider/me` → `next: HOME` = approved.",
+      "item": [
+        {
+          "name": "Send OTP",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status 200/201', () => pm.expect(pm.response.code).to.be.oneOf([200,201]));",
+                  "const j = pm.response.json();",
+                  "pm.collectionVariables.set('requestId', j.requestId);",
+                  "// Test servers only: the code is in the reply. On production it comes by SMS: put it in otpCode.",
+                  "if (j.devCode) pm.collectionVariables.set('otpCode', j.devCode);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Idempotency-Key",
+                "value": "{{$guid}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"phone\": \"{{riderPhone}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/v1/auth/otp/request",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "v1",
+                "auth",
+                "otp",
+                "request"
+              ]
+            },
+            "auth": {
+              "type": "noauth"
+            }
+          }
+        },
+        {
+          "name": "Verify OTP (RIDER)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status 200/201', () => pm.expect(pm.response.code).to.be.oneOf([200,201]));",
+                  "const j = pm.response.json();",
+                  "pm.collectionVariables.set('riderToken', j.accessToken);",
+                  "pm.collectionVariables.set('riderRefreshToken', j.refreshToken);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Idempotency-Key",
+                "value": "{{$guid}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"requestId\": \"{{requestId}}\",\n  \"code\": \"{{otpCode}}\",\n  \"app\": \"RIDER\",\n  \"device\": {\n    \"platform\": \"android\",\n    \"app\": \"delivez-agent\",\n    \"deviceId\": \"{{deviceId}}\"\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/v1/auth/otp/verify",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "v1",
+                "auth",
+                "otp",
+                "verify"
+              ]
+            },
+            "auth": {
+              "type": "noauth"
+            }
+          }
+        },
+        {
+          "name": "Who am I (GET /rider/me)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status 200/201', () => pm.expect(pm.response.code).to.be.oneOf([200,201]));",
+                  "pm.test('approved rider', () => pm.expect(pm.response.json().next).to.eql('HOME'));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Idempotency-Key",
+                "value": "{{$guid}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/v1/rider/me",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "v1",
+                "rider",
+                "me"
+              ]
+            },
+            "description": "`next = HOME` means approved: the work screens below are open."
+          }
+        },
+        {
+          "name": "Refresh token",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status 200/201', () => pm.expect(pm.response.code).to.be.oneOf([200,201]));",
+                  "const j = pm.response.json();",
+                  "pm.collectionVariables.set('riderToken', j.accessToken);",
+                  "pm.collectionVariables.set('riderRefreshToken', j.refreshToken);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Idempotency-Key",
+                "value": "{{$guid}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"refreshToken\": \"{{riderRefreshToken}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/v1/auth/refresh",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "v1",
+                "auth",
+                "refresh"
+              ]
+            },
+            "description": "Access tokens last 15 min. Returns a new pair; the old refresh token stops working.",
+            "auth": {
+              "type": "noauth"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "2. Online & GPS",
+      "description": "Send a GPS ping every `gpsEverySeconds` (≈30 s) while online; without pings you stop getting jobs.",
+      "item": [
+        {
+          "name": "Duty status (why no jobs?)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status 200/201', () => pm.expect(pm.response.code).to.be.oneOf([200,201]));",
+                  "const j = pm.response.json(); console.log('online:', j.online, '· not receiving jobs because:', j.notReceivingJobsBecause, '· cash in hand:', j.cash && j.cash.inHandToday);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Idempotency-Key",
+                "value": "{{$guid}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/v1/rider/duty",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "v1",
+                "rider",
+                "duty"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Go online",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status 200/201', () => pm.expect(pm.response.code).to.be.oneOf([200,201]));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Idempotency-Key",
+                "value": "{{$guid}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"online\": true,\n  \"lat\": {{lat}},\n  \"lng\": {{lng}}\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/v1/rider/duty",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "v1",
+                "rider",
+                "duty"
+              ]
+            }
+          }
+        },
+        {
+          "name": "GPS ping (also returns the offer)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status 200/201', () => pm.expect(pm.response.code).to.be.oneOf([200,201]));",
+                  "const j = pm.response.json(); if (j.offer) { pm.collectionVariables.set('offerId', j.offer.id); console.log('offer', j.offer.id, j.offer.secondsLeft + 's left'); }"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Idempotency-Key",
+                "value": "{{$guid}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"lat\": {{lat}},\n  \"lng\": {{lng}},\n  \"accuracyM\": 15\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/v1/rider/location",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "v1",
+                "rider",
+                "location"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Go offline",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status 200/201', () => pm.expect(pm.response.code).to.be.oneOf([200,201]));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Idempotency-Key",
+                "value": "{{$guid}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"online\": false\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/v1/rider/duty",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "v1",
+                "rider",
+                "duty"
+              ]
+            },
+            "description": "Refused while carrying an order."
+          }
+        }
+      ]
+    },
+    {
+      "name": "3. Food Delivery",
+      "description": "Restaurants (`vertical: \"EAT\"`). If you arrive before the food is ready the task shows `WAITING_AT_PICKUP`; wait for the counter.",
+      "item": [
+        {
+          "name": "Current offer",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status 200/201', () => pm.expect(pm.response.code).to.be.oneOf([200,201]));",
+                  "const o = pm.response.json().offer; if (o) { pm.collectionVariables.set('offerId', o.id); console.log(o.vertical, o.pickup.name, '→', o.drop.area, '·', o.secondsLeft + 's left'); } else console.log('no offer right now');"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Idempotency-Key",
+                "value": "{{$guid}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/v1/rider/offers/current",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "v1",
+                "rider",
+                "offers",
+                "current"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Accept offer",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status 200/201', () => pm.expect(pm.response.code).to.be.oneOf([200,201]));",
+                  "const j = pm.response.json();",
+                  "const t = j.task || j;",
+                  "if (t && t.id) { pm.collectionVariables.set('taskId', t.id); pm.collectionVariables.set('taskLines', JSON.stringify((t.items || []).filter((i) => !i.outOfStock).map((i) => i.lineId))); }",
+                  "if (t && t.next) console.log('next steps allowed:', t.next.join(', '));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Idempotency-Key",
+                "value": "{{$guid}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/v1/rider/offers/{{offerId}}/accept",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "v1",
+                "rider",
+                "offers",
+                "{{offerId}}",
+                "accept"
+              ]
+            },
+            "description": "Returns the task. `409 OFFER_EXPIRED` / `OFFER_GONE` / `RIDER_AT_CAPACITY`."
+          }
+        },
+        {
+          "name": "Decline offer",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status 200/201', () => pm.expect(pm.response.code).to.be.oneOf([200,201]));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Idempotency-Key",
+                "value": "{{$guid}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"reason\": \"TOO_FAR\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/v1/rider/offers/{{offerId}}/decline",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "v1",
+                "rider",
+                "offers",
+                "{{offerId}}",
+                "decline"
+              ]
+            },
+            "description": "reason: TOO_FAR · VEHICLE_ISSUE · ON_BREAK · LOW_BATTERY · UNSAFE_AREA · OTHER"
+          }
+        },
+        {
+          "name": "Deliveries on board",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status 200/201', () => pm.expect(pm.response.code).to.be.oneOf([200,201]));",
+                  "const j = pm.response.json();",
+                  "const list = j.items || j.tasks || j;",
+                  "if (Array.isArray(list) && list[0]) { pm.collectionVariables.set('taskId', list[0].id); pm.collectionVariables.set('taskLines', JSON.stringify((list[0].items || []).filter((i) => !i.outOfStock).map((i) => i.lineId))); }"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Idempotency-Key",
+                "value": "{{$guid}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/v1/rider/tasks",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "v1",
+                "rider",
+                "tasks"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Open delivery",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status 200/201', () => pm.expect(pm.response.code).to.be.oneOf([200,201]));",
+                  "const j = pm.response.json();",
+                  "const t = j.task || j;",
+                  "if (t && t.id) { pm.collectionVariables.set('taskId', t.id); pm.collectionVariables.set('taskLines', JSON.stringify((t.items || []).filter((i) => !i.outOfStock).map((i) => i.lineId))); }",
+                  "if (t && t.next) console.log('next steps allowed:', t.next.join(', '));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Idempotency-Key",
+                "value": "{{$guid}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/v1/rider/tasks/{{taskId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "v1",
+                "rider",
+                "tasks",
+                "{{taskId}}"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Step: on the way to the shop",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status 200/201', () => pm.expect(pm.response.code).to.be.oneOf([200,201]));",
+                  "const t = pm.response.json(); if (t.next) console.log('next:', t.next.join(', '));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Idempotency-Key",
+                "value": "{{$guid}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"EN_ROUTE_TO_PICKUP\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/v1/rider/tasks/{{taskId}}/status",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "v1",
+                "rider",
+                "tasks",
+                "{{taskId}}",
+                "status"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Step: at the shop",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status 200/201', () => pm.expect(pm.response.code).to.be.oneOf([200,201]));",
+                  "const t = pm.response.json(); if (t.next) console.log('next:', t.next.join(', '));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Idempotency-Key",
+                "value": "{{$guid}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"ARRIVED_AT_PICKUP\",\n  \"lat\": {{shopLat}},\n  \"lng\": {{shopLng}}\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/v1/rider/tasks/{{taskId}}/status",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "v1",
+                "rider",
+                "tasks",
+                "{{taskId}}",
+                "status"
+              ]
+            },
+            "description": "Must be within 500 m of the shop (`409 NOT_AT_PICKUP`). Not ready yet → `WAITING_AT_PICKUP`."
+          }
+        },
+        {
+          "name": "Step: on the way to the customer (after the shop enters your handover code)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status 200/201', () => pm.expect(pm.response.code).to.be.oneOf([200,201]));",
+                  "const t = pm.response.json(); if (t.next) console.log('next:', t.next.join(', '));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Idempotency-Key",
+                "value": "{{$guid}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"EN_ROUTE_TO_DROP\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/v1/rider/tasks/{{taskId}}/status",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "v1",
+                "rider",
+                "tasks",
+                "{{taskId}}",
+                "status"
+              ]
+            },
+            "description": "Only after the shop confirmed the pickup with your handover code."
+          }
+        },
+        {
+          "name": "Step: at the customer",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status 200/201', () => pm.expect(pm.response.code).to.be.oneOf([200,201]));",
+                  "const t = pm.response.json(); if (t.next) console.log('next:', t.next.join(', '));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Idempotency-Key",
+                "value": "{{$guid}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"ARRIVED_AT_DROP\",\n  \"lat\": {{dropLat}},\n  \"lng\": {{dropLng}}\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/v1/rider/tasks/{{taskId}}/status",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "v1",
+                "rider",
+                "tasks",
+                "{{taskId}}",
+                "status"
+              ]
+            },
+            "description": "Within 500 m of the customer (`409 NOT_AT_DROP`)."
+          }
+        },
+        {
+          "name": "Delivered — prepaid (customer's delivery code)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status 200/201', () => pm.expect(pm.response.code).to.be.oneOf([200,201]));",
+                  "const t = pm.response.json(); if (t.next) console.log('next:', t.next.join(', '));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Idempotency-Key",
+                "value": "{{$guid}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"DELIVERED\",\n  \"otp\": \"{{deliveryCode}}\",\n  \"lat\": {{dropLat}},\n  \"lng\": {{dropLng}}\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/v1/rider/tasks/{{taskId}}/status",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "v1",
+                "rider",
+                "tasks",
+                "{{taskId}}",
+                "status"
+              ]
+            },
+            "description": "`otp` = the code the customer reads out (when `proof.deliveryCodeRequired`). Wrong → `422 OTP_INCORRECT` with attemptsLeft."
+          }
+        },
+        {
+          "name": "Delivered — cash collected",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status 200/201', () => pm.expect(pm.response.code).to.be.oneOf([200,201]));",
+                  "const t = pm.response.json(); if (t.next) console.log('next:', t.next.join(', '));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Idempotency-Key",
+                "value": "{{$guid}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"DELIVERED\",\n  \"otp\": \"{{deliveryCode}}\",\n  \"cashCollected\": true,\n  \"lat\": {{dropLat}},\n  \"lng\": {{dropLng}}\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/v1/rider/tasks/{{taskId}}/status",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "v1",
+                "rider",
+                "tasks",
+                "{{taskId}}",
+                "status"
+              ]
+            },
+            "description": "Collect exactly `cashToCollect`."
+          }
+        },
+        {
+          "name": "Failed delivery",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status 200/201', () => pm.expect(pm.response.code).to.be.oneOf([200,201]));",
+                  "const t = pm.response.json(); if (t.next) console.log('next:', t.next.join(', '));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Idempotency-Key",
+                "value": "{{$guid}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"FAILED\",\n  \"code\": \"FAIL_CUSTOMER_UNAVAILABLE\",\n  \"reason\": \"3 calls, gate closed\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/v1/rider/tasks/{{taskId}}/status",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "v1",
+                "rider",
+                "tasks",
+                "{{taskId}}",
+                "status"
+              ]
+            },
+            "description": "customerStatus: NOT_ANSWERING · ASKED_TO_COME_LATER · REFUSED · ADDRESS_NOT_FOUND · REACHABLE_WAITING"
+          }
+        }
+      ]
+    },
+    {
+      "name": "4. Pharmacy & Grocery (Quick Commerce)",
+      "description": "Pharmacies and grocery shops (`vertical: \"PHARMACY\"` / `\"GROCERY\"`).",
+      "item": [
+        {
+          "name": "Current offer",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status 200/201', () => pm.expect(pm.response.code).to.be.oneOf([200,201]));",
+                  "const o = pm.response.json().offer; if (o) { pm.collectionVariables.set('offerId', o.id); console.log(o.vertical, o.pickup.name, '→', o.drop.area, '·', o.secondsLeft + 's left'); } else console.log('no offer right now');"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Idempotency-Key",
+                "value": "{{$guid}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/v1/rider/offers/current",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "v1",
+                "rider",
+                "offers",
+                "current"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Accept offer",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status 200/201', () => pm.expect(pm.response.code).to.be.oneOf([200,201]));",
+                  "const j = pm.response.json();",
+                  "const t = j.task || j;",
+                  "if (t && t.id) { pm.collectionVariables.set('taskId', t.id); pm.collectionVariables.set('taskLines', JSON.stringify((t.items || []).filter((i) => !i.outOfStock).map((i) => i.lineId))); }",
+                  "if (t && t.next) console.log('next steps allowed:', t.next.join(', '));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Idempotency-Key",
+                "value": "{{$guid}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/v1/rider/offers/{{offerId}}/accept",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "v1",
+                "rider",
+                "offers",
+                "{{offerId}}",
+                "accept"
+              ]
+            },
+            "description": "Returns the task. `409 OFFER_EXPIRED` / `OFFER_GONE` / `RIDER_AT_CAPACITY`."
+          }
+        },
+        {
+          "name": "Decline offer",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status 200/201', () => pm.expect(pm.response.code).to.be.oneOf([200,201]));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Idempotency-Key",
+                "value": "{{$guid}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"reason\": \"TOO_FAR\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/v1/rider/offers/{{offerId}}/decline",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "v1",
+                "rider",
+                "offers",
+                "{{offerId}}",
+                "decline"
+              ]
+            },
+            "description": "reason: TOO_FAR · VEHICLE_ISSUE · ON_BREAK · LOW_BATTERY · UNSAFE_AREA · OTHER"
+          }
+        },
+        {
+          "name": "Deliveries on board",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status 200/201', () => pm.expect(pm.response.code).to.be.oneOf([200,201]));",
+                  "const j = pm.response.json();",
+                  "const list = j.items || j.tasks || j;",
+                  "if (Array.isArray(list) && list[0]) { pm.collectionVariables.set('taskId', list[0].id); pm.collectionVariables.set('taskLines', JSON.stringify((list[0].items || []).filter((i) => !i.outOfStock).map((i) => i.lineId))); }"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Idempotency-Key",
+                "value": "{{$guid}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/v1/rider/tasks",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "v1",
+                "rider",
+                "tasks"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Open delivery",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status 200/201', () => pm.expect(pm.response.code).to.be.oneOf([200,201]));",
+                  "const j = pm.response.json();",
+                  "const t = j.task || j;",
+                  "if (t && t.id) { pm.collectionVariables.set('taskId', t.id); pm.collectionVariables.set('taskLines', JSON.stringify((t.items || []).filter((i) => !i.outOfStock).map((i) => i.lineId))); }",
+                  "if (t && t.next) console.log('next steps allowed:', t.next.join(', '));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Idempotency-Key",
+                "value": "{{$guid}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/v1/rider/tasks/{{taskId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "v1",
+                "rider",
+                "tasks",
+                "{{taskId}}"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Step: on the way to the shop",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status 200/201', () => pm.expect(pm.response.code).to.be.oneOf([200,201]));",
+                  "const t = pm.response.json(); if (t.next) console.log('next:', t.next.join(', '));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Idempotency-Key",
+                "value": "{{$guid}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"EN_ROUTE_TO_PICKUP\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/v1/rider/tasks/{{taskId}}/status",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "v1",
+                "rider",
+                "tasks",
+                "{{taskId}}",
+                "status"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Step: at the shop",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status 200/201', () => pm.expect(pm.response.code).to.be.oneOf([200,201]));",
+                  "const t = pm.response.json(); if (t.next) console.log('next:', t.next.join(', '));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Idempotency-Key",
+                "value": "{{$guid}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"ARRIVED_AT_PICKUP\",\n  \"lat\": {{shopLat}},\n  \"lng\": {{shopLng}}\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/v1/rider/tasks/{{taskId}}/status",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "v1",
+                "rider",
+                "tasks",
+                "{{taskId}}",
+                "status"
+              ]
+            },
+            "description": "Must be within 500 m of the shop (`409 NOT_AT_PICKUP`). Not ready yet → `WAITING_AT_PICKUP`."
+          }
+        },
+        {
+          "name": "Step: on the way to the customer (after the shop enters your handover code)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status 200/201', () => pm.expect(pm.response.code).to.be.oneOf([200,201]));",
+                  "const t = pm.response.json(); if (t.next) console.log('next:', t.next.join(', '));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Idempotency-Key",
+                "value": "{{$guid}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"EN_ROUTE_TO_DROP\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/v1/rider/tasks/{{taskId}}/status",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "v1",
+                "rider",
+                "tasks",
+                "{{taskId}}",
+                "status"
+              ]
+            },
+            "description": "Only after the shop confirmed the pickup with your handover code."
+          }
+        },
+        {
+          "name": "Step: at the customer",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status 200/201', () => pm.expect(pm.response.code).to.be.oneOf([200,201]));",
+                  "const t = pm.response.json(); if (t.next) console.log('next:', t.next.join(', '));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Idempotency-Key",
+                "value": "{{$guid}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"ARRIVED_AT_DROP\",\n  \"lat\": {{dropLat}},\n  \"lng\": {{dropLng}}\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/v1/rider/tasks/{{taskId}}/status",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "v1",
+                "rider",
+                "tasks",
+                "{{taskId}}",
+                "status"
+              ]
+            },
+            "description": "Within 500 m of the customer (`409 NOT_AT_DROP`)."
+          }
+        },
+        {
+          "name": "Delivered — prepaid (customer's delivery code)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status 200/201', () => pm.expect(pm.response.code).to.be.oneOf([200,201]));",
+                  "const t = pm.response.json(); if (t.next) console.log('next:', t.next.join(', '));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Idempotency-Key",
+                "value": "{{$guid}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"DELIVERED\",\n  \"otp\": \"{{deliveryCode}}\",\n  \"lat\": {{dropLat}},\n  \"lng\": {{dropLng}}\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/v1/rider/tasks/{{taskId}}/status",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "v1",
+                "rider",
+                "tasks",
+                "{{taskId}}",
+                "status"
+              ]
+            },
+            "description": "`otp` = the code the customer reads out (when `proof.deliveryCodeRequired`). Wrong → `422 OTP_INCORRECT` with attemptsLeft."
+          }
+        },
+        {
+          "name": "Delivered — cash collected",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status 200/201', () => pm.expect(pm.response.code).to.be.oneOf([200,201]));",
+                  "const t = pm.response.json(); if (t.next) console.log('next:', t.next.join(', '));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Idempotency-Key",
+                "value": "{{$guid}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"DELIVERED\",\n  \"otp\": \"{{deliveryCode}}\",\n  \"cashCollected\": true,\n  \"lat\": {{dropLat}},\n  \"lng\": {{dropLng}}\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/v1/rider/tasks/{{taskId}}/status",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "v1",
+                "rider",
+                "tasks",
+                "{{taskId}}",
+                "status"
+              ]
+            },
+            "description": "Collect exactly `cashToCollect`."
+          }
+        },
+        {
+          "name": "Failed delivery",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status 200/201', () => pm.expect(pm.response.code).to.be.oneOf([200,201]));",
+                  "const t = pm.response.json(); if (t.next) console.log('next:', t.next.join(', '));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Idempotency-Key",
+                "value": "{{$guid}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"FAILED\",\n  \"code\": \"FAIL_CUSTOMER_UNAVAILABLE\",\n  \"reason\": \"3 calls, gate closed\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/v1/rider/tasks/{{taskId}}/status",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "v1",
+                "rider",
+                "tasks",
+                "{{taskId}}",
+                "status"
+              ]
+            },
+            "description": "customerStatus: NOT_ANSWERING · ASKED_TO_COME_LATER · REFUSED · ADDRESS_NOT_FOUND · REACHABLE_WAITING"
+          }
+        }
+      ]
+    }
+  ]
+}

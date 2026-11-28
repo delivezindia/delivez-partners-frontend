@@ -1,6 +1,6 @@
 # Delivez Core API — full reference
 
-Version 0.1.0 · 299 endpoints · generated from the live Swagger spec (`/docs-json`). Base URL: `https://partners.api.delivez.com` (local: `http://localhost:4000`).
+Version 0.1.0 · 329 endpoints · generated from the live Swagger spec (`/docs-json`). Base URL: `https://partners.api.delivez.com` (local: `http://localhost:4000`).
 
 One backend for the Partners app, the customer app (Local), the admin console, hub management and the rider app.
 
@@ -13,7 +13,7 @@ Interactive version: `/docs` on the API (password protected on servers). Import 
 
 ## Sections
 
-- [admin](#admin) (73)
+- [admin](#admin) (81)
 - [auth](#auth) (5)
 - [i18n](#i18n) (3)
 - [health](#health) (1)
@@ -27,7 +27,7 @@ Interactive version: `/docs` on the API (password protected on servers). Import 
 - [orders](#orders) (16)
 - [reports](#reports) (4)
 - [admin · driver assignment](#admin-driver-assignment) (10)
-- [rider · work](#rider-work) (9)
+- [rider · work](#rider-work) (15)
 - [local](#local) (38)
 - [lab-bookings](#lab-bookings) (20)
 - [pharmacy](#pharmacy) (9)
@@ -37,6 +37,8 @@ Interactive version: `/docs` on the API (password protected on servers). Import 
 - [PaymentsWebhook](#paymentswebhook) (1)
 - [rider](#rider) (10)
 - [admin · riders](#admin-riders) (10)
+- [rider · attendance](#rider-attendance) (8)
+- [admin · fleet & attendance](#admin-fleet-attendance) (8)
 
 ## admin
 
@@ -44,7 +46,7 @@ Interactive version: `/docs` on the API (password protected on servers). Import 
 
 **List**
 
-**Access:** Bearer token from the ADMIN app · admin roles: FOUNDER, HEAD_OF_OPS, REGIONAL_HEAD, CITY_OPS, COMPLIANCE, FINANCE, LEGAL, SUPPORT, AUDITOR.
+**Access:** Bearer token from the ADMIN app · admin roles: FOUNDER, HEAD_OF_OPS, REGIONAL_HEAD, CITY_OPS, COMPLIANCE, FINANCE, LEGAL, SUPPORT, AUDITOR, ZONE_HEAD, STATE_HEAD, DISTRICT_MANAGER, AREA_MANAGER, PINCODE_EXECUTIVE.
 
 | Parameter | In | Type | Required | Notes |
 |---|---|---|---|---|
@@ -62,7 +64,7 @@ Interactive version: `/docs` on the API (password protected on servers). Import 
 
 **Me**
 
-**Access:** Bearer token from the ADMIN app · admin roles: FOUNDER, HEAD_OF_OPS, REGIONAL_HEAD, CITY_OPS, COMPLIANCE, FINANCE, LEGAL, SUPPORT, AUDITOR, ACCOUNT_MANAGER, DISPATCHER.
+**Access:** Bearer token from the ADMIN app · admin roles: FOUNDER, HEAD_OF_OPS, REGIONAL_HEAD, CITY_OPS, COMPLIANCE, FINANCE, LEGAL, SUPPORT, AUDITOR, ZONE_HEAD, STATE_HEAD, DISTRICT_MANAGER, AREA_MANAGER, PINCODE_EXECUTIVE, ACCOUNT_MANAGER, DISPATCHER.
 
 ### `GET /v1/admin/onboarding/pipeline`
 
@@ -112,7 +114,7 @@ Interactive version: `/docs` on the API (password protected on servers). Import 
 
 **Verify**
 
-**Access:** Bearer token from the ADMIN app · admin roles: FOUNDER, HEAD_OF_OPS, COMPLIANCE.
+**Access:** Bearer token from the ADMIN app · admin roles: FOUNDER, HEAD_OF_OPS, COMPLIANCE, ZONE_HEAD, STATE_HEAD.
 
 | Parameter | In | Type | Required | Notes |
 |---|---|---|---|---|
@@ -129,7 +131,7 @@ Interactive version: `/docs` on the API (password protected on servers). Import 
 
 **Reject**
 
-**Access:** Bearer token from the ADMIN app · admin roles: FOUNDER, HEAD_OF_OPS, COMPLIANCE.
+**Access:** Bearer token from the ADMIN app · admin roles: FOUNDER, HEAD_OF_OPS, COMPLIANCE, ZONE_HEAD, STATE_HEAD.
 
 | Parameter | In | Type | Required | Notes |
 |---|---|---|---|---|
@@ -145,7 +147,7 @@ Interactive version: `/docs` on the API (password protected on servers). Import 
 
 **Start review**
 
-**Access:** Bearer token from the ADMIN app · admin roles: FOUNDER, HEAD_OF_OPS, REGIONAL_HEAD, CITY_OPS, COMPLIANCE.
+**Access:** Bearer token from the ADMIN app · admin roles: FOUNDER, HEAD_OF_OPS, REGIONAL_HEAD, CITY_OPS, COMPLIANCE, ZONE_HEAD, STATE_HEAD, DISTRICT_MANAGER.
 
 | Parameter | In | Type | Required | Notes |
 |---|---|---|---|---|
@@ -155,7 +157,7 @@ Interactive version: `/docs` on the API (password protected on servers). Import 
 
 **Approve live**
 
-**Access:** Bearer token from the ADMIN app · admin roles: FOUNDER, HEAD_OF_OPS, REGIONAL_HEAD, CITY_OPS, COMPLIANCE.
+**Access:** Bearer token from the ADMIN app · admin roles: FOUNDER, HEAD_OF_OPS, REGIONAL_HEAD, CITY_OPS, COMPLIANCE, ZONE_HEAD, STATE_HEAD, DISTRICT_MANAGER.
 
 | Parameter | In | Type | Required | Notes |
 |---|---|---|---|---|
@@ -171,7 +173,7 @@ Interactive version: `/docs` on the API (password protected on servers). Import 
 
 **Approve limited**
 
-**Access:** Bearer token from the ADMIN app · admin roles: FOUNDER, HEAD_OF_OPS, REGIONAL_HEAD, CITY_OPS, COMPLIANCE.
+**Access:** Bearer token from the ADMIN app · admin roles: FOUNDER, HEAD_OF_OPS, REGIONAL_HEAD, CITY_OPS, COMPLIANCE, ZONE_HEAD, STATE_HEAD, DISTRICT_MANAGER.
 
 | Parameter | In | Type | Required | Notes |
 |---|---|---|---|---|
@@ -187,7 +189,7 @@ Interactive version: `/docs` on the API (password protected on servers). Import 
 
 **Request changes**
 
-**Access:** Bearer token from the ADMIN app · admin roles: FOUNDER, HEAD_OF_OPS, REGIONAL_HEAD, CITY_OPS, COMPLIANCE.
+**Access:** Bearer token from the ADMIN app · admin roles: FOUNDER, HEAD_OF_OPS, REGIONAL_HEAD, CITY_OPS, COMPLIANCE, ZONE_HEAD, STATE_HEAD, DISTRICT_MANAGER.
 
 | Parameter | In | Type | Required | Notes |
 |---|---|---|---|---|
@@ -203,7 +205,7 @@ Interactive version: `/docs` on the API (password protected on servers). Import 
 
 **Reject store**
 
-**Access:** Bearer token from the ADMIN app · admin roles: FOUNDER, HEAD_OF_OPS, REGIONAL_HEAD, CITY_OPS, COMPLIANCE.
+**Access:** Bearer token from the ADMIN app · admin roles: FOUNDER, HEAD_OF_OPS, REGIONAL_HEAD, CITY_OPS, COMPLIANCE, ZONE_HEAD, STATE_HEAD, DISTRICT_MANAGER.
 
 | Parameter | In | Type | Required | Notes |
 |---|---|---|---|---|
@@ -219,7 +221,7 @@ Interactive version: `/docs` on the API (password protected on servers). Import 
 
 **Suspend**
 
-**Access:** Bearer token from the ADMIN app · admin roles: FOUNDER, HEAD_OF_OPS, REGIONAL_HEAD, COMPLIANCE.
+**Access:** Bearer token from the ADMIN app · admin roles: FOUNDER, HEAD_OF_OPS, REGIONAL_HEAD, COMPLIANCE, ZONE_HEAD, STATE_HEAD.
 
 | Parameter | In | Type | Required | Notes |
 |---|---|---|---|---|
@@ -235,7 +237,7 @@ Interactive version: `/docs` on the API (password protected on servers). Import 
 
 **Reinstate**
 
-**Access:** Bearer token from the ADMIN app · admin roles: FOUNDER, HEAD_OF_OPS, REGIONAL_HEAD.
+**Access:** Bearer token from the ADMIN app · admin roles: FOUNDER, HEAD_OF_OPS, REGIONAL_HEAD, ZONE_HEAD.
 
 | Parameter | In | Type | Required | Notes |
 |---|---|---|---|---|
@@ -251,7 +253,7 @@ Interactive version: `/docs` on the API (password protected on servers). Import 
 
 **Pause**
 
-**Access:** Bearer token from the ADMIN app · admin roles: FOUNDER, HEAD_OF_OPS, REGIONAL_HEAD, CITY_OPS.
+**Access:** Bearer token from the ADMIN app · admin roles: FOUNDER, HEAD_OF_OPS, REGIONAL_HEAD, CITY_OPS, ZONE_HEAD, STATE_HEAD, DISTRICT_MANAGER, AREA_MANAGER, PINCODE_EXECUTIVE.
 
 | Parameter | In | Type | Required | Notes |
 |---|---|---|---|---|
@@ -267,7 +269,7 @@ Interactive version: `/docs` on the API (password protected on servers). Import 
 
 **Resume**
 
-**Access:** Bearer token from the ADMIN app · admin roles: FOUNDER, HEAD_OF_OPS, REGIONAL_HEAD, CITY_OPS.
+**Access:** Bearer token from the ADMIN app · admin roles: FOUNDER, HEAD_OF_OPS, REGIONAL_HEAD, CITY_OPS, ZONE_HEAD, STATE_HEAD, DISTRICT_MANAGER, AREA_MANAGER, PINCODE_EXECUTIVE.
 
 | Parameter | In | Type | Required | Notes |
 |---|---|---|---|---|
@@ -283,7 +285,7 @@ Interactive version: `/docs` on the API (password protected on servers). Import 
 
 **Notice**
 
-**Access:** Bearer token from the ADMIN app · admin roles: FOUNDER, HEAD_OF_OPS, REGIONAL_HEAD, CITY_OPS.
+**Access:** Bearer token from the ADMIN app · admin roles: FOUNDER, HEAD_OF_OPS, REGIONAL_HEAD, CITY_OPS, ZONE_HEAD, STATE_HEAD, DISTRICT_MANAGER, AREA_MANAGER, PINCODE_EXECUTIVE.
 
 | Parameter | In | Type | Required | Notes |
 |---|---|---|---|---|
@@ -299,7 +301,7 @@ Interactive version: `/docs` on the API (password protected on servers). Import 
 
 **Member access**
 
-**Access:** Bearer token from the ADMIN app · admin roles: FOUNDER, HEAD_OF_OPS, REGIONAL_HEAD, CITY_OPS, SUPPORT.
+**Access:** Bearer token from the ADMIN app · admin roles: FOUNDER, HEAD_OF_OPS, REGIONAL_HEAD, CITY_OPS, SUPPORT, ZONE_HEAD, STATE_HEAD, DISTRICT_MANAGER, AREA_MANAGER.
 
 | Parameter | In | Type | Required | Notes |
 |---|---|---|---|---|
@@ -317,13 +319,13 @@ Interactive version: `/docs` on the API (password protected on servers). Import 
 
 **Team**
 
-**Access:** Bearer token from the ADMIN app · admin roles: FOUNDER, HEAD_OF_OPS.
+**Access:** Bearer token from the ADMIN app · admin roles: FOUNDER, HEAD_OF_OPS, ZONE_HEAD, STATE_HEAD, DISTRICT_MANAGER, AREA_MANAGER.
 
 ### `POST /v1/admin/team`
 
 **Add admin**
 
-**Access:** Bearer token from the ADMIN app · admin roles: FOUNDER, HEAD_OF_OPS.
+**Access:** Bearer token from the ADMIN app · admin roles: FOUNDER, HEAD_OF_OPS, ZONE_HEAD, STATE_HEAD, DISTRICT_MANAGER, AREA_MANAGER.
 
 **Body**
 
@@ -331,14 +333,16 @@ Interactive version: `/docs` on the API (password protected on servers). Import 
 |---|---|---|---|
 | `phone` | string | yes |  |
 | `fullName` | string | yes | min 2 chars, max 80 chars |
-| `role` | `FOUNDER` \| `HEAD_OF_OPS` \| `REGIONAL_HEAD` \| `CITY_OPS` \| `COMPLIANCE` \| `FINANCE` \| `LEGAL` \| `SUPPORT` \| `SALES_AGENT` \| `AUDITOR` \| `ACCOUNT_MANAGER` \| `DISPATCHER` | yes |  |
-| `cityIds` | string (uuid)[] |  | at most 50 items, default `[]` |
+| `role` | `FOUNDER` \| `HEAD_OF_OPS` \| `REGIONAL_HEAD` \| `CITY_OPS` \| `COMPLIANCE` \| `FINANCE` \| `LEGAL` \| `SUPPORT` \| `SALES_AGENT` \| `AUDITOR` \| `ACCOUNT_MANAGER` \| `DISPATCHER` \| `ZONE_HEAD` \| `STATE_HEAD` \| `DISTRICT_MANAGER` \| `AREA_MANAGER` \| `PINCODE_EXECUTIVE` | yes |  |
+| `scopeLevel` | `NATIONAL` \| `ZONE` \| `STATE` \| `DISTRICT` \| `CITY` \| `AREA` \| `PINCODE` |  |  |
+| `scopeIds` | string[] |  | at most 100 items |
+| `cityIds` | string (uuid)[] |  | at most 50 items |
 
 ### `PATCH /v1/admin/team/{id}`
 
 **Update admin**
 
-**Access:** Bearer token from the ADMIN app · admin roles: FOUNDER, HEAD_OF_OPS.
+**Access:** Bearer token from the ADMIN app · admin roles: FOUNDER, HEAD_OF_OPS, ZONE_HEAD, STATE_HEAD, DISTRICT_MANAGER, AREA_MANAGER.
 
 | Parameter | In | Type | Required | Notes |
 |---|---|---|---|---|
@@ -348,7 +352,9 @@ Interactive version: `/docs` on the API (password protected on servers). Import 
 
 | Field | Type | Required | Rules |
 |---|---|---|---|
-| `role` | `FOUNDER` \| `HEAD_OF_OPS` \| `REGIONAL_HEAD` \| `CITY_OPS` \| `COMPLIANCE` \| `FINANCE` \| `LEGAL` \| `SUPPORT` \| `SALES_AGENT` \| `AUDITOR` \| `ACCOUNT_MANAGER` \| `DISPATCHER` |  |  |
+| `role` | `FOUNDER` \| `HEAD_OF_OPS` \| `REGIONAL_HEAD` \| `CITY_OPS` \| `COMPLIANCE` \| `FINANCE` \| `LEGAL` \| `SUPPORT` \| `SALES_AGENT` \| `AUDITOR` \| `ACCOUNT_MANAGER` \| `DISPATCHER` \| `ZONE_HEAD` \| `STATE_HEAD` \| `DISTRICT_MANAGER` \| `AREA_MANAGER` \| `PINCODE_EXECUTIVE` |  |  |
+| `scopeLevel` | `NATIONAL` \| `ZONE` \| `STATE` \| `DISTRICT` \| `CITY` \| `AREA` \| `PINCODE` |  |  |
+| `scopeIds` | string[] |  | at most 100 items |
 | `cityIds` | string (uuid)[] |  | at most 50 items |
 | `isActive` | boolean |  |  |
 
@@ -362,14 +368,15 @@ Interactive version: `/docs` on the API (password protected on servers). Import 
 
 **Add city**
 
-**Access:** Bearer token from the ADMIN app · admin roles: FOUNDER, HEAD_OF_OPS, REGIONAL_HEAD.
+**Access:** Bearer token from the ADMIN app · admin roles: FOUNDER, HEAD_OF_OPS, REGIONAL_HEAD, ZONE_HEAD, STATE_HEAD, DISTRICT_MANAGER, AREA_MANAGER.
 
 **Body**
 
 | Field | Type | Required | Rules |
 |---|---|---|---|
 | `name` | string | yes | min 2 chars, max 60 chars |
-| `state` | string | yes | min 2 chars, max 60 chars |
+| `state` | string |  | min 2 chars, max 60 chars |
+| `districtId` | string (uuid) |  |  |
 | `centerLat` | number | yes | ≥ 6, ≤ 37 |
 | `centerLng` | number | yes | ≥ 68, ≤ 98 |
 
@@ -377,7 +384,7 @@ Interactive version: `/docs` on the API (password protected on servers). Import 
 
 **Update city**
 
-**Access:** Bearer token from the ADMIN app · admin roles: FOUNDER, HEAD_OF_OPS, REGIONAL_HEAD.
+**Access:** Bearer token from the ADMIN app · admin roles: FOUNDER, HEAD_OF_OPS, REGIONAL_HEAD, ZONE_HEAD, STATE_HEAD, DISTRICT_MANAGER, AREA_MANAGER.
 
 | Parameter | In | Type | Required | Notes |
 |---|---|---|---|---|
@@ -390,12 +397,13 @@ Interactive version: `/docs` on the API (password protected on servers). Import 
 | `isActive` | boolean |  |  |
 | `centerLat` | number |  | ≥ 6, ≤ 37 |
 | `centerLng` | number |  | ≥ 68, ≤ 98 |
+| `districtId` | string (uuid) |  |  |
 
 ### `POST /v1/admin/cities/{id}/zones`
 
 **Add zone**
 
-**Access:** Bearer token from the ADMIN app · admin roles: FOUNDER, HEAD_OF_OPS, REGIONAL_HEAD.
+**Access:** Bearer token from the ADMIN app · admin roles: FOUNDER, HEAD_OF_OPS, REGIONAL_HEAD, ZONE_HEAD, STATE_HEAD, DISTRICT_MANAGER, AREA_MANAGER.
 
 | Parameter | In | Type | Required | Notes |
 |---|---|---|---|---|
@@ -411,7 +419,7 @@ Interactive version: `/docs` on the API (password protected on servers). Import 
 
 **Update zone**
 
-**Access:** Bearer token from the ADMIN app · admin roles: FOUNDER, HEAD_OF_OPS, REGIONAL_HEAD.
+**Access:** Bearer token from the ADMIN app · admin roles: FOUNDER, HEAD_OF_OPS, REGIONAL_HEAD, ZONE_HEAD, STATE_HEAD, DISTRICT_MANAGER, AREA_MANAGER.
 
 | Parameter | In | Type | Required | Notes |
 |---|---|---|---|---|
@@ -438,7 +446,7 @@ Interactive version: `/docs` on the API (password protected on servers). Import 
 
 **Upsert pincodes**
 
-**Access:** Bearer token from the ADMIN app · admin roles: FOUNDER, HEAD_OF_OPS, REGIONAL_HEAD.
+**Access:** Bearer token from the ADMIN app · admin roles: FOUNDER, HEAD_OF_OPS, REGIONAL_HEAD, ZONE_HEAD, STATE_HEAD, DISTRICT_MANAGER, AREA_MANAGER.
 
 | Parameter | In | Type | Required | Notes |
 |---|---|---|---|---|
@@ -505,11 +513,114 @@ Interactive version: `/docs` on the API (password protected on servers). Import 
 | `before` | query | string |  |  |
 | `limit` | query | number |  |  |
 
+### `GET /v1/admin/geo/tree`
+
+**Tree**
+
+**Access:** Bearer token from the ADMIN app · any admin role.
+
+### `GET /v1/admin/geo/permissions`
+
+**Every role, its level, what it may do and whom it may add (with what you yourself may grant).**
+
+**Access:** Bearer token from the ADMIN app · admin roles: FOUNDER, HEAD_OF_OPS, REGIONAL_HEAD, CITY_OPS, COMPLIANCE, FINANCE, LEGAL, SUPPORT, AUDITOR, ZONE_HEAD, STATE_HEAD, DISTRICT_MANAGER, AREA_MANAGER, PINCODE_EXECUTIVE, DISPATCHER.
+
+### `POST /v1/admin/geo/zones`
+
+**Add zone**
+
+**Access:** Bearer token from the ADMIN app · admin roles: FOUNDER, HEAD_OF_OPS, REGIONAL_HEAD, ZONE_HEAD, STATE_HEAD, DISTRICT_MANAGER, AREA_MANAGER.
+
+**Body**
+
+| Field | Type | Required | Rules |
+|---|---|---|---|
+| `name` | string | yes | min 2 chars, max 60 chars |
+
+### `PATCH /v1/admin/geo/zones/{id}`
+
+**Update zone**
+
+**Access:** Bearer token from the ADMIN app · admin roles: FOUNDER, HEAD_OF_OPS, REGIONAL_HEAD, ZONE_HEAD, STATE_HEAD, DISTRICT_MANAGER, AREA_MANAGER.
+
+| Parameter | In | Type | Required | Notes |
+|---|---|---|---|---|
+| `id` | path | string | yes |  |
+
+**Body**
+
+| Field | Type | Required | Rules |
+|---|---|---|---|
+| `name` | string |  | min 2 chars, max 60 chars |
+| `isActive` | boolean |  |  |
+
+### `POST /v1/admin/geo/states`
+
+**Add state**
+
+**Access:** Bearer token from the ADMIN app · admin roles: FOUNDER, HEAD_OF_OPS, REGIONAL_HEAD, ZONE_HEAD, STATE_HEAD, DISTRICT_MANAGER, AREA_MANAGER.
+
+**Body**
+
+| Field | Type | Required | Rules |
+|---|---|---|---|
+| `name` | string | yes | min 2 chars, max 60 chars |
+| `code` | string | yes | pattern `^[A-Z]{2,3}$` |
+| `regionId` | string (uuid) | yes |  |
+
+### `PATCH /v1/admin/geo/states/{id}`
+
+**Update state**
+
+**Access:** Bearer token from the ADMIN app · admin roles: FOUNDER, HEAD_OF_OPS, REGIONAL_HEAD, ZONE_HEAD, STATE_HEAD, DISTRICT_MANAGER, AREA_MANAGER.
+
+| Parameter | In | Type | Required | Notes |
+|---|---|---|---|---|
+| `id` | path | string | yes |  |
+
+**Body**
+
+| Field | Type | Required | Rules |
+|---|---|---|---|
+| `name` | string |  | min 2 chars, max 60 chars |
+| `isActive` | boolean |  |  |
+| `regionId` | string (uuid) |  |  |
+
+### `POST /v1/admin/geo/districts`
+
+**Add district**
+
+**Access:** Bearer token from the ADMIN app · admin roles: FOUNDER, HEAD_OF_OPS, REGIONAL_HEAD, ZONE_HEAD, STATE_HEAD, DISTRICT_MANAGER, AREA_MANAGER.
+
+**Body**
+
+| Field | Type | Required | Rules |
+|---|---|---|---|
+| `name` | string | yes | min 2 chars, max 60 chars |
+| `stateId` | string (uuid) | yes |  |
+
+### `PATCH /v1/admin/geo/districts/{id}`
+
+**Update district**
+
+**Access:** Bearer token from the ADMIN app · admin roles: FOUNDER, HEAD_OF_OPS, REGIONAL_HEAD, ZONE_HEAD, STATE_HEAD, DISTRICT_MANAGER, AREA_MANAGER.
+
+| Parameter | In | Type | Required | Notes |
+|---|---|---|---|---|
+| `id` | path | string | yes |  |
+
+**Body**
+
+| Field | Type | Required | Rules |
+|---|---|---|---|
+| `name` | string |  | min 2 chars, max 60 chars |
+| `isActive` | boolean |  |  |
+
 ### `POST /v1/admin/orders/{id}/returns`
 
 **Playing the rider at the door (until the rider app exists): items the customer handed back.**
 
-**Access:** Bearer token from the ADMIN app · admin roles: FOUNDER, HEAD_OF_OPS, REGIONAL_HEAD, CITY_OPS.
+**Access:** Bearer token from the ADMIN app · admin roles: FOUNDER, HEAD_OF_OPS, REGIONAL_HEAD, CITY_OPS, ZONE_HEAD, STATE_HEAD, DISTRICT_MANAGER, AREA_MANAGER, PINCODE_EXECUTIVE.
 
 | Parameter | In | Type | Required | Notes |
 |---|---|---|---|---|
@@ -529,7 +640,7 @@ Interactive version: `/docs` on the API (password protected on servers). Import 
 
 **"Customer is happy" — the rider leaves.**
 
-**Access:** Bearer token from the ADMIN app · admin roles: FOUNDER, HEAD_OF_OPS, REGIONAL_HEAD, CITY_OPS.
+**Access:** Bearer token from the ADMIN app · admin roles: FOUNDER, HEAD_OF_OPS, REGIONAL_HEAD, CITY_OPS, ZONE_HEAD, STATE_HEAD, DISTRICT_MANAGER, AREA_MANAGER, PINCODE_EXECUTIVE.
 
 | Parameter | In | Type | Required | Notes |
 |---|---|---|---|---|
@@ -563,7 +674,7 @@ Interactive version: `/docs` on the API (password protected on servers). Import 
 
 **Cancel**
 
-**Access:** Bearer token from the ADMIN app · admin roles: FOUNDER, HEAD_OF_OPS, REGIONAL_HEAD, CITY_OPS, SUPPORT.
+**Access:** Bearer token from the ADMIN app · admin roles: FOUNDER, HEAD_OF_OPS, REGIONAL_HEAD, CITY_OPS, ZONE_HEAD, STATE_HEAD, DISTRICT_MANAGER, AREA_MANAGER, PINCODE_EXECUTIVE, SUPPORT.
 
 | Parameter | In | Type | Required | Notes |
 |---|---|---|---|---|
@@ -580,7 +691,7 @@ Interactive version: `/docs` on the API (password protected on servers). Import 
 
 **Assign**
 
-**Access:** Bearer token from the ADMIN app · admin roles: FOUNDER, HEAD_OF_OPS, REGIONAL_HEAD, CITY_OPS.
+**Access:** Bearer token from the ADMIN app · admin roles: FOUNDER, HEAD_OF_OPS, REGIONAL_HEAD, CITY_OPS, ZONE_HEAD, STATE_HEAD, DISTRICT_MANAGER, AREA_MANAGER, PINCODE_EXECUTIVE.
 
 | Parameter | In | Type | Required | Notes |
 |---|---|---|---|---|
@@ -590,7 +701,7 @@ Interactive version: `/docs` on the API (password protected on servers). Import 
 
 **Step**
 
-**Access:** Bearer token from the ADMIN app · admin roles: FOUNDER, HEAD_OF_OPS, REGIONAL_HEAD, CITY_OPS.
+**Access:** Bearer token from the ADMIN app · admin roles: FOUNDER, HEAD_OF_OPS, REGIONAL_HEAD, CITY_OPS, ZONE_HEAD, STATE_HEAD, DISTRICT_MANAGER, AREA_MANAGER, PINCODE_EXECUTIVE.
 
 | Parameter | In | Type | Required | Notes |
 |---|---|---|---|---|
@@ -614,7 +725,7 @@ Interactive version: `/docs` on the API (password protected on servers). Import 
 
 **Ack**
 
-**Access:** Bearer token from the ADMIN app · admin roles: FOUNDER, HEAD_OF_OPS, REGIONAL_HEAD, CITY_OPS, SUPPORT.
+**Access:** Bearer token from the ADMIN app · admin roles: FOUNDER, HEAD_OF_OPS, REGIONAL_HEAD, CITY_OPS, ZONE_HEAD, STATE_HEAD, DISTRICT_MANAGER, AREA_MANAGER, PINCODE_EXECUTIVE, SUPPORT.
 
 | Parameter | In | Type | Required | Notes |
 |---|---|---|---|---|
@@ -630,13 +741,13 @@ Interactive version: `/docs` on the API (password protected on servers). Import 
 
 **Ack all**
 
-**Access:** Bearer token from the ADMIN app · admin roles: FOUNDER, HEAD_OF_OPS, REGIONAL_HEAD, CITY_OPS, SUPPORT.
+**Access:** Bearer token from the ADMIN app · admin roles: FOUNDER, HEAD_OF_OPS, REGIONAL_HEAD, CITY_OPS, ZONE_HEAD, STATE_HEAD, DISTRICT_MANAGER, AREA_MANAGER, PINCODE_EXECUTIVE, SUPPORT.
 
 ### `POST /v1/admin/ops/alerts/{id}/resolve`
 
 **Resolve**
 
-**Access:** Bearer token from the ADMIN app · admin roles: FOUNDER, HEAD_OF_OPS, REGIONAL_HEAD, CITY_OPS, SUPPORT.
+**Access:** Bearer token from the ADMIN app · admin roles: FOUNDER, HEAD_OF_OPS, REGIONAL_HEAD, CITY_OPS, ZONE_HEAD, STATE_HEAD, DISTRICT_MANAGER, AREA_MANAGER, PINCODE_EXECUTIVE, SUPPORT.
 
 | Parameter | In | Type | Required | Notes |
 |---|---|---|---|---|
@@ -664,7 +775,7 @@ Interactive version: `/docs` on the API (password protected on servers). Import 
 
 **Prep**
 
-**Access:** Bearer token from the ADMIN app · admin roles: FOUNDER, HEAD_OF_OPS, REGIONAL_HEAD, CITY_OPS.
+**Access:** Bearer token from the ADMIN app · admin roles: FOUNDER, HEAD_OF_OPS, REGIONAL_HEAD, CITY_OPS, ZONE_HEAD, STATE_HEAD, DISTRICT_MANAGER, AREA_MANAGER, PINCODE_EXECUTIVE.
 
 | Parameter | In | Type | Required | Notes |
 |---|---|---|---|---|
@@ -681,7 +792,7 @@ Interactive version: `/docs` on the API (password protected on servers). Import 
 
 **Escalate**
 
-**Access:** Bearer token from the ADMIN app · admin roles: FOUNDER, HEAD_OF_OPS, REGIONAL_HEAD, CITY_OPS, SUPPORT.
+**Access:** Bearer token from the ADMIN app · admin roles: FOUNDER, HEAD_OF_OPS, REGIONAL_HEAD, CITY_OPS, ZONE_HEAD, STATE_HEAD, DISTRICT_MANAGER, AREA_MANAGER, PINCODE_EXECUTIVE, SUPPORT.
 
 | Parameter | In | Type | Required | Notes |
 |---|---|---|---|---|
@@ -697,7 +808,7 @@ Interactive version: `/docs` on the API (password protected on servers). Import 
 
 **Apology**
 
-**Access:** Bearer token from the ADMIN app · admin roles: FOUNDER, HEAD_OF_OPS, REGIONAL_HEAD, CITY_OPS, SUPPORT.
+**Access:** Bearer token from the ADMIN app · admin roles: FOUNDER, HEAD_OF_OPS, REGIONAL_HEAD, CITY_OPS, ZONE_HEAD, STATE_HEAD, DISTRICT_MANAGER, AREA_MANAGER, PINCODE_EXECUTIVE, SUPPORT.
 
 | Parameter | In | Type | Required | Notes |
 |---|---|---|---|---|
@@ -707,7 +818,7 @@ Interactive version: `/docs` on the API (password protected on servers). Import 
 
 **Release**
 
-**Access:** Bearer token from the ADMIN app · admin roles: FOUNDER, HEAD_OF_OPS, REGIONAL_HEAD, CITY_OPS.
+**Access:** Bearer token from the ADMIN app · admin roles: FOUNDER, HEAD_OF_OPS, REGIONAL_HEAD, CITY_OPS, ZONE_HEAD, STATE_HEAD, DISTRICT_MANAGER, AREA_MANAGER, PINCODE_EXECUTIVE.
 
 | Parameter | In | Type | Required | Notes |
 |---|---|---|---|---|
@@ -723,7 +834,7 @@ Interactive version: `/docs` on the API (password protected on servers). Import 
 
 **Pause**
 
-**Access:** Bearer token from the ADMIN app · admin roles: FOUNDER, HEAD_OF_OPS, REGIONAL_HEAD, CITY_OPS.
+**Access:** Bearer token from the ADMIN app · admin roles: FOUNDER, HEAD_OF_OPS, REGIONAL_HEAD, CITY_OPS, ZONE_HEAD, STATE_HEAD, DISTRICT_MANAGER, AREA_MANAGER, PINCODE_EXECUTIVE.
 
 | Parameter | In | Type | Required | Notes |
 |---|---|---|---|---|
@@ -733,7 +844,7 @@ Interactive version: `/docs` on the API (password protected on servers). Import 
 
 **Resume**
 
-**Access:** Bearer token from the ADMIN app · admin roles: FOUNDER, HEAD_OF_OPS, REGIONAL_HEAD, CITY_OPS.
+**Access:** Bearer token from the ADMIN app · admin roles: FOUNDER, HEAD_OF_OPS, REGIONAL_HEAD, CITY_OPS, ZONE_HEAD, STATE_HEAD, DISTRICT_MANAGER, AREA_MANAGER, PINCODE_EXECUTIVE.
 
 | Parameter | In | Type | Required | Notes |
 |---|---|---|---|---|
@@ -743,7 +854,7 @@ Interactive version: `/docs` on the API (password protected on servers). Import 
 
 **Reassign**
 
-**Access:** Bearer token from the ADMIN app · admin roles: FOUNDER, HEAD_OF_OPS, REGIONAL_HEAD, CITY_OPS.
+**Access:** Bearer token from the ADMIN app · admin roles: FOUNDER, HEAD_OF_OPS, REGIONAL_HEAD, CITY_OPS, ZONE_HEAD, STATE_HEAD, DISTRICT_MANAGER, AREA_MANAGER, PINCODE_EXECUTIVE.
 
 | Parameter | In | Type | Required | Notes |
 |---|---|---|---|---|
@@ -759,7 +870,7 @@ Interactive version: `/docs` on the API (password protected on servers). Import 
 
 **List**
 
-**Access:** Bearer token from the ADMIN app · admin roles: FOUNDER, HEAD_OF_OPS, REGIONAL_HEAD, CITY_OPS, COMPLIANCE, FINANCE, LEGAL, SUPPORT, AUDITOR.
+**Access:** Bearer token from the ADMIN app · admin roles: FOUNDER, HEAD_OF_OPS, REGIONAL_HEAD, CITY_OPS, COMPLIANCE, FINANCE, LEGAL, SUPPORT, AUDITOR, ZONE_HEAD, STATE_HEAD, DISTRICT_MANAGER, AREA_MANAGER, PINCODE_EXECUTIVE.
 
 | Parameter | In | Type | Required | Notes |
 |---|---|---|---|---|
@@ -827,7 +938,7 @@ Interactive version: `/docs` on the API (password protected on servers). Import 
 
 **Redemptions**
 
-**Access:** Bearer token from the ADMIN app · admin roles: FOUNDER, HEAD_OF_OPS, REGIONAL_HEAD, CITY_OPS, COMPLIANCE, FINANCE, LEGAL, SUPPORT, AUDITOR.
+**Access:** Bearer token from the ADMIN app · admin roles: FOUNDER, HEAD_OF_OPS, REGIONAL_HEAD, CITY_OPS, COMPLIANCE, FINANCE, LEGAL, SUPPORT, AUDITOR, ZONE_HEAD, STATE_HEAD, DISTRICT_MANAGER, AREA_MANAGER, PINCODE_EXECUTIVE.
 
 | Parameter | In | Type | Required | Notes |
 |---|---|---|---|---|
@@ -860,7 +971,7 @@ Interactive version: `/docs` on the API (password protected on servers). Import 
 
 **Cancel**
 
-**Access:** Bearer token from the ADMIN app · admin roles: FOUNDER, HEAD_OF_OPS, REGIONAL_HEAD, CITY_OPS, SUPPORT.
+**Access:** Bearer token from the ADMIN app · admin roles: FOUNDER, HEAD_OF_OPS, REGIONAL_HEAD, CITY_OPS, ZONE_HEAD, STATE_HEAD, DISTRICT_MANAGER, AREA_MANAGER, PINCODE_EXECUTIVE, SUPPORT.
 
 | Parameter | In | Type | Required | Notes |
 |---|---|---|---|---|
@@ -898,7 +1009,7 @@ Interactive version: `/docs` on the API (password protected on servers). Import 
 
 **List**
 
-**Access:** Bearer token from the ADMIN app · admin roles: FOUNDER, HEAD_OF_OPS, REGIONAL_HEAD, CITY_OPS, COMPLIANCE, FINANCE, LEGAL, SUPPORT, AUDITOR.
+**Access:** Bearer token from the ADMIN app · admin roles: FOUNDER, HEAD_OF_OPS, REGIONAL_HEAD, CITY_OPS, COMPLIANCE, FINANCE, LEGAL, SUPPORT, AUDITOR, ZONE_HEAD, STATE_HEAD, DISTRICT_MANAGER, AREA_MANAGER, PINCODE_EXECUTIVE.
 
 | Parameter | In | Type | Required | Notes |
 |---|---|---|---|---|
@@ -909,7 +1020,7 @@ Interactive version: `/docs` on the API (password protected on servers). Import 
 
 **Get**
 
-**Access:** Bearer token from the ADMIN app · admin roles: FOUNDER, HEAD_OF_OPS, REGIONAL_HEAD, CITY_OPS, COMPLIANCE, FINANCE, LEGAL, SUPPORT, AUDITOR.
+**Access:** Bearer token from the ADMIN app · admin roles: FOUNDER, HEAD_OF_OPS, REGIONAL_HEAD, CITY_OPS, COMPLIANCE, FINANCE, LEGAL, SUPPORT, AUDITOR, ZONE_HEAD, STATE_HEAD, DISTRICT_MANAGER, AREA_MANAGER, PINCODE_EXECUTIVE.
 
 | Parameter | In | Type | Required | Notes |
 |---|---|---|---|---|
@@ -919,7 +1030,7 @@ Interactive version: `/docs` on the API (password protected on servers). Import 
 
 **Reply**
 
-**Access:** Bearer token from the ADMIN app · admin roles: FOUNDER, HEAD_OF_OPS, REGIONAL_HEAD, CITY_OPS, SUPPORT.
+**Access:** Bearer token from the ADMIN app · admin roles: FOUNDER, HEAD_OF_OPS, REGIONAL_HEAD, CITY_OPS, SUPPORT, ZONE_HEAD, STATE_HEAD, DISTRICT_MANAGER, AREA_MANAGER, PINCODE_EXECUTIVE.
 
 | Parameter | In | Type | Required | Notes |
 |---|---|---|---|---|
@@ -936,7 +1047,7 @@ Interactive version: `/docs` on the API (password protected on servers). Import 
 
 **Status**
 
-**Access:** Bearer token from the ADMIN app · admin roles: FOUNDER, HEAD_OF_OPS, REGIONAL_HEAD, CITY_OPS, SUPPORT.
+**Access:** Bearer token from the ADMIN app · admin roles: FOUNDER, HEAD_OF_OPS, REGIONAL_HEAD, CITY_OPS, SUPPORT, ZONE_HEAD, STATE_HEAD, DISTRICT_MANAGER, AREA_MANAGER, PINCODE_EXECUTIVE.
 
 | Parameter | In | Type | Required | Notes |
 |---|---|---|---|---|
@@ -952,7 +1063,7 @@ Interactive version: `/docs` on the API (password protected on servers). Import 
 
 **Assign**
 
-**Access:** Bearer token from the ADMIN app · admin roles: FOUNDER, HEAD_OF_OPS, REGIONAL_HEAD, CITY_OPS, SUPPORT.
+**Access:** Bearer token from the ADMIN app · admin roles: FOUNDER, HEAD_OF_OPS, REGIONAL_HEAD, CITY_OPS, SUPPORT, ZONE_HEAD, STATE_HEAD, DISTRICT_MANAGER, AREA_MANAGER, PINCODE_EXECUTIVE.
 
 | Parameter | In | Type | Required | Notes |
 |---|---|---|---|---|
@@ -962,7 +1073,7 @@ Interactive version: `/docs` on the API (password protected on servers). Import 
 
 **Cities**
 
-**Access:** Bearer token from the ADMIN app · admin roles: FOUNDER, HEAD_OF_OPS, REGIONAL_HEAD, CITY_OPS, COMPLIANCE, FINANCE, LEGAL, SUPPORT, AUDITOR.
+**Access:** Bearer token from the ADMIN app · admin roles: FOUNDER, HEAD_OF_OPS, REGIONAL_HEAD, CITY_OPS, COMPLIANCE, FINANCE, LEGAL, SUPPORT, AUDITOR, ZONE_HEAD, STATE_HEAD, DISTRICT_MANAGER, AREA_MANAGER, PINCODE_EXECUTIVE.
 
 | Parameter | In | Type | Required | Notes |
 |---|---|---|---|---|
@@ -972,7 +1083,7 @@ Interactive version: `/docs` on the API (password protected on servers). Import 
 
 **Cities csv**
 
-**Access:** Bearer token from the ADMIN app · admin roles: FOUNDER, HEAD_OF_OPS, REGIONAL_HEAD, CITY_OPS, COMPLIANCE, FINANCE, LEGAL, SUPPORT, AUDITOR.
+**Access:** Bearer token from the ADMIN app · admin roles: FOUNDER, HEAD_OF_OPS, REGIONAL_HEAD, CITY_OPS, COMPLIANCE, FINANCE, LEGAL, SUPPORT, AUDITOR, ZONE_HEAD, STATE_HEAD, DISTRICT_MANAGER, AREA_MANAGER, PINCODE_EXECUTIVE.
 
 | Parameter | In | Type | Required | Notes |
 |---|---|---|---|---|
@@ -982,7 +1093,7 @@ Interactive version: `/docs` on the API (password protected on servers). Import 
 
 **Health**
 
-**Access:** Bearer token from the ADMIN app · admin roles: FOUNDER, HEAD_OF_OPS, REGIONAL_HEAD, CITY_OPS, COMPLIANCE, FINANCE, LEGAL, SUPPORT, AUDITOR.
+**Access:** Bearer token from the ADMIN app · admin roles: FOUNDER, HEAD_OF_OPS, REGIONAL_HEAD, CITY_OPS, COMPLIANCE, FINANCE, LEGAL, SUPPORT, AUDITOR, ZONE_HEAD, STATE_HEAD, DISTRICT_MANAGER, AREA_MANAGER, PINCODE_EXECUTIVE.
 
 | Parameter | In | Type | Required | Notes |
 |---|---|---|---|---|
@@ -992,13 +1103,13 @@ Interactive version: `/docs` on the API (password protected on servers). Import 
 
 **Status**
 
-**Access:** Bearer token from the ADMIN app · admin roles: FOUNDER, HEAD_OF_OPS.
+**Access:** Bearer token from the ADMIN app · admin roles: FOUNDER, HEAD_OF_OPS, ZONE_HEAD, STATE_HEAD, DISTRICT_MANAGER, AREA_MANAGER.
 
 ### `POST /v1/admin/system/push-check`
 
 **Asks Google for an access token with the Firebase key: proves key, server clock and network — sends no message.**
 
-**Access:** Bearer token from the ADMIN app · admin roles: FOUNDER, HEAD_OF_OPS.
+**Access:** Bearer token from the ADMIN app · admin roles: FOUNDER, HEAD_OF_OPS, ZONE_HEAD, STATE_HEAD, DISTRICT_MANAGER, AREA_MANAGER.
 
 ## auth
 
@@ -1947,7 +2058,7 @@ _(no fields)_
 
 **Assign**
 
-**Access:** Bearer token from the ADMIN app · admin roles: FOUNDER, HEAD_OF_OPS, REGIONAL_HEAD, CITY_OPS.
+**Access:** Bearer token from the ADMIN app · admin roles: FOUNDER, HEAD_OF_OPS, REGIONAL_HEAD, CITY_OPS, ZONE_HEAD, STATE_HEAD, DISTRICT_MANAGER, AREA_MANAGER, PINCODE_EXECUTIVE.
 
 | Parameter | In | Type | Required | Notes |
 |---|---|---|---|---|
@@ -1963,7 +2074,7 @@ _(no fields)_
 
 **Dev only: run the hourly churn / order-drop check now.**
 
-**Access:** Bearer token from the ADMIN app · admin roles: FOUNDER, HEAD_OF_OPS, REGIONAL_HEAD, CITY_OPS.
+**Access:** Bearer token from the ADMIN app · admin roles: FOUNDER, HEAD_OF_OPS, REGIONAL_HEAD, CITY_OPS, ZONE_HEAD, STATE_HEAD, DISTRICT_MANAGER, AREA_MANAGER, PINCODE_EXECUTIVE.
 
 ## notifications
 
@@ -2384,13 +2495,13 @@ _(no fields)_
 
 **The cities this admin can pick in the city filter.**
 
-**Access:** Bearer token from the ADMIN app · admin roles: FOUNDER, HEAD_OF_OPS, REGIONAL_HEAD, CITY_OPS, COMPLIANCE, FINANCE, LEGAL, SUPPORT, AUDITOR, DISPATCHER.
+**Access:** Bearer token from the ADMIN app · admin roles: FOUNDER, HEAD_OF_OPS, REGIONAL_HEAD, CITY_OPS, COMPLIANCE, FINANCE, LEGAL, SUPPORT, AUDITOR, DISPATCHER, ZONE_HEAD, STATE_HEAD, DISTRICT_MANAGER, AREA_MANAGER, PINCODE_EXECUTIVE.
 
 ### `GET /v1/admin/dispatch/summary`
 
 **Counts for the top of the screen: deliveries waiting, assigned, on the way, done today; drivers online, busy, free.**
 
-**Access:** Bearer token from the ADMIN app · admin roles: FOUNDER, HEAD_OF_OPS, REGIONAL_HEAD, CITY_OPS, COMPLIANCE, FINANCE, LEGAL, SUPPORT, AUDITOR, DISPATCHER.
+**Access:** Bearer token from the ADMIN app · admin roles: FOUNDER, HEAD_OF_OPS, REGIONAL_HEAD, CITY_OPS, COMPLIANCE, FINANCE, LEGAL, SUPPORT, AUDITOR, DISPATCHER, ZONE_HEAD, STATE_HEAD, DISTRICT_MANAGER, AREA_MANAGER, PINCODE_EXECUTIVE.
 
 | Parameter | In | Type | Required | Notes |
 |---|---|---|---|---|
@@ -2400,7 +2511,7 @@ _(no fields)_
 
 **Deliveries in one tab. The waiting tab lists the longest-waiting delivery first.**
 
-**Access:** Bearer token from the ADMIN app · admin roles: FOUNDER, HEAD_OF_OPS, REGIONAL_HEAD, CITY_OPS, COMPLIANCE, FINANCE, LEGAL, SUPPORT, AUDITOR, DISPATCHER.
+**Access:** Bearer token from the ADMIN app · admin roles: FOUNDER, HEAD_OF_OPS, REGIONAL_HEAD, CITY_OPS, COMPLIANCE, FINANCE, LEGAL, SUPPORT, AUDITOR, DISPATCHER, ZONE_HEAD, STATE_HEAD, DISTRICT_MANAGER, AREA_MANAGER, PINCODE_EXECUTIVE.
 
 | Parameter | In | Type | Required | Notes |
 |---|---|---|---|---|
@@ -2414,7 +2525,7 @@ _(no fields)_
 
 **One delivery with its history: who assigned which driver, when and why.**
 
-**Access:** Bearer token from the ADMIN app · admin roles: FOUNDER, HEAD_OF_OPS, REGIONAL_HEAD, CITY_OPS, COMPLIANCE, FINANCE, LEGAL, SUPPORT, AUDITOR, DISPATCHER.
+**Access:** Bearer token from the ADMIN app · admin roles: FOUNDER, HEAD_OF_OPS, REGIONAL_HEAD, CITY_OPS, COMPLIANCE, FINANCE, LEGAL, SUPPORT, AUDITOR, DISPATCHER, ZONE_HEAD, STATE_HEAD, DISTRICT_MANAGER, AREA_MANAGER, PINCODE_EXECUTIVE.
 
 | Parameter | In | Type | Required | Notes |
 |---|---|---|---|---|
@@ -2424,7 +2535,7 @@ _(no fields)_
 
 **Drivers who can take deliveries, best choice first (online, nearest to the pickup, least loaded).**
 
-**Access:** Bearer token from the ADMIN app · admin roles: FOUNDER, HEAD_OF_OPS, REGIONAL_HEAD, CITY_OPS, COMPLIANCE, FINANCE, LEGAL, SUPPORT, AUDITOR, DISPATCHER.
+**Access:** Bearer token from the ADMIN app · admin roles: FOUNDER, HEAD_OF_OPS, REGIONAL_HEAD, CITY_OPS, COMPLIANCE, FINANCE, LEGAL, SUPPORT, AUDITOR, DISPATCHER, ZONE_HEAD, STATE_HEAD, DISTRICT_MANAGER, AREA_MANAGER, PINCODE_EXECUTIVE.
 
 | Parameter | In | Type | Required | Notes |
 |---|---|---|---|---|
@@ -2437,7 +2548,7 @@ _(no fields)_
 
 **Gives a waiting delivery to a driver.**
 
-**Access:** Bearer token from the ADMIN app · admin roles: FOUNDER, HEAD_OF_OPS, REGIONAL_HEAD, CITY_OPS, DISPATCHER.
+**Access:** Bearer token from the ADMIN app · admin roles: FOUNDER, HEAD_OF_OPS, REGIONAL_HEAD, CITY_OPS, DISPATCHER, ZONE_HEAD, STATE_HEAD, DISTRICT_MANAGER, AREA_MANAGER, PINCODE_EXECUTIVE.
 
 | Parameter | In | Type | Required | Notes |
 |---|---|---|---|---|
@@ -2454,7 +2565,7 @@ _(no fields)_
 
 **Moves a delivery to another driver. Allowed until the order is picked up.**
 
-**Access:** Bearer token from the ADMIN app · admin roles: FOUNDER, HEAD_OF_OPS, REGIONAL_HEAD, CITY_OPS, DISPATCHER.
+**Access:** Bearer token from the ADMIN app · admin roles: FOUNDER, HEAD_OF_OPS, REGIONAL_HEAD, CITY_OPS, DISPATCHER, ZONE_HEAD, STATE_HEAD, DISTRICT_MANAGER, AREA_MANAGER, PINCODE_EXECUTIVE.
 
 | Parameter | In | Type | Required | Notes |
 |---|---|---|---|---|
@@ -2471,7 +2582,7 @@ _(no fields)_
 
 **Takes the driver off a delivery; it goes back to waiting. Allowed until the order is picked up.**
 
-**Access:** Bearer token from the ADMIN app · admin roles: FOUNDER, HEAD_OF_OPS, REGIONAL_HEAD, CITY_OPS, DISPATCHER.
+**Access:** Bearer token from the ADMIN app · admin roles: FOUNDER, HEAD_OF_OPS, REGIONAL_HEAD, CITY_OPS, DISPATCHER, ZONE_HEAD, STATE_HEAD, DISTRICT_MANAGER, AREA_MANAGER, PINCODE_EXECUTIVE.
 
 | Parameter | In | Type | Required | Notes |
 |---|---|---|---|---|
@@ -2487,7 +2598,7 @@ _(no fields)_
 
 **Creates `count` approved, online riders with a fresh GPS fix within `radiusKm` of the shop. Phones +91 98000 1xxxx.**
 
-**Access:** Bearer token from the ADMIN app · admin roles: FOUNDER, HEAD_OF_OPS, REGIONAL_HEAD, CITY_OPS.
+**Access:** Bearer token from the ADMIN app · admin roles: FOUNDER, HEAD_OF_OPS, REGIONAL_HEAD, CITY_OPS, ZONE_HEAD, STATE_HEAD, DISTRICT_MANAGER, AREA_MANAGER, PINCODE_EXECUTIVE.
 
 **Body**
 
@@ -2501,7 +2612,7 @@ _(no fields)_
 
 **Runs one dispatch pass now (expire offers, offline silent riders, make new offers).**
 
-**Access:** Bearer token from the ADMIN app · admin roles: FOUNDER, HEAD_OF_OPS, REGIONAL_HEAD, CITY_OPS.
+**Access:** Bearer token from the ADMIN app · admin roles: FOUNDER, HEAD_OF_OPS, REGIONAL_HEAD, CITY_OPS, ZONE_HEAD, STATE_HEAD, DISTRICT_MANAGER, AREA_MANAGER, PINCODE_EXECUTIVE.
 
 ## rider · work
 
@@ -2577,6 +2688,27 @@ _(no fields)_
 
 **Access:** Bearer token from the RIDER app.
 
+### `GET /v1/rider/tasks/history`
+
+**Deliveries you finished that day (delivered, failed, cancelled, returned), with what each earned.**
+
+**Access:** Bearer token from the RIDER app.
+
+| Parameter | In | Type | Required | Notes |
+|---|---|---|---|---|
+| `date` | query | string |  | YYYY-MM-DD (India time); default today |
+
+### `GET /v1/rider/earnings`
+
+**Earnings per day (default the last 7 days), today's totals, and cash collected to hand in. Paise.**
+
+**Access:** Bearer token from the RIDER app.
+
+| Parameter | In | Type | Required | Notes |
+|---|---|---|---|---|
+| `from` | query | string |  |  |
+| `to` | query | string |  |  |
+
 ### `GET /v1/rider/tasks/{taskId}`
 
 **Task**
@@ -2608,6 +2740,85 @@ _(no fields)_
 | `reason` | string |  | max 300 chars |
 | `lat` | number |  | ≥ -90, ≤ 90 |
 | `lng` | number |  | ≥ -180, ≤ 180 |
+| `handoverMode` | `IN_PERSON` \| `CONTACTLESS` \| `SAFE_DROP` |  | DELIVERED: IN_PERSON (default) · CONTACTLESS (code + photo) · SAFE_DROP (photo + place, prepaid only). See task.proof.rules. |
+| `proofPhotoKey` | string |  | min 10 chars, max 250 chars, DELIVERED, contactless / safe drop: fileKey from POST tasks/:id/proof/presign |
+| `safeDropPlace` | string |  | max 200 chars, DELIVERED, safe drop: where you left it |
+| `codMode` | `CASH` \| `UPI` |  | DELIVERED on a COD order: CASH (default) or UPI |
+| `codReference` | string |  | max 20 chars, DELIVERED, codMode UPI: the 12-digit UTR from the customer’s payment screen |
+| `customerStatus` | `NOT_ANSWERING` \| `ASKED_TO_COME_LATER` \| `REFUSED` \| `ADDRESS_NOT_FOUND` \| `REACHABLE_WAITING` |  | FAILED: NOT_ANSWERING · ASKED_TO_COME_LATER · REFUSED · ADDRESS_NOT_FOUND · REACHABLE_WAITING |
+
+### `POST /v1/rider/tasks/{taskId}/items-check`
+
+**At the shop, before pickup: OK / MISSING / WRONG / DAMAGED for every item (lineId from the task). Problems go to the shop's screen.**
+
+**Access:** Bearer token from the RIDER app.
+
+| Parameter | In | Type | Required | Notes |
+|---|---|---|---|---|
+| `taskId` | path | string | yes |  |
+
+**Body**
+
+| Field | Type | Required | Rules |
+|---|---|---|---|
+| `items` | object[] | yes | at least 1 items, at most 200 items |
+| `items[].lineId` | string (uuid) | yes |  |
+| `items[].status` | `OK` \| `MISSING` \| `WRONG` \| `DAMAGED` | yes |  |
+| `items[].note` | string |  | max 200 chars |
+
+### `POST /v1/rider/tasks/{taskId}/packaging-check`
+
+**Food orders, at the counter: seal, hot/cold, thermal bag, spills + a photo. Any problem needs a note and goes to the shop.**
+
+**Access:** Bearer token from the RIDER app.
+
+| Parameter | In | Type | Required | Notes |
+|---|---|---|---|---|
+| `taskId` | path | string | yes |  |
+
+**Body**
+
+| Field | Type | Required | Rules |
+|---|---|---|---|
+| `sealIntact` | boolean | yes |  |
+| `hotColdSeparated` | boolean | yes | true when there are no cold items |
+| `inThermalBag` | boolean | yes |  |
+| `spillSafe` | boolean | yes |  |
+| `photoKey` | string | yes | min 10 chars, max 250 chars, fileKey from POST tasks/:id/proof/presign |
+| `note` | string |  | max 300 chars, Needed when any check is false — sent to the shop |
+
+### `POST /v1/rider/tasks/{taskId}/prep-delay`
+
+**Waiting at the shop and the food is past its ready time (+5 min): tells the shop and the hub.**
+
+**Access:** Bearer token from the RIDER app.
+
+| Parameter | In | Type | Required | Notes |
+|---|---|---|---|---|
+| `taskId` | path | string | yes |  |
+
+**Body**
+
+| Field | Type | Required | Rules |
+|---|---|---|---|
+| `note` | string |  | max 300 chars |
+
+### `POST /v1/rider/tasks/{taskId}/proof/presign`
+
+**Upload link for the delivery photo or the food packaging photo. PUT the bytes to uploadUrl, then send fileKey.**
+
+**Access:** Bearer token from the RIDER app.
+
+| Parameter | In | Type | Required | Notes |
+|---|---|---|---|---|
+| `taskId` | path | string | yes |  |
+
+**Body**
+
+| Field | Type | Required | Rules |
+|---|---|---|---|
+| `contentType` | `image/jpeg` \| `image/png` \| `image/webp` | yes |  |
+| `size` | integer | yes | > 0, ≤ 10485760 |
 
 ## local
 
@@ -4211,7 +4422,7 @@ _(no fields)_
 | Field | Type | Required | Rules |
 |---|---|---|---|
 | `tier` | `DELIVEZ_BIZ` \| `DELIVEZ_NOW` \| `DELIVEZ_ONE` | yes |  |
-| `services` | `E_COMMERCE` \| `B2B_LOGISTICS` \| `QUICK_COMMERCE` \| `HYPERLOCAL` \| `COLD_CHAIN` \| `CRITICAL_SPARE_PARTS` \| `DRONE_HYBRID` \| `EVENT_EXHIBITION` \| `WHITE_GLOVE` \| `HAND_CARRY` \| `HIGH_VALUE_SECURE` \| `IT_ASSET` \| `LINEHAUL` \| `MACHINERY_MOVEMENT` \| `MEDICAL_PHARMA` \| `CONFIDENTIAL_DOCUMENT` \| `OFFICE_RELOCATION` \| `PHARMACY` \| `FOOD_DELIVERY` \| `GROCERY_DELIVERY` \| `RUSH_DELIVERY` \| `CONFIDENTIAL_DELIVERY` \| `COURIER_DELIVERY` \| `LUGGAGE_DELIVERY` \| `FORGET_SOMETHING` \| `RETURN_PICKUP`[] | yes |  |
+| `services` | `E_COMMERCE` \| `B2B_LOGISTICS` \| `QUICK_COMMERCE` \| `HYPERLOCAL` \| `COLD_CHAIN` \| `CRITICAL_SPARE_PARTS` \| `DRONE_HYBRID` \| `EVENT_EXHIBITION` \| `WHITE_GLOVE` \| `HAND_CARRY` \| `HIGH_VALUE_SECURE` \| `IT_ASSET` \| `LINEHAUL` \| `MACHINERY_MOVEMENT` \| `MEDICAL_PHARMA` \| `CONFIDENTIAL_DOCUMENT` \| `OFFICE_RELOCATION` \| `PHARMACY` \| `FOOD_DELIVERY` \| `GROCERY_DELIVERY` \| `CONFIDENTIAL_DELIVERY` \| `COURIER_DELIVERY` \| `LUGGAGE_DELIVERY` \| `FORGET_SOMETHING` \| `RETURN_PICKUP`[] | yes |  |
 | `workingDays` | `MON` \| `TUE` \| `WED` \| `THU` \| `FRI` \| `SAT` \| `SUN`[] | yes |  |
 | `shift` | `MORNING` \| `EVENING` \| `NIGHT` \| `FLEXIBLE` | yes |  |
 | `workPreference` | `FULL_TIME` \| `PART_TIME` \| `PER_ORDER` | yes |  |
@@ -4294,7 +4505,7 @@ _(no fields)_
 
 | Parameter | In | Type | Required | Notes |
 |---|---|---|---|---|
-| `type` | path | `PAN` \| `ADDRESS_PROOF` \| `BANK_PROOF` \| `GOV_ID` \| `PHOTO` \| `DRIVING_LICENCE` \| `VEHICLE_RC` \| `VEHICLE_INSURANCE` | yes |  |
+| `type` | path | `PHOTO` \| `PAN` \| `ADDRESS_PROOF` \| `BANK_PROOF` \| `GOV_ID` \| `DRIVING_LICENCE` \| `VEHICLE_RC` \| `VEHICLE_INSURANCE` | yes |  |
 
 ### `POST /v1/rider/registration/submit`
 
@@ -4337,7 +4548,7 @@ _(no fields)_
 
 **Start review**
 
-**Access:** Bearer token from the ADMIN app · admin roles: FOUNDER, HEAD_OF_OPS, REGIONAL_HEAD, CITY_OPS, COMPLIANCE.
+**Access:** Bearer token from the ADMIN app · admin roles: FOUNDER, HEAD_OF_OPS, REGIONAL_HEAD, CITY_OPS, COMPLIANCE, ZONE_HEAD, STATE_HEAD, DISTRICT_MANAGER.
 
 | Parameter | In | Type | Required | Notes |
 |---|---|---|---|---|
@@ -4347,7 +4558,7 @@ _(no fields)_
 
 **Verify doc**
 
-**Access:** Bearer token from the ADMIN app · admin roles: FOUNDER, HEAD_OF_OPS, REGIONAL_HEAD, CITY_OPS, COMPLIANCE.
+**Access:** Bearer token from the ADMIN app · admin roles: FOUNDER, HEAD_OF_OPS, REGIONAL_HEAD, CITY_OPS, COMPLIANCE, ZONE_HEAD, STATE_HEAD, DISTRICT_MANAGER.
 
 | Parameter | In | Type | Required | Notes |
 |---|---|---|---|---|
@@ -4358,7 +4569,7 @@ _(no fields)_
 
 **Reject doc**
 
-**Access:** Bearer token from the ADMIN app · admin roles: FOUNDER, HEAD_OF_OPS, REGIONAL_HEAD, CITY_OPS, COMPLIANCE.
+**Access:** Bearer token from the ADMIN app · admin roles: FOUNDER, HEAD_OF_OPS, REGIONAL_HEAD, CITY_OPS, COMPLIANCE, ZONE_HEAD, STATE_HEAD, DISTRICT_MANAGER.
 
 | Parameter | In | Type | Required | Notes |
 |---|---|---|---|---|
@@ -4375,7 +4586,7 @@ _(no fields)_
 
 **Approve**
 
-**Access:** Bearer token from the ADMIN app · admin roles: FOUNDER, HEAD_OF_OPS, REGIONAL_HEAD, CITY_OPS, COMPLIANCE.
+**Access:** Bearer token from the ADMIN app · admin roles: FOUNDER, HEAD_OF_OPS, REGIONAL_HEAD, CITY_OPS, COMPLIANCE, ZONE_HEAD, STATE_HEAD, DISTRICT_MANAGER.
 
 | Parameter | In | Type | Required | Notes |
 |---|---|---|---|---|
@@ -4393,7 +4604,7 @@ _(no fields)_
 
 **Request changes**
 
-**Access:** Bearer token from the ADMIN app · admin roles: FOUNDER, HEAD_OF_OPS, REGIONAL_HEAD, CITY_OPS, COMPLIANCE.
+**Access:** Bearer token from the ADMIN app · admin roles: FOUNDER, HEAD_OF_OPS, REGIONAL_HEAD, CITY_OPS, COMPLIANCE, ZONE_HEAD, STATE_HEAD, DISTRICT_MANAGER.
 
 | Parameter | In | Type | Required | Notes |
 |---|---|---|---|---|
@@ -4409,7 +4620,7 @@ _(no fields)_
 
 **Reject**
 
-**Access:** Bearer token from the ADMIN app · admin roles: FOUNDER, HEAD_OF_OPS, REGIONAL_HEAD, CITY_OPS, COMPLIANCE.
+**Access:** Bearer token from the ADMIN app · admin roles: FOUNDER, HEAD_OF_OPS, REGIONAL_HEAD, CITY_OPS, COMPLIANCE, ZONE_HEAD, STATE_HEAD, DISTRICT_MANAGER.
 
 | Parameter | In | Type | Required | Notes |
 |---|---|---|---|---|
@@ -4425,7 +4636,7 @@ _(no fields)_
 
 **Suspend**
 
-**Access:** Bearer token from the ADMIN app · admin roles: FOUNDER, HEAD_OF_OPS, REGIONAL_HEAD, CITY_OPS, COMPLIANCE.
+**Access:** Bearer token from the ADMIN app · admin roles: FOUNDER, HEAD_OF_OPS, REGIONAL_HEAD, CITY_OPS, COMPLIANCE, ZONE_HEAD, STATE_HEAD, DISTRICT_MANAGER.
 
 | Parameter | In | Type | Required | Notes |
 |---|---|---|---|---|
@@ -4441,8 +4652,229 @@ _(no fields)_
 
 **Reinstate**
 
-**Access:** Bearer token from the ADMIN app · admin roles: FOUNDER, HEAD_OF_OPS, REGIONAL_HEAD, CITY_OPS, COMPLIANCE.
+**Access:** Bearer token from the ADMIN app · admin roles: FOUNDER, HEAD_OF_OPS, REGIONAL_HEAD, CITY_OPS, COMPLIANCE, ZONE_HEAD, STATE_HEAD, DISTRICT_MANAGER.
 
 | Parameter | In | Type | Required | Notes |
 |---|---|---|---|---|
 | `riderId` | path | string | yes |  |
+
+## rider · attendance
+
+### `GET /v1/rider/attendance`
+
+**Status (NOT_PUNCHED_IN · SHIFT_ACTIVE · ON_BREAK · SHIFT_COMPLETED), the open or last shift, today's minutes, the company vehicle and the rules.**
+
+**Access:** Bearer token from the RIDER app.
+
+### `GET /v1/rider/attendance/shifts`
+
+**Your past shifts, newest first.**
+
+**Access:** Bearer token from the RIDER app.
+
+| Parameter | In | Type | Required | Notes |
+|---|---|---|---|---|
+| `from` | query | string |  |  |
+| `to` | query | string |  |  |
+| `limit` | query | number |  |  |
+
+### `POST /v1/rider/attendance/photos/presign`
+
+**Upload link for a selfie or vehicle photo (JPG / PNG / WEBP, 10 MB). PUT the bytes to uploadUrl, then send fileKey.**
+
+**Access:** Bearer token from the RIDER app.
+
+**Body**
+
+| Field | Type | Required | Rules |
+|---|---|---|---|
+| `contentType` | `image/jpeg` \| `image/png` \| `image/webp` | yes |  |
+| `size` | integer | yes | > 0, ≤ 10485760 |
+
+### `POST /v1/rider/attendance/punch-in`
+
+**Punch in**
+
+**Access:** Bearer token from the RIDER app.
+
+**Body**
+
+| Field | Type | Required | Rules |
+|---|---|---|---|
+| `clientRef` | string |  | min 6 chars, max 64 chars, The app's own shift id. Sending the same punch-in again returns the same shift. |
+| `selfie` | object | yes |  |
+| `selfie.fileKey` | string | yes | min 10 chars, max 200 chars, From POST /rider/attendance/photos/presign, after the PUT upload |
+| `selfie.capturedAt` | string (date-time) | yes | When the camera took it (ISO 8601). Must be within 10 minutes. |
+| `location` | object | yes |  |
+| `location.lat` | number | yes | ≥ -90, ≤ 90 |
+| `location.lng` | number | yes | ≥ -180, ≤ 180 |
+| `location.accuracyM` | number |  | ≥ 0, ≤ 100000, GPS error radius; above 100 m is refused |
+| `location.address` | string |  | max 300 chars, Reverse-geocoded address, if the phone has one |
+| `vehicle` | object |  | Required when the rider has a company vehicle (GET /rider/vehicle → required: true) |
+| `vehicle.vehicleId` | string (uuid) |  |  |
+| `vehicle.confirmedCheckIds` | string[] |  | at most 20 items |
+| `vehicle.photo` | object |  |  |
+| `vehicle.photo.fileKey` | string |  | min 10 chars, max 200 chars, From POST /rider/attendance/photos/presign, after the PUT upload |
+| `vehicle.photo.capturedAt` | string (date-time) |  | When the camera took it (ISO 8601). Must be within 10 minutes. |
+| `goOnline` | boolean |  | default `true`, Go online for jobs straight away (default true) |
+
+### `POST /v1/rider/attendance/breaks/start`
+
+**Takes you offline for jobs. Not while you carry an order.**
+
+**Access:** Bearer token from the RIDER app.
+
+### `POST /v1/rider/attendance/breaks/end`
+
+**Back online for jobs.**
+
+**Access:** Bearer token from the RIDER app.
+
+### `POST /v1/rider/attendance/punch-out`
+
+**Ends the shift and takes you offline. Not while you carry an order.**
+
+**Access:** Bearer token from the RIDER app.
+
+**Body**
+
+| Field | Type | Required | Rules |
+|---|---|---|---|
+| `selfie` | object | yes |  |
+| `selfie.fileKey` | string | yes | min 10 chars, max 200 chars, From POST /rider/attendance/photos/presign, after the PUT upload |
+| `selfie.capturedAt` | string (date-time) | yes | When the camera took it (ISO 8601). Must be within 10 minutes. |
+| `location` | object | yes |  |
+| `location.lat` | number | yes | ≥ -90, ≤ 90 |
+| `location.lng` | number | yes | ≥ -180, ≤ 180 |
+| `location.accuracyM` | number |  | ≥ 0, ≤ 100000, GPS error radius; above 100 m is refused |
+| `location.address` | string |  | max 300 chars, Reverse-geocoded address, if the phone has one |
+| `vehicleReturn` | object |  | Required when the shift started with a company vehicle |
+| `vehicleReturn.vehicleId` | string (uuid) |  |  |
+| `vehicleReturn.confirmedCheckIds` | string[] |  | at most 20 items |
+| `vehicleReturn.photo` | object |  |  |
+| `vehicleReturn.photo.fileKey` | string |  | min 10 chars, max 200 chars, From POST /rider/attendance/photos/presign, after the PUT upload |
+| `vehicleReturn.photo.capturedAt` | string (date-time) |  | When the camera took it (ISO 8601). Must be within 10 minutes. |
+| `vehicleReturn.newDamage` | boolean |  | Any new damage or issue on the vehicle? |
+| `vehicleReturn.issueNote` | string |  | max 1000 chars, Required (10+ characters) when newDamage is true |
+| `vehicleReturn.closingOdometerKm` | integer |  | ≥ 0, ≤ 9999999 |
+
+### `GET /v1/rider/vehicle`
+
+**The company vehicle ops assigned to you, with the punch-in and return checklists. `vehicle: null` = none yet.**
+
+**Access:** Bearer token from the RIDER app.
+
+## admin · fleet & attendance
+
+### `GET /v1/admin/fleet/vehicles`
+
+**List**
+
+**Access:** Bearer token from the ADMIN app · any admin role.
+
+| Parameter | In | Type | Required | Notes |
+|---|---|---|---|---|
+| `cityId` | query | string |  |  |
+| `status` | query | `ACTIVE` \| `IN_REPAIR` \| `RETIRED` |  |  |
+| `category` | query | `BIKE` \| `THREE_WHEELER` \| `FOUR_WHEELER` \| `TRUCK` |  |  |
+| `search` | query | string |  | Registration, note, rider code or name |
+
+### `POST /v1/admin/fleet/vehicles`
+
+**Create**
+
+**Access:** Bearer token from the ADMIN app · admin roles: FOUNDER, HEAD_OF_OPS, REGIONAL_HEAD, CITY_OPS, COMPLIANCE, ZONE_HEAD, STATE_HEAD, DISTRICT_MANAGER.
+
+**Body**
+
+| Field | Type | Required | Rules |
+|---|---|---|---|
+| `registration` | string | yes | min 6 chars, max 20 chars, As on the RC, e.g. KA 51 AB 1234 |
+| `category` | `BIKE` \| `THREE_WHEELER` \| `FOUR_WHEELER` \| `TRUCK` | yes |  |
+| `description` | string |  | max 120 chars, Make / model or a fleet note |
+| `cityId` | string (uuid) |  |  |
+| `hubName` | string |  | max 80 chars |
+
+### `PATCH /v1/admin/fleet/vehicles/{id}`
+
+**Update**
+
+**Access:** Bearer token from the ADMIN app · admin roles: FOUNDER, HEAD_OF_OPS, REGIONAL_HEAD, CITY_OPS, COMPLIANCE, ZONE_HEAD, STATE_HEAD, DISTRICT_MANAGER.
+
+| Parameter | In | Type | Required | Notes |
+|---|---|---|---|---|
+| `id` | path | string | yes |  |
+
+**Body**
+
+| Field | Type | Required | Rules |
+|---|---|---|---|
+| `description` | string |  | max 120 chars |
+| `hubName` | string, or null |  | max 80 chars |
+| `cityId` | string (uuid), or null |  |  |
+| `status` | `ACTIVE` \| `IN_REPAIR` \| `RETIRED` |  | IN_REPAIR / RETIRED stop punch-ins with it; RETIRED also takes it off the rider |
+
+### `POST /v1/admin/fleet/vehicles/{id}/assign`
+
+**Gives the vehicle to a rider; any vehicle they had before is taken off them.**
+
+**Access:** Bearer token from the ADMIN app · admin roles: FOUNDER, HEAD_OF_OPS, REGIONAL_HEAD, CITY_OPS, COMPLIANCE, ZONE_HEAD, STATE_HEAD, DISTRICT_MANAGER.
+
+| Parameter | In | Type | Required | Notes |
+|---|---|---|---|---|
+| `id` | path | string | yes |  |
+
+**Body**
+
+| Field | Type | Required | Rules |
+|---|---|---|---|
+| `riderId` | string (uuid) | yes |  |
+
+### `POST /v1/admin/fleet/vehicles/{id}/unassign`
+
+**Unassign**
+
+**Access:** Bearer token from the ADMIN app · admin roles: FOUNDER, HEAD_OF_OPS, REGIONAL_HEAD, CITY_OPS, COMPLIANCE, ZONE_HEAD, STATE_HEAD, DISTRICT_MANAGER.
+
+| Parameter | In | Type | Required | Notes |
+|---|---|---|---|---|
+| `id` | path | string | yes |  |
+
+### `GET /v1/admin/attendance`
+
+**Shifts that started that day plus every shift still open, with hours, breaks, vehicle and damage reports.**
+
+**Access:** Bearer token from the ADMIN app · any admin role.
+
+| Parameter | In | Type | Required | Notes |
+|---|---|---|---|---|
+| `date` | query | string |  | YYYY-MM-DD (India time); default today |
+| `cityId` | query | string |  |  |
+| `riderId` | query | string |  |  |
+| `open` | query | `true` \| `false` |  | true = only shifts not punched out yet |
+
+### `GET /v1/admin/attendance/{shiftId}`
+
+**One shift with its selfies, GPS, breaks and vehicle check / return photos (links valid 10 minutes).**
+
+**Access:** Bearer token from the ADMIN app · any admin role.
+
+| Parameter | In | Type | Required | Notes |
+|---|---|---|---|---|
+| `shiftId` | path | string | yes |  |
+
+### `POST /v1/admin/attendance/{shiftId}/end`
+
+**Closes a shift the rider forgot to punch out of.**
+
+**Access:** Bearer token from the ADMIN app · admin roles: FOUNDER, HEAD_OF_OPS, REGIONAL_HEAD, CITY_OPS, COMPLIANCE, ZONE_HEAD, STATE_HEAD, DISTRICT_MANAGER.
+
+| Parameter | In | Type | Required | Notes |
+|---|---|---|---|---|
+| `shiftId` | path | string | yes |  |
+
+**Body**
+
+| Field | Type | Required | Rules |
+|---|---|---|---|
+| `note` | string | yes | min 5 chars, max 300 chars |

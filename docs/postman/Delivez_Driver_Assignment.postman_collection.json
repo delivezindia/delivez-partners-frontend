@@ -1,0 +1,995 @@
+{
+  "info": {
+    "name": "Delivez — Driver Assignment (ops)",
+    "_postman_id": "0d4c3e7a-91f2-4b8e-a5d6-3c7f1e2b9a44",
+    "description": "The ops console's **Driver assignment** screen as API calls: see deliveries waiting for a driver, pick a driver, assign, change and remove drivers.\n\n**Who can use it** (ADMIN-app login): FOUNDER, HEAD_OF_OPS, REGIONAL_HEAD, CITY_OPS and **driver assignment only** (role `DISPATCHER`) can assign. COMPLIANCE, FINANCE, LEGAL, SUPPORT and AUDITOR can only look.\nA login limited to some cities only sees those cities' deliveries and drivers. A delivery can only go to a driver of its own city.\n\n**Run it top to bottom.** Each request saves what the next needs (token, taskId, driverId…).\n1. Choose the **Production** environment, set `adminPhone` (10 digits, a console login).\n2. *1. Sign in* → **Send OTP**, put the SMS code in `otpCode`, **Verify OTP**. **Who am I** shows your role and cities.\n3. *2. Overview* → cities, counts, the waiting list. Set `orderNumber` to work on one order (e.g. DEL-123456); leave it empty to take the longest-waiting delivery.\n4. *3. Pick a driver* → the delivery, then its drivers, best first. Saves the first free driver as `driverId` and the next as `driver2Id`.\n5. *4. Assign* → assign, change driver (reassign), remove driver (unassign). Change and remove are allowed until the order is picked up.\n\nOptional variables: `cityId` (only this city), `orderNumber`. Errors: `{ \"error\": { \"code\", \"message\" } }` — e.g. 409 DRIVER_BUSY, 409 TASK_NOT_ASSIGNABLE, 403 CITY_NOT_ALLOWED, 400 VALIDATION_FAILED.\n\n⚠ Production: Send OTP sends a real SMS, and Assign / Reassign / Unassign change a real customer's delivery and notify the driver.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{adminToken}}",
+        "type": "string"
+      }
+    ]
+  },
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "pm.request.url.query.each((q) => {",
+          "  const m = /^{{(\\w+)}}$/.exec(q.value || '');",
+          "  if (m && !(pm.environment.get(m[1]) || pm.collectionVariables.get(m[1]))) q.disabled = true;",
+          "});"
+        ]
+      }
+    }
+  ],
+  "variable": [
+    {
+      "key": "requestId",
+      "value": ""
+    },
+    {
+      "key": "otpCode",
+      "value": ""
+    },
+    {
+      "key": "adminToken",
+      "value": ""
+    },
+    {
+      "key": "adminRefreshToken",
+      "value": ""
+    },
+    {
+      "key": "taskId",
+      "value": ""
+    },
+    {
+      "key": "driverId",
+      "value": ""
+    },
+    {
+      "key": "driver2Id",
+      "value": ""
+    }
+  ],
+  "item": [
+    {
+      "name": "0. Server",
+      "description": "Is the API up?",
+      "item": [
+        {
+          "name": "Health",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('database up', () => pm.expect(pm.response.json().db).to.eql('up'));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Idempotency-Key",
+                "value": "{{$guid}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/v1/health",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "v1",
+                "health"
+              ]
+            },
+            "auth": {
+              "type": "noauth"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "1. Sign in",
+      "description": "OTP login to the ops console (app = ADMIN).",
+      "item": [
+        {
+          "name": "Send OTP",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status 200', () => pm.response.to.have.status(200));",
+                  "const j = pm.response.json();",
+                  "pm.collectionVariables.set('requestId', j.requestId);",
+                  "// Development / test servers only: the code is in the reply. On production it comes by SMS: put it in otpCode.",
+                  "if (j.devCode) pm.collectionVariables.set('otpCode', j.devCode);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Idempotency-Key",
+                "value": "{{$guid}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"phone\": \"{{adminPhone}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/v1/auth/otp/request",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "v1",
+                "auth",
+                "otp",
+                "request"
+              ]
+            },
+            "auth": {
+              "type": "noauth"
+            },
+            "description": "Sends a 6-digit code by SMS to {{adminPhone}}. Saves requestId. Max 5 codes an hour."
+          }
+        },
+        {
+          "name": "Verify OTP (ADMIN)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status 200', () => pm.response.to.have.status(200));",
+                  "const j = pm.response.json();",
+                  "pm.collectionVariables.set('adminToken', j.accessToken);",
+                  "pm.collectionVariables.set('adminRefreshToken', j.refreshToken);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Idempotency-Key",
+                "value": "{{$guid}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"requestId\": \"{{requestId}}\",\n  \"code\": \"{{otpCode}}\",\n  \"app\": \"ADMIN\",\n  \"device\": {\n    \"platform\": \"web\",\n    \"app\": \"postman\",\n    \"deviceId\": \"{{deviceId}}\"\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/v1/auth/otp/verify",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "v1",
+                "auth",
+                "otp",
+                "verify"
+              ]
+            },
+            "auth": {
+              "type": "noauth"
+            },
+            "description": "Put the SMS code in otpCode first. Saves the access and refresh tokens. 403 = this phone has no console access."
+          }
+        },
+        {
+          "name": "Who am I (role and cities)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status 200', () => pm.response.to.have.status(200));",
+                  "const j = pm.response.json(); console.log(`role ${j.role} · ${j.allCities ? 'all cities' : j.cities.map((c) => c.name).join(', ')}`);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Idempotency-Key",
+                "value": "{{$guid}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/v1/admin/me",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "v1",
+                "admin",
+                "me"
+              ]
+            },
+            "description": "role (DISPATCHER = driver assignment only), cities, allCities."
+          }
+        },
+        {
+          "name": "Refresh token",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status 200', () => pm.response.to.have.status(200));",
+                  "const j = pm.response.json(); pm.collectionVariables.set('adminToken', j.accessToken); pm.collectionVariables.set('adminRefreshToken', j.refreshToken);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Idempotency-Key",
+                "value": "{{$guid}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"refreshToken\": \"{{adminRefreshToken}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/v1/auth/refresh",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "v1",
+                "auth",
+                "refresh"
+              ]
+            },
+            "auth": {
+              "type": "noauth"
+            },
+            "description": "Access tokens last 15 minutes. Returns a NEW pair; the old refresh token stops working."
+          }
+        }
+      ]
+    },
+    {
+      "name": "2. Overview",
+      "description": "What the top of the screen shows.",
+      "item": [
+        {
+          "name": "Cities I can pick",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status 200', () => pm.response.to.have.status(200));",
+                  "const j = pm.response.json(); pm.test('has cities', () => pm.expect(j.items).to.be.an('array')); console.log(j.items.map((c) => c.name + ' = ' + c.id).join(' · '));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Idempotency-Key",
+                "value": "{{$guid}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/v1/admin/dispatch/cities",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "v1",
+                "admin",
+                "dispatch",
+                "cities"
+              ]
+            },
+            "description": "The city filter. allCities = false: you only ever see these cities."
+          }
+        },
+        {
+          "name": "Counts (summary)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status 200', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Idempotency-Key",
+                "value": "{{$guid}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/v1/admin/dispatch/summary?cityId={{cityId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "v1",
+                "admin",
+                "dispatch",
+                "summary"
+              ],
+              "query": [
+                {
+                  "key": "cityId",
+                  "value": "{{cityId}}",
+                  "description": "Optional: one city. Left out automatically when cityId is empty."
+                }
+              ]
+            },
+            "description": "Deliveries waiting / assigned / on the way / done today, drivers online / busy / free, longest wait, today's offers."
+          }
+        },
+        {
+          "name": "Waiting for a driver — pick a delivery",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status 200', () => pm.response.to.have.status(200));",
+                  "const it = pm.response.json().items.filter((t) => t.can.assign);",
+                  "pm.test('a delivery is waiting for a driver', () => pm.expect(it.length).to.be.above(0));",
+                  "if (it.length) { pm.collectionVariables.set('taskId', it[0].id); console.log(`picked ${it[0].order.orderNumber} · ${it[0].store.name} · waiting ${it[0].waitingMinutes} min`); }"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Idempotency-Key",
+                "value": "{{$guid}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/v1/admin/dispatch/tasks?tab=UNASSIGNED&search={{orderNumber}}&cityId={{cityId}}&page=1&pageSize=25",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "v1",
+                "admin",
+                "dispatch",
+                "tasks"
+              ],
+              "query": [
+                {
+                  "key": "tab",
+                  "value": "UNASSIGNED"
+                },
+                {
+                  "key": "search",
+                  "value": "{{orderNumber}}"
+                },
+                {
+                  "key": "cityId",
+                  "value": "{{cityId}}",
+                  "description": "Optional: one city. Left out automatically when cityId is empty."
+                },
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "pageSize",
+                  "value": "25"
+                }
+              ]
+            },
+            "description": "Longest-waiting first. Saves the first delivery that can be assigned as taskId (with orderNumber set: that order)."
+          }
+        },
+        {
+          "name": "Assigned (driver going to the shop)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status 200', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Idempotency-Key",
+                "value": "{{$guid}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/v1/admin/dispatch/tasks?tab=ASSIGNED&cityId={{cityId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "v1",
+                "admin",
+                "dispatch",
+                "tasks"
+              ],
+              "query": [
+                {
+                  "key": "tab",
+                  "value": "ASSIGNED"
+                },
+                {
+                  "key": "cityId",
+                  "value": "{{cityId}}",
+                  "description": "Optional: one city. Left out automatically when cityId is empty."
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "On the way (picked up)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status 200', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Idempotency-Key",
+                "value": "{{$guid}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/v1/admin/dispatch/tasks?tab=ON_THE_WAY&cityId={{cityId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "v1",
+                "admin",
+                "dispatch",
+                "tasks"
+              ],
+              "query": [
+                {
+                  "key": "tab",
+                  "value": "ON_THE_WAY"
+                },
+                {
+                  "key": "cityId",
+                  "value": "{{cityId}}",
+                  "description": "Optional: one city. Left out automatically when cityId is empty."
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Done (delivered, failed, cancelled)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status 200', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Idempotency-Key",
+                "value": "{{$guid}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/v1/admin/dispatch/tasks?tab=DONE&cityId={{cityId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "v1",
+                "admin",
+                "dispatch",
+                "tasks"
+              ],
+              "query": [
+                {
+                  "key": "tab",
+                  "value": "DONE"
+                },
+                {
+                  "key": "cityId",
+                  "value": "{{cityId}}",
+                  "description": "Optional: one city. Left out automatically when cityId is empty."
+                }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "3. Pick a driver",
+      "description": "The chosen delivery and the drivers who can take it.",
+      "item": [
+        {
+          "name": "Open the delivery",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status 200', () => pm.response.to.have.status(200));",
+                  "const t = pm.response.json(); console.log(`${t.order && t.order.orderNumber} · ${t.status} · driver: ${t.driver ? t.driver.name + ' (' + t.driver.code + ')' : 'none'}`);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Idempotency-Key",
+                "value": "{{$guid}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/v1/admin/dispatch/tasks/{{taskId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "v1",
+                "admin",
+                "dispatch",
+                "tasks",
+                "{{taskId}}"
+              ]
+            },
+            "description": "Order, shop, pickup and drop, driver, auto-dispatch offers, what you can do (can.assign / reassign / unassign) and the history."
+          }
+        },
+        {
+          "name": "Drivers for this delivery (best first)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status 200', () => pm.response.to.have.status(200));",
+                  "const free = pm.response.json().items.filter((d) => d.canAssign);",
+                  "pm.test('a driver is free', () => pm.expect(free.length).to.be.above(0));",
+                  "if (free[0]) pm.collectionVariables.set('driverId', free[0].id);",
+                  "if (free[1]) pm.collectionVariables.set('driver2Id', free[1].id);",
+                  "console.log(free.slice(0, 2).map((d) => `${d.name} (${d.code}) ${d.distanceToPickupKm ?? '?'} km`).join(' · '));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Idempotency-Key",
+                "value": "{{$guid}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/v1/admin/dispatch/drivers?taskId={{taskId}}&onlineOnly=false&search={{driverSearch}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "v1",
+                "admin",
+                "dispatch",
+                "drivers"
+              ],
+              "query": [
+                {
+                  "key": "taskId",
+                  "value": "{{taskId}}"
+                },
+                {
+                  "key": "onlineOnly",
+                  "value": "false"
+                },
+                {
+                  "key": "search",
+                  "value": "{{driverSearch}}"
+                }
+              ]
+            },
+            "description": "Only drivers of the delivery's city, with distance and ETA to the shop; free + online + nearest first. canAssign = false comes with the reason (busy, offline, at the most orders…). Saves the first two free drivers as driverId and driver2Id."
+          }
+        },
+        {
+          "name": "All drivers (city)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status 200', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Idempotency-Key",
+                "value": "{{$guid}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/v1/admin/dispatch/drivers?onlineOnly=true&cityId={{cityId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "v1",
+                "admin",
+                "dispatch",
+                "drivers"
+              ],
+              "query": [
+                {
+                  "key": "onlineOnly",
+                  "value": "true"
+                },
+                {
+                  "key": "cityId",
+                  "value": "{{cityId}}",
+                  "description": "Optional: one city. Left out automatically when cityId is empty."
+                }
+              ]
+            },
+            "description": "Without a delivery: everyone online in your cities (or cityId)."
+          }
+        }
+      ]
+    },
+    {
+      "name": "4. Assign",
+      "description": "Change who carries the delivery. Each change is in the delivery's history and the audit log, and the driver gets a notification.",
+      "item": [
+        {
+          "name": "Assign driver",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('driver assigned', () => pm.expect(pm.response.json().driver.id).to.eql(pm.collectionVariables.get('driverId')));",
+                  "const t = pm.response.json(); console.log(`${t.order && t.order.orderNumber} · ${t.status} · driver: ${t.driver ? t.driver.name + ' (' + t.driver.code + ')' : 'none'}`);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Idempotency-Key",
+                "value": "{{$guid}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"riderId\": \"{{driverId}}\",\n  \"note\": \"Assigned from Postman\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/v1/admin/dispatch/tasks/{{taskId}}/assign",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "v1",
+                "admin",
+                "dispatch",
+                "tasks",
+                "{{taskId}}",
+                "assign"
+              ]
+            },
+            "description": "For a delivery waiting for a driver. note is optional. 409 when the driver is busy / at the most orders or the delivery already has a driver."
+          }
+        },
+        {
+          "name": "Change driver (reassign)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('new driver', () => pm.expect(pm.response.json().driver.id).to.eql(pm.collectionVariables.get('driver2Id')));",
+                  "const t = pm.response.json(); console.log(`${t.order && t.order.orderNumber} · ${t.status} · driver: ${t.driver ? t.driver.name + ' (' + t.driver.code + ')' : 'none'}`);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Idempotency-Key",
+                "value": "{{$guid}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"riderId\": \"{{driver2Id}}\",\n  \"reason\": \"First driver is stuck in traffic\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/v1/admin/dispatch/tasks/{{taskId}}/reassign",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "v1",
+                "admin",
+                "dispatch",
+                "tasks",
+                "{{taskId}}",
+                "reassign"
+              ]
+            },
+            "description": "Moves it to another driver; reason (5+ characters) required. Allowed until pickup."
+          }
+        },
+        {
+          "name": "Remove driver (unassign)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('no driver now', () => pm.expect(pm.response.json().driver).to.eql(null));",
+                  "const t = pm.response.json(); console.log(`${t.order && t.order.orderNumber} · ${t.status} · driver: ${t.driver ? t.driver.name + ' (' + t.driver.code + ')' : 'none'}`);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Idempotency-Key",
+                "value": "{{$guid}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"reason\": \"Driver asked to be taken off\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/v1/admin/dispatch/tasks/{{taskId}}/unassign",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "v1",
+                "admin",
+                "dispatch",
+                "tasks",
+                "{{taskId}}",
+                "unassign"
+              ]
+            },
+            "description": "Back to waiting (auto-dispatch looks again); reason required. Allowed until pickup."
+          }
+        },
+        {
+          "name": "History of the delivery",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status 200', () => pm.response.to.have.status(200));",
+                  "const h = pm.response.json().history || []; console.log(h.map((e) => `${e.action || e.to}${e.driver ? ' ' + e.driver : ''}${e.reason ? ' — ' + e.reason : ''}`).join(' | '));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Idempotency-Key",
+                "value": "{{$guid}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/v1/admin/dispatch/tasks/{{taskId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "v1",
+                "admin",
+                "dispatch",
+                "tasks",
+                "{{taskId}}"
+              ]
+            },
+            "description": "history: who assigned / changed / removed which driver, when and why."
+          }
+        }
+      ]
+    }
+  ]
+}

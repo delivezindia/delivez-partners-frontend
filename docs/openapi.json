@@ -49,7 +49,7 @@
           "admin"
         ],
         "summary": "List",
-        "description": "**Access:** Bearer token from the ADMIN app · admin roles: FOUNDER, HEAD_OF_OPS, REGIONAL_HEAD, CITY_OPS, COMPLIANCE, FINANCE, LEGAL, SUPPORT, AUDITOR."
+        "description": "**Access:** Bearer token from the ADMIN app · admin roles: FOUNDER, HEAD_OF_OPS, REGIONAL_HEAD, CITY_OPS, COMPLIANCE, FINANCE, LEGAL, SUPPORT, AUDITOR, ZONE_HEAD, STATE_HEAD, DISTRICT_MANAGER, AREA_MANAGER, PINCODE_EXECUTIVE."
       }
     },
     "/v1/auth/otp/request": {
@@ -1947,7 +1947,7 @@
           "admin"
         ],
         "summary": "Me",
-        "description": "**Access:** Bearer token from the ADMIN app · admin roles: FOUNDER, HEAD_OF_OPS, REGIONAL_HEAD, CITY_OPS, COMPLIANCE, FINANCE, LEGAL, SUPPORT, AUDITOR, ACCOUNT_MANAGER, DISPATCHER."
+        "description": "**Access:** Bearer token from the ADMIN app · admin roles: FOUNDER, HEAD_OF_OPS, REGIONAL_HEAD, CITY_OPS, COMPLIANCE, FINANCE, LEGAL, SUPPORT, AUDITOR, ZONE_HEAD, STATE_HEAD, DISTRICT_MANAGER, AREA_MANAGER, PINCODE_EXECUTIVE, ACCOUNT_MANAGER, DISPATCHER."
       }
     },
     "/v1/admin/onboarding/pipeline": {
@@ -2186,7 +2186,7 @@
           }
         },
         "summary": "Verify",
-        "description": "**Access:** Bearer token from the ADMIN app · admin roles: FOUNDER, HEAD_OF_OPS, COMPLIANCE."
+        "description": "**Access:** Bearer token from the ADMIN app · admin roles: FOUNDER, HEAD_OF_OPS, COMPLIANCE, ZONE_HEAD, STATE_HEAD."
       }
     },
     "/v1/admin/documents/{id}/reject": {
@@ -2236,7 +2236,7 @@
           }
         },
         "summary": "Reject",
-        "description": "**Access:** Bearer token from the ADMIN app · admin roles: FOUNDER, HEAD_OF_OPS, COMPLIANCE."
+        "description": "**Access:** Bearer token from the ADMIN app · admin roles: FOUNDER, HEAD_OF_OPS, COMPLIANCE, ZONE_HEAD, STATE_HEAD."
       }
     },
     "/v1/admin/stores/{storeId}/start-review": {
@@ -2266,7 +2266,7 @@
           "admin"
         ],
         "summary": "Start review",
-        "description": "**Access:** Bearer token from the ADMIN app · admin roles: FOUNDER, HEAD_OF_OPS, REGIONAL_HEAD, CITY_OPS, COMPLIANCE."
+        "description": "**Access:** Bearer token from the ADMIN app · admin roles: FOUNDER, HEAD_OF_OPS, REGIONAL_HEAD, CITY_OPS, COMPLIANCE, ZONE_HEAD, STATE_HEAD, DISTRICT_MANAGER."
       }
     },
     "/v1/admin/stores/{storeId}/approve-live": {
@@ -2312,7 +2312,7 @@
           }
         },
         "summary": "Approve live",
-        "description": "**Access:** Bearer token from the ADMIN app · admin roles: FOUNDER, HEAD_OF_OPS, REGIONAL_HEAD, CITY_OPS, COMPLIANCE."
+        "description": "**Access:** Bearer token from the ADMIN app · admin roles: FOUNDER, HEAD_OF_OPS, REGIONAL_HEAD, CITY_OPS, COMPLIANCE, ZONE_HEAD, STATE_HEAD, DISTRICT_MANAGER."
       }
     },
     "/v1/admin/stores/{storeId}/approve-limited": {
@@ -2358,7 +2358,7 @@
           }
         },
         "summary": "Approve limited",
-        "description": "**Access:** Bearer token from the ADMIN app · admin roles: FOUNDER, HEAD_OF_OPS, REGIONAL_HEAD, CITY_OPS, COMPLIANCE."
+        "description": "**Access:** Bearer token from the ADMIN app · admin roles: FOUNDER, HEAD_OF_OPS, REGIONAL_HEAD, CITY_OPS, COMPLIANCE, ZONE_HEAD, STATE_HEAD, DISTRICT_MANAGER."
       }
     },
     "/v1/admin/stores/{storeId}/request-changes": {
@@ -2404,7 +2404,7 @@
           }
         },
         "summary": "Request changes",
-        "description": "**Access:** Bearer token from the ADMIN app · admin roles: FOUNDER, HEAD_OF_OPS, REGIONAL_HEAD, CITY_OPS, COMPLIANCE."
+        "description": "**Access:** Bearer token from the ADMIN app · admin roles: FOUNDER, HEAD_OF_OPS, REGIONAL_HEAD, CITY_OPS, COMPLIANCE, ZONE_HEAD, STATE_HEAD, DISTRICT_MANAGER."
       }
     },
     "/v1/admin/stores/{storeId}/reject": {
@@ -2450,7 +2450,7 @@
           }
         },
         "summary": "Reject store",
-        "description": "**Access:** Bearer token from the ADMIN app · admin roles: FOUNDER, HEAD_OF_OPS, REGIONAL_HEAD, CITY_OPS, COMPLIANCE."
+        "description": "**Access:** Bearer token from the ADMIN app · admin roles: FOUNDER, HEAD_OF_OPS, REGIONAL_HEAD, CITY_OPS, COMPLIANCE, ZONE_HEAD, STATE_HEAD, DISTRICT_MANAGER."
       }
     },
     "/v1/admin/stores/{storeId}/suspend": {
@@ -2496,7 +2496,7 @@
           }
         },
         "summary": "Suspend",
-        "description": "**Access:** Bearer token from the ADMIN app · admin roles: FOUNDER, HEAD_OF_OPS, REGIONAL_HEAD, COMPLIANCE."
+        "description": "**Access:** Bearer token from the ADMIN app · admin roles: FOUNDER, HEAD_OF_OPS, REGIONAL_HEAD, COMPLIANCE, ZONE_HEAD, STATE_HEAD."
       }
     },
     "/v1/admin/stores/{storeId}/reinstate": {
@@ -2542,7 +2542,7 @@
           }
         },
         "summary": "Reinstate",
-        "description": "**Access:** Bearer token from the ADMIN app · admin roles: FOUNDER, HEAD_OF_OPS, REGIONAL_HEAD."
+        "description": "**Access:** Bearer token from the ADMIN app · admin roles: FOUNDER, HEAD_OF_OPS, REGIONAL_HEAD, ZONE_HEAD."
       }
     },
     "/v1/admin/stores/{storeId}/pause": {
@@ -2588,7 +2588,7 @@
           }
         },
         "summary": "Pause",
-        "description": "**Access:** Bearer token from the ADMIN app · admin roles: FOUNDER, HEAD_OF_OPS, REGIONAL_HEAD, CITY_OPS."
+        "description": "**Access:** Bearer token from the ADMIN app · admin roles: FOUNDER, HEAD_OF_OPS, REGIONAL_HEAD, CITY_OPS, ZONE_HEAD, STATE_HEAD, DISTRICT_MANAGER, AREA_MANAGER, PINCODE_EXECUTIVE."
       }
     },
     "/v1/admin/stores/{storeId}/resume": {
@@ -2634,7 +2634,7 @@
           }
         },
         "summary": "Resume",
-        "description": "**Access:** Bearer token from the ADMIN app · admin roles: FOUNDER, HEAD_OF_OPS, REGIONAL_HEAD, CITY_OPS."
+        "description": "**Access:** Bearer token from the ADMIN app · admin roles: FOUNDER, HEAD_OF_OPS, REGIONAL_HEAD, CITY_OPS, ZONE_HEAD, STATE_HEAD, DISTRICT_MANAGER, AREA_MANAGER, PINCODE_EXECUTIVE."
       }
     },
     "/v1/admin/stores/{storeId}/notices": {
@@ -2684,7 +2684,7 @@
           }
         },
         "summary": "Notice",
-        "description": "**Access:** Bearer token from the ADMIN app · admin roles: FOUNDER, HEAD_OF_OPS, REGIONAL_HEAD, CITY_OPS."
+        "description": "**Access:** Bearer token from the ADMIN app · admin roles: FOUNDER, HEAD_OF_OPS, REGIONAL_HEAD, CITY_OPS, ZONE_HEAD, STATE_HEAD, DISTRICT_MANAGER, AREA_MANAGER, PINCODE_EXECUTIVE."
       }
     },
     "/v1/admin/stores/{storeId}/members/{memberId}/access": {
@@ -2744,7 +2744,7 @@
           }
         },
         "summary": "Member access",
-        "description": "**Access:** Bearer token from the ADMIN app · admin roles: FOUNDER, HEAD_OF_OPS, REGIONAL_HEAD, CITY_OPS, SUPPORT."
+        "description": "**Access:** Bearer token from the ADMIN app · admin roles: FOUNDER, HEAD_OF_OPS, REGIONAL_HEAD, CITY_OPS, SUPPORT, ZONE_HEAD, STATE_HEAD, DISTRICT_MANAGER, AREA_MANAGER."
       }
     },
     "/v1/admin/team": {
@@ -2765,7 +2765,7 @@
           "admin"
         ],
         "summary": "Team",
-        "description": "**Access:** Bearer token from the ADMIN app · admin roles: FOUNDER, HEAD_OF_OPS."
+        "description": "**Access:** Bearer token from the ADMIN app · admin roles: FOUNDER, HEAD_OF_OPS, ZONE_HEAD, STATE_HEAD, DISTRICT_MANAGER, AREA_MANAGER."
       },
       "post": {
         "operationId": "AdminPlatformController_addAdmin",
@@ -2812,8 +2812,34 @@
                       "SALES_AGENT",
                       "AUDITOR",
                       "ACCOUNT_MANAGER",
-                      "DISPATCHER"
+                      "DISPATCHER",
+                      "ZONE_HEAD",
+                      "STATE_HEAD",
+                      "DISTRICT_MANAGER",
+                      "AREA_MANAGER",
+                      "PINCODE_EXECUTIVE"
                     ]
+                  },
+                  "scopeLevel": {
+                    "type": "string",
+                    "enum": [
+                      "NATIONAL",
+                      "ZONE",
+                      "STATE",
+                      "DISTRICT",
+                      "CITY",
+                      "AREA",
+                      "PINCODE"
+                    ]
+                  },
+                  "scopeIds": {
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 60
+                    },
+                    "maxItems": 100
                   },
                   "cityIds": {
                     "type": "array",
@@ -2821,8 +2847,7 @@
                       "type": "string",
                       "format": "uuid"
                     },
-                    "maxItems": 50,
-                    "default": []
+                    "maxItems": 50
                   }
                 },
                 "required": [
@@ -2835,7 +2860,7 @@
           }
         },
         "summary": "Add admin",
-        "description": "**Access:** Bearer token from the ADMIN app · admin roles: FOUNDER, HEAD_OF_OPS."
+        "description": "**Access:** Bearer token from the ADMIN app · admin roles: FOUNDER, HEAD_OF_OPS, ZONE_HEAD, STATE_HEAD, DISTRICT_MANAGER, AREA_MANAGER."
       }
     },
     "/v1/admin/team/{id}": {
@@ -2885,8 +2910,34 @@
                       "SALES_AGENT",
                       "AUDITOR",
                       "ACCOUNT_MANAGER",
-                      "DISPATCHER"
+                      "DISPATCHER",
+                      "ZONE_HEAD",
+                      "STATE_HEAD",
+                      "DISTRICT_MANAGER",
+                      "AREA_MANAGER",
+                      "PINCODE_EXECUTIVE"
                     ]
+                  },
+                  "scopeLevel": {
+                    "type": "string",
+                    "enum": [
+                      "NATIONAL",
+                      "ZONE",
+                      "STATE",
+                      "DISTRICT",
+                      "CITY",
+                      "AREA",
+                      "PINCODE"
+                    ]
+                  },
+                  "scopeIds": {
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 60
+                    },
+                    "maxItems": 100
                   },
                   "cityIds": {
                     "type": "array",
@@ -2905,7 +2956,7 @@
           }
         },
         "summary": "Update admin",
-        "description": "**Access:** Bearer token from the ADMIN app · admin roles: FOUNDER, HEAD_OF_OPS."
+        "description": "**Access:** Bearer token from the ADMIN app · admin roles: FOUNDER, HEAD_OF_OPS, ZONE_HEAD, STATE_HEAD, DISTRICT_MANAGER, AREA_MANAGER."
       }
     },
     "/v1/admin/cities": {
@@ -2961,6 +3012,10 @@
                     "minLength": 2,
                     "maxLength": 60
                   },
+                  "districtId": {
+                    "type": "string",
+                    "format": "uuid"
+                  },
                   "centerLat": {
                     "type": "number",
                     "minimum": 6,
@@ -2974,7 +3029,6 @@
                 },
                 "required": [
                   "name",
-                  "state",
                   "centerLat",
                   "centerLng"
                 ]
@@ -2983,7 +3037,7 @@
           }
         },
         "summary": "Add city",
-        "description": "**Access:** Bearer token from the ADMIN app · admin roles: FOUNDER, HEAD_OF_OPS, REGIONAL_HEAD."
+        "description": "**Access:** Bearer token from the ADMIN app · admin roles: FOUNDER, HEAD_OF_OPS, REGIONAL_HEAD, ZONE_HEAD, STATE_HEAD, DISTRICT_MANAGER, AREA_MANAGER."
       }
     },
     "/v1/admin/cities/{id}": {
@@ -3031,6 +3085,10 @@
                     "type": "number",
                     "minimum": 68,
                     "maximum": 98
+                  },
+                  "districtId": {
+                    "type": "string",
+                    "format": "uuid"
                   }
                 }
               }
@@ -3038,7 +3096,7 @@
           }
         },
         "summary": "Update city",
-        "description": "**Access:** Bearer token from the ADMIN app · admin roles: FOUNDER, HEAD_OF_OPS, REGIONAL_HEAD."
+        "description": "**Access:** Bearer token from the ADMIN app · admin roles: FOUNDER, HEAD_OF_OPS, REGIONAL_HEAD, ZONE_HEAD, STATE_HEAD, DISTRICT_MANAGER, AREA_MANAGER."
       }
     },
     "/v1/admin/cities/{id}/zones": {
@@ -3088,7 +3146,7 @@
           }
         },
         "summary": "Add zone",
-        "description": "**Access:** Bearer token from the ADMIN app · admin roles: FOUNDER, HEAD_OF_OPS, REGIONAL_HEAD."
+        "description": "**Access:** Bearer token from the ADMIN app · admin roles: FOUNDER, HEAD_OF_OPS, REGIONAL_HEAD, ZONE_HEAD, STATE_HEAD, DISTRICT_MANAGER, AREA_MANAGER."
       }
     },
     "/v1/admin/zones/{id}": {
@@ -3138,7 +3196,7 @@
           }
         },
         "summary": "Update zone",
-        "description": "**Access:** Bearer token from the ADMIN app · admin roles: FOUNDER, HEAD_OF_OPS, REGIONAL_HEAD."
+        "description": "**Access:** Bearer token from the ADMIN app · admin roles: FOUNDER, HEAD_OF_OPS, REGIONAL_HEAD, ZONE_HEAD, STATE_HEAD, DISTRICT_MANAGER, AREA_MANAGER."
       }
     },
     "/v1/admin/cities/{id}/pincodes": {
@@ -3233,7 +3291,7 @@
           }
         },
         "summary": "Upsert pincodes",
-        "description": "**Access:** Bearer token from the ADMIN app · admin roles: FOUNDER, HEAD_OF_OPS, REGIONAL_HEAD."
+        "description": "**Access:** Bearer token from the ADMIN app · admin roles: FOUNDER, HEAD_OF_OPS, REGIONAL_HEAD, ZONE_HEAD, STATE_HEAD, DISTRICT_MANAGER, AREA_MANAGER."
       }
     },
     "/v1/admin/legal": {
@@ -3449,6 +3507,340 @@
         ],
         "summary": "Audit",
         "description": "**Access:** Bearer token from the ADMIN app · admin roles: FOUNDER, HEAD_OF_OPS, COMPLIANCE, LEGAL, AUDITOR."
+      }
+    },
+    "/v1/admin/geo/tree": {
+      "get": {
+        "operationId": "AdminGeoController_tree",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "admin"
+        ],
+        "summary": "Tree",
+        "description": "**Access:** Bearer token from the ADMIN app · any admin role."
+      }
+    },
+    "/v1/admin/geo/permissions": {
+      "get": {
+        "operationId": "AdminGeoController_permissions",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Every role, its level, what it may do and whom it may add (with what you yourself may grant).",
+        "tags": [
+          "admin"
+        ],
+        "description": "**Access:** Bearer token from the ADMIN app · admin roles: FOUNDER, HEAD_OF_OPS, REGIONAL_HEAD, CITY_OPS, COMPLIANCE, FINANCE, LEGAL, SUPPORT, AUDITOR, ZONE_HEAD, STATE_HEAD, DISTRICT_MANAGER, AREA_MANAGER, PINCODE_EXECUTIVE, DISPATCHER."
+      }
+    },
+    "/v1/admin/geo/zones": {
+      "post": {
+        "operationId": "AdminGeoController_addZone",
+        "parameters": [],
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "admin"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "name": {
+                    "type": "string",
+                    "minLength": 2,
+                    "maxLength": 60
+                  }
+                },
+                "required": [
+                  "name"
+                ]
+              }
+            }
+          }
+        },
+        "summary": "Add zone",
+        "description": "**Access:** Bearer token from the ADMIN app · admin roles: FOUNDER, HEAD_OF_OPS, REGIONAL_HEAD, ZONE_HEAD, STATE_HEAD, DISTRICT_MANAGER, AREA_MANAGER."
+      }
+    },
+    "/v1/admin/geo/zones/{id}": {
+      "patch": {
+        "operationId": "AdminGeoController_updateZone",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "admin"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "name": {
+                    "type": "string",
+                    "minLength": 2,
+                    "maxLength": 60
+                  },
+                  "isActive": {
+                    "type": "boolean"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "summary": "Update zone",
+        "description": "**Access:** Bearer token from the ADMIN app · admin roles: FOUNDER, HEAD_OF_OPS, REGIONAL_HEAD, ZONE_HEAD, STATE_HEAD, DISTRICT_MANAGER, AREA_MANAGER."
+      }
+    },
+    "/v1/admin/geo/states": {
+      "post": {
+        "operationId": "AdminGeoController_addState",
+        "parameters": [],
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "admin"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "name": {
+                    "type": "string",
+                    "minLength": 2,
+                    "maxLength": 60
+                  },
+                  "code": {
+                    "type": "string",
+                    "pattern": "^[A-Z]{2,3}$"
+                  },
+                  "regionId": {
+                    "type": "string",
+                    "format": "uuid"
+                  }
+                },
+                "required": [
+                  "name",
+                  "code",
+                  "regionId"
+                ]
+              }
+            }
+          }
+        },
+        "summary": "Add state",
+        "description": "**Access:** Bearer token from the ADMIN app · admin roles: FOUNDER, HEAD_OF_OPS, REGIONAL_HEAD, ZONE_HEAD, STATE_HEAD, DISTRICT_MANAGER, AREA_MANAGER."
+      }
+    },
+    "/v1/admin/geo/states/{id}": {
+      "patch": {
+        "operationId": "AdminGeoController_updateState",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "admin"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "name": {
+                    "type": "string",
+                    "minLength": 2,
+                    "maxLength": 60
+                  },
+                  "isActive": {
+                    "type": "boolean"
+                  },
+                  "regionId": {
+                    "type": "string",
+                    "format": "uuid"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "summary": "Update state",
+        "description": "**Access:** Bearer token from the ADMIN app · admin roles: FOUNDER, HEAD_OF_OPS, REGIONAL_HEAD, ZONE_HEAD, STATE_HEAD, DISTRICT_MANAGER, AREA_MANAGER."
+      }
+    },
+    "/v1/admin/geo/districts": {
+      "post": {
+        "operationId": "AdminGeoController_addDistrict",
+        "parameters": [],
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "admin"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "name": {
+                    "type": "string",
+                    "minLength": 2,
+                    "maxLength": 60
+                  },
+                  "stateId": {
+                    "type": "string",
+                    "format": "uuid"
+                  }
+                },
+                "required": [
+                  "name",
+                  "stateId"
+                ]
+              }
+            }
+          }
+        },
+        "summary": "Add district",
+        "description": "**Access:** Bearer token from the ADMIN app · admin roles: FOUNDER, HEAD_OF_OPS, REGIONAL_HEAD, ZONE_HEAD, STATE_HEAD, DISTRICT_MANAGER, AREA_MANAGER."
+      }
+    },
+    "/v1/admin/geo/districts/{id}": {
+      "patch": {
+        "operationId": "AdminGeoController_updateDistrict",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "admin"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "name": {
+                    "type": "string",
+                    "minLength": 2,
+                    "maxLength": 60
+                  },
+                  "isActive": {
+                    "type": "boolean"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "summary": "Update district",
+        "description": "**Access:** Bearer token from the ADMIN app · admin roles: FOUNDER, HEAD_OF_OPS, REGIONAL_HEAD, ZONE_HEAD, STATE_HEAD, DISTRICT_MANAGER, AREA_MANAGER."
       }
     },
     "/v1/admin/am/home": {
@@ -4102,7 +4494,7 @@
           }
         },
         "summary": "Assign",
-        "description": "**Access:** Bearer token from the ADMIN app · admin roles: FOUNDER, HEAD_OF_OPS, REGIONAL_HEAD, CITY_OPS."
+        "description": "**Access:** Bearer token from the ADMIN app · admin roles: FOUNDER, HEAD_OF_OPS, REGIONAL_HEAD, CITY_OPS, ZONE_HEAD, STATE_HEAD, DISTRICT_MANAGER, AREA_MANAGER, PINCODE_EXECUTIVE."
       }
     },
     "/v1/admin/am/dev/health-check": {
@@ -4123,7 +4515,7 @@
         "tags": [
           "admin-account-managers"
         ],
-        "description": "**Access:** Bearer token from the ADMIN app · admin roles: FOUNDER, HEAD_OF_OPS, REGIONAL_HEAD, CITY_OPS."
+        "description": "**Access:** Bearer token from the ADMIN app · admin roles: FOUNDER, HEAD_OF_OPS, REGIONAL_HEAD, CITY_OPS, ZONE_HEAD, STATE_HEAD, DISTRICT_MANAGER, AREA_MANAGER, PINCODE_EXECUTIVE."
       }
     },
     "/v1/push/config": {
@@ -5624,7 +6016,7 @@
             }
           }
         },
-        "description": "**Access:** Bearer token from the ADMIN app · admin roles: FOUNDER, HEAD_OF_OPS, REGIONAL_HEAD, CITY_OPS."
+        "description": "**Access:** Bearer token from the ADMIN app · admin roles: FOUNDER, HEAD_OF_OPS, REGIONAL_HEAD, CITY_OPS, ZONE_HEAD, STATE_HEAD, DISTRICT_MANAGER, AREA_MANAGER, PINCODE_EXECUTIVE."
       }
     },
     "/v1/admin/orders/{id}/return-window/close": {
@@ -5654,7 +6046,7 @@
         "tags": [
           "admin"
         ],
-        "description": "**Access:** Bearer token from the ADMIN app · admin roles: FOUNDER, HEAD_OF_OPS, REGIONAL_HEAD, CITY_OPS."
+        "description": "**Access:** Bearer token from the ADMIN app · admin roles: FOUNDER, HEAD_OF_OPS, REGIONAL_HEAD, CITY_OPS, ZONE_HEAD, STATE_HEAD, DISTRICT_MANAGER, AREA_MANAGER, PINCODE_EXECUTIVE."
       }
     },
     "/v1/admin/orders": {
@@ -5807,7 +6199,7 @@
           }
         },
         "summary": "Cancel",
-        "description": "**Access:** Bearer token from the ADMIN app · admin roles: FOUNDER, HEAD_OF_OPS, REGIONAL_HEAD, CITY_OPS, SUPPORT."
+        "description": "**Access:** Bearer token from the ADMIN app · admin roles: FOUNDER, HEAD_OF_OPS, REGIONAL_HEAD, CITY_OPS, ZONE_HEAD, STATE_HEAD, DISTRICT_MANAGER, AREA_MANAGER, PINCODE_EXECUTIVE, SUPPORT."
       }
     },
     "/v1/admin/tasks/{id}/assign": {
@@ -5837,7 +6229,7 @@
           "admin"
         ],
         "summary": "Assign",
-        "description": "**Access:** Bearer token from the ADMIN app · admin roles: FOUNDER, HEAD_OF_OPS, REGIONAL_HEAD, CITY_OPS."
+        "description": "**Access:** Bearer token from the ADMIN app · admin roles: FOUNDER, HEAD_OF_OPS, REGIONAL_HEAD, CITY_OPS, ZONE_HEAD, STATE_HEAD, DISTRICT_MANAGER, AREA_MANAGER, PINCODE_EXECUTIVE."
       }
     },
     "/v1/admin/tasks/{id}/status": {
@@ -5909,7 +6301,7 @@
           }
         },
         "summary": "Step",
-        "description": "**Access:** Bearer token from the ADMIN app · admin roles: FOUNDER, HEAD_OF_OPS, REGIONAL_HEAD, CITY_OPS."
+        "description": "**Access:** Bearer token from the ADMIN app · admin roles: FOUNDER, HEAD_OF_OPS, REGIONAL_HEAD, CITY_OPS, ZONE_HEAD, STATE_HEAD, DISTRICT_MANAGER, AREA_MANAGER, PINCODE_EXECUTIVE."
       }
     },
     "/v1/partners/stores/{storeId}/reports/summary": {
@@ -6145,7 +6537,7 @@
           }
         },
         "summary": "Ack",
-        "description": "**Access:** Bearer token from the ADMIN app · admin roles: FOUNDER, HEAD_OF_OPS, REGIONAL_HEAD, CITY_OPS, SUPPORT."
+        "description": "**Access:** Bearer token from the ADMIN app · admin roles: FOUNDER, HEAD_OF_OPS, REGIONAL_HEAD, CITY_OPS, ZONE_HEAD, STATE_HEAD, DISTRICT_MANAGER, AREA_MANAGER, PINCODE_EXECUTIVE, SUPPORT."
       }
     },
     "/v1/admin/ops/alerts/ack-all": {
@@ -6166,7 +6558,7 @@
           "admin"
         ],
         "summary": "Ack all",
-        "description": "**Access:** Bearer token from the ADMIN app · admin roles: FOUNDER, HEAD_OF_OPS, REGIONAL_HEAD, CITY_OPS, SUPPORT."
+        "description": "**Access:** Bearer token from the ADMIN app · admin roles: FOUNDER, HEAD_OF_OPS, REGIONAL_HEAD, CITY_OPS, ZONE_HEAD, STATE_HEAD, DISTRICT_MANAGER, AREA_MANAGER, PINCODE_EXECUTIVE, SUPPORT."
       }
     },
     "/v1/admin/ops/alerts/{id}/resolve": {
@@ -6212,7 +6604,7 @@
           }
         },
         "summary": "Resolve",
-        "description": "**Access:** Bearer token from the ADMIN app · admin roles: FOUNDER, HEAD_OF_OPS, REGIONAL_HEAD, CITY_OPS, SUPPORT."
+        "description": "**Access:** Bearer token from the ADMIN app · admin roles: FOUNDER, HEAD_OF_OPS, REGIONAL_HEAD, CITY_OPS, ZONE_HEAD, STATE_HEAD, DISTRICT_MANAGER, AREA_MANAGER, PINCODE_EXECUTIVE, SUPPORT."
       }
     },
     "/v1/admin/ops/alerts/log": {
@@ -6319,7 +6711,7 @@
           }
         },
         "summary": "Prep",
-        "description": "**Access:** Bearer token from the ADMIN app · admin roles: FOUNDER, HEAD_OF_OPS, REGIONAL_HEAD, CITY_OPS."
+        "description": "**Access:** Bearer token from the ADMIN app · admin roles: FOUNDER, HEAD_OF_OPS, REGIONAL_HEAD, CITY_OPS, ZONE_HEAD, STATE_HEAD, DISTRICT_MANAGER, AREA_MANAGER, PINCODE_EXECUTIVE."
       }
     },
     "/v1/admin/ops/orders/{id}/escalate": {
@@ -6365,7 +6757,7 @@
           }
         },
         "summary": "Escalate",
-        "description": "**Access:** Bearer token from the ADMIN app · admin roles: FOUNDER, HEAD_OF_OPS, REGIONAL_HEAD, CITY_OPS, SUPPORT."
+        "description": "**Access:** Bearer token from the ADMIN app · admin roles: FOUNDER, HEAD_OF_OPS, REGIONAL_HEAD, CITY_OPS, ZONE_HEAD, STATE_HEAD, DISTRICT_MANAGER, AREA_MANAGER, PINCODE_EXECUTIVE, SUPPORT."
       }
     },
     "/v1/admin/ops/orders/{id}/apology": {
@@ -6395,7 +6787,7 @@
           "admin"
         ],
         "summary": "Apology",
-        "description": "**Access:** Bearer token from the ADMIN app · admin roles: FOUNDER, HEAD_OF_OPS, REGIONAL_HEAD, CITY_OPS, SUPPORT."
+        "description": "**Access:** Bearer token from the ADMIN app · admin roles: FOUNDER, HEAD_OF_OPS, REGIONAL_HEAD, CITY_OPS, ZONE_HEAD, STATE_HEAD, DISTRICT_MANAGER, AREA_MANAGER, PINCODE_EXECUTIVE, SUPPORT."
       }
     },
     "/v1/admin/ops/tasks/{id}/release": {
@@ -6425,7 +6817,7 @@
           "admin"
         ],
         "summary": "Release",
-        "description": "**Access:** Bearer token from the ADMIN app · admin roles: FOUNDER, HEAD_OF_OPS, REGIONAL_HEAD, CITY_OPS."
+        "description": "**Access:** Bearer token from the ADMIN app · admin roles: FOUNDER, HEAD_OF_OPS, REGIONAL_HEAD, CITY_OPS, ZONE_HEAD, STATE_HEAD, DISTRICT_MANAGER, AREA_MANAGER, PINCODE_EXECUTIVE."
       }
     },
     "/v1/admin/ops/riders": {
@@ -6476,7 +6868,7 @@
           "admin"
         ],
         "summary": "Pause",
-        "description": "**Access:** Bearer token from the ADMIN app · admin roles: FOUNDER, HEAD_OF_OPS, REGIONAL_HEAD, CITY_OPS."
+        "description": "**Access:** Bearer token from the ADMIN app · admin roles: FOUNDER, HEAD_OF_OPS, REGIONAL_HEAD, CITY_OPS, ZONE_HEAD, STATE_HEAD, DISTRICT_MANAGER, AREA_MANAGER, PINCODE_EXECUTIVE."
       }
     },
     "/v1/admin/ops/riders/{id}/resume": {
@@ -6506,7 +6898,7 @@
           "admin"
         ],
         "summary": "Resume",
-        "description": "**Access:** Bearer token from the ADMIN app · admin roles: FOUNDER, HEAD_OF_OPS, REGIONAL_HEAD, CITY_OPS."
+        "description": "**Access:** Bearer token from the ADMIN app · admin roles: FOUNDER, HEAD_OF_OPS, REGIONAL_HEAD, CITY_OPS, ZONE_HEAD, STATE_HEAD, DISTRICT_MANAGER, AREA_MANAGER, PINCODE_EXECUTIVE."
       }
     },
     "/v1/admin/ops/riders/{id}/reassign": {
@@ -6556,7 +6948,7 @@
           }
         },
         "summary": "Reassign",
-        "description": "**Access:** Bearer token from the ADMIN app · admin roles: FOUNDER, HEAD_OF_OPS, REGIONAL_HEAD, CITY_OPS."
+        "description": "**Access:** Bearer token from the ADMIN app · admin roles: FOUNDER, HEAD_OF_OPS, REGIONAL_HEAD, CITY_OPS, ZONE_HEAD, STATE_HEAD, DISTRICT_MANAGER, AREA_MANAGER, PINCODE_EXECUTIVE."
       }
     },
     "/v1/admin/dispatch/cities": {
@@ -6577,7 +6969,7 @@
         "tags": [
           "admin · driver assignment"
         ],
-        "description": "**Access:** Bearer token from the ADMIN app · admin roles: FOUNDER, HEAD_OF_OPS, REGIONAL_HEAD, CITY_OPS, COMPLIANCE, FINANCE, LEGAL, SUPPORT, AUDITOR, DISPATCHER."
+        "description": "**Access:** Bearer token from the ADMIN app · admin roles: FOUNDER, HEAD_OF_OPS, REGIONAL_HEAD, CITY_OPS, COMPLIANCE, FINANCE, LEGAL, SUPPORT, AUDITOR, DISPATCHER, ZONE_HEAD, STATE_HEAD, DISTRICT_MANAGER, AREA_MANAGER, PINCODE_EXECUTIVE."
       }
     },
     "/v1/admin/dispatch/summary": {
@@ -6608,7 +7000,7 @@
         "tags": [
           "admin · driver assignment"
         ],
-        "description": "**Access:** Bearer token from the ADMIN app · admin roles: FOUNDER, HEAD_OF_OPS, REGIONAL_HEAD, CITY_OPS, COMPLIANCE, FINANCE, LEGAL, SUPPORT, AUDITOR, DISPATCHER."
+        "description": "**Access:** Bearer token from the ADMIN app · admin roles: FOUNDER, HEAD_OF_OPS, REGIONAL_HEAD, CITY_OPS, COMPLIANCE, FINANCE, LEGAL, SUPPORT, AUDITOR, DISPATCHER, ZONE_HEAD, STATE_HEAD, DISTRICT_MANAGER, AREA_MANAGER, PINCODE_EXECUTIVE."
       }
     },
     "/v1/admin/dispatch/tasks": {
@@ -6682,7 +7074,7 @@
         "tags": [
           "admin · driver assignment"
         ],
-        "description": "**Access:** Bearer token from the ADMIN app · admin roles: FOUNDER, HEAD_OF_OPS, REGIONAL_HEAD, CITY_OPS, COMPLIANCE, FINANCE, LEGAL, SUPPORT, AUDITOR, DISPATCHER."
+        "description": "**Access:** Bearer token from the ADMIN app · admin roles: FOUNDER, HEAD_OF_OPS, REGIONAL_HEAD, CITY_OPS, COMPLIANCE, FINANCE, LEGAL, SUPPORT, AUDITOR, DISPATCHER, ZONE_HEAD, STATE_HEAD, DISTRICT_MANAGER, AREA_MANAGER, PINCODE_EXECUTIVE."
       }
     },
     "/v1/admin/dispatch/tasks/{taskId}": {
@@ -6712,7 +7104,7 @@
         "tags": [
           "admin · driver assignment"
         ],
-        "description": "**Access:** Bearer token from the ADMIN app · admin roles: FOUNDER, HEAD_OF_OPS, REGIONAL_HEAD, CITY_OPS, COMPLIANCE, FINANCE, LEGAL, SUPPORT, AUDITOR, DISPATCHER."
+        "description": "**Access:** Bearer token from the ADMIN app · admin roles: FOUNDER, HEAD_OF_OPS, REGIONAL_HEAD, CITY_OPS, COMPLIANCE, FINANCE, LEGAL, SUPPORT, AUDITOR, DISPATCHER, ZONE_HEAD, STATE_HEAD, DISTRICT_MANAGER, AREA_MANAGER, PINCODE_EXECUTIVE."
       }
     },
     "/v1/admin/dispatch/drivers": {
@@ -6774,7 +7166,7 @@
         "tags": [
           "admin · driver assignment"
         ],
-        "description": "**Access:** Bearer token from the ADMIN app · admin roles: FOUNDER, HEAD_OF_OPS, REGIONAL_HEAD, CITY_OPS, COMPLIANCE, FINANCE, LEGAL, SUPPORT, AUDITOR, DISPATCHER."
+        "description": "**Access:** Bearer token from the ADMIN app · admin roles: FOUNDER, HEAD_OF_OPS, REGIONAL_HEAD, CITY_OPS, COMPLIANCE, FINANCE, LEGAL, SUPPORT, AUDITOR, DISPATCHER, ZONE_HEAD, STATE_HEAD, DISTRICT_MANAGER, AREA_MANAGER, PINCODE_EXECUTIVE."
       }
     },
     "/v1/admin/dispatch/tasks/{taskId}/assign": {
@@ -6827,7 +7219,7 @@
             }
           }
         },
-        "description": "**Access:** Bearer token from the ADMIN app · admin roles: FOUNDER, HEAD_OF_OPS, REGIONAL_HEAD, CITY_OPS, DISPATCHER."
+        "description": "**Access:** Bearer token from the ADMIN app · admin roles: FOUNDER, HEAD_OF_OPS, REGIONAL_HEAD, CITY_OPS, DISPATCHER, ZONE_HEAD, STATE_HEAD, DISTRICT_MANAGER, AREA_MANAGER, PINCODE_EXECUTIVE."
       }
     },
     "/v1/admin/dispatch/tasks/{taskId}/reassign": {
@@ -6882,7 +7274,7 @@
             }
           }
         },
-        "description": "**Access:** Bearer token from the ADMIN app · admin roles: FOUNDER, HEAD_OF_OPS, REGIONAL_HEAD, CITY_OPS, DISPATCHER."
+        "description": "**Access:** Bearer token from the ADMIN app · admin roles: FOUNDER, HEAD_OF_OPS, REGIONAL_HEAD, CITY_OPS, DISPATCHER, ZONE_HEAD, STATE_HEAD, DISTRICT_MANAGER, AREA_MANAGER, PINCODE_EXECUTIVE."
       }
     },
     "/v1/admin/dispatch/tasks/{taskId}/unassign": {
@@ -6932,7 +7324,7 @@
             }
           }
         },
-        "description": "**Access:** Bearer token from the ADMIN app · admin roles: FOUNDER, HEAD_OF_OPS, REGIONAL_HEAD, CITY_OPS, DISPATCHER."
+        "description": "**Access:** Bearer token from the ADMIN app · admin roles: FOUNDER, HEAD_OF_OPS, REGIONAL_HEAD, CITY_OPS, DISPATCHER, ZONE_HEAD, STATE_HEAD, DISTRICT_MANAGER, AREA_MANAGER, PINCODE_EXECUTIVE."
       }
     },
     "/v1/rider/duty": {
@@ -7181,6 +7573,75 @@
         "description": "**Access:** Bearer token from the RIDER app."
       }
     },
+    "/v1/rider/tasks/history": {
+      "get": {
+        "operationId": "RiderWorkController_history",
+        "parameters": [
+          {
+            "name": "date",
+            "required": false,
+            "in": "query",
+            "description": "YYYY-MM-DD (India time); default today",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Deliveries you finished that day (delivered, failed, cancelled, returned), with what each earned.",
+        "tags": [
+          "rider · work"
+        ],
+        "description": "**Access:** Bearer token from the RIDER app."
+      }
+    },
+    "/v1/rider/earnings": {
+      "get": {
+        "operationId": "RiderWorkController_earnings",
+        "parameters": [
+          {
+            "name": "from",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "to",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Earnings per day (default the last 7 days), today's totals, and cash collected to hand in. Paise.",
+        "tags": [
+          "rider · work"
+        ],
+        "description": "**Access:** Bearer token from the RIDER app."
+      }
+    },
     "/v1/rider/tasks/{taskId}": {
       "get": {
         "operationId": "RiderWorkController_task",
@@ -7297,6 +7758,50 @@
                     "type": "number",
                     "minimum": -180,
                     "maximum": 180
+                  },
+                  "handoverMode": {
+                    "type": "string",
+                    "enum": [
+                      "IN_PERSON",
+                      "CONTACTLESS",
+                      "SAFE_DROP"
+                    ],
+                    "description": "DELIVERED: IN_PERSON (default) · CONTACTLESS (code + photo) · SAFE_DROP (photo + place, prepaid only). See task.proof.rules."
+                  },
+                  "proofPhotoKey": {
+                    "type": "string",
+                    "minLength": 10,
+                    "maxLength": 250,
+                    "description": "DELIVERED, contactless / safe drop: fileKey from POST tasks/:id/proof/presign"
+                  },
+                  "safeDropPlace": {
+                    "type": "string",
+                    "maxLength": 200,
+                    "description": "DELIVERED, safe drop: where you left it"
+                  },
+                  "codMode": {
+                    "type": "string",
+                    "enum": [
+                      "CASH",
+                      "UPI"
+                    ],
+                    "description": "DELIVERED on a COD order: CASH (default) or UPI"
+                  },
+                  "codReference": {
+                    "type": "string",
+                    "maxLength": 20,
+                    "description": "DELIVERED, codMode UPI: the 12-digit UTR from the customer’s payment screen"
+                  },
+                  "customerStatus": {
+                    "type": "string",
+                    "enum": [
+                      "NOT_ANSWERING",
+                      "ASKED_TO_COME_LATER",
+                      "REFUSED",
+                      "ADDRESS_NOT_FOUND",
+                      "REACHABLE_WAITING"
+                    ],
+                    "description": "FAILED: NOT_ANSWERING · ASKED_TO_COME_LATER · REFUSED · ADDRESS_NOT_FOUND · REACHABLE_WAITING"
                   }
                 },
                 "required": [
@@ -7307,6 +7812,261 @@
           }
         },
         "summary": "Step",
+        "description": "**Access:** Bearer token from the RIDER app."
+      }
+    },
+    "/v1/rider/tasks/{taskId}/items-check": {
+      "post": {
+        "operationId": "RiderWorkController_itemsCheck",
+        "parameters": [
+          {
+            "name": "taskId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "At the shop, before pickup: OK / MISSING / WRONG / DAMAGED for every item (lineId from the task). Problems go to the shop's screen.",
+        "tags": [
+          "rider · work"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "items": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "lineId": {
+                          "type": "string",
+                          "format": "uuid"
+                        },
+                        "status": {
+                          "type": "string",
+                          "enum": [
+                            "OK",
+                            "MISSING",
+                            "WRONG",
+                            "DAMAGED"
+                          ]
+                        },
+                        "note": {
+                          "type": "string",
+                          "maxLength": 200
+                        }
+                      },
+                      "required": [
+                        "lineId",
+                        "status"
+                      ]
+                    },
+                    "minItems": 1,
+                    "maxItems": 200
+                  }
+                },
+                "required": [
+                  "items"
+                ]
+              }
+            }
+          }
+        },
+        "description": "**Access:** Bearer token from the RIDER app."
+      }
+    },
+    "/v1/rider/tasks/{taskId}/packaging-check": {
+      "post": {
+        "operationId": "RiderWorkController_packagingCheck",
+        "parameters": [
+          {
+            "name": "taskId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Food orders, at the counter: seal, hot/cold, thermal bag, spills + a photo. Any problem needs a note and goes to the shop.",
+        "tags": [
+          "rider · work"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "sealIntact": {
+                    "type": "boolean"
+                  },
+                  "hotColdSeparated": {
+                    "type": "boolean",
+                    "description": "true when there are no cold items"
+                  },
+                  "inThermalBag": {
+                    "type": "boolean"
+                  },
+                  "spillSafe": {
+                    "type": "boolean"
+                  },
+                  "photoKey": {
+                    "type": "string",
+                    "minLength": 10,
+                    "maxLength": 250,
+                    "description": "fileKey from POST tasks/:id/proof/presign"
+                  },
+                  "note": {
+                    "type": "string",
+                    "maxLength": 300,
+                    "description": "Needed when any check is false — sent to the shop"
+                  }
+                },
+                "required": [
+                  "sealIntact",
+                  "hotColdSeparated",
+                  "inThermalBag",
+                  "spillSafe",
+                  "photoKey"
+                ]
+              }
+            }
+          }
+        },
+        "description": "**Access:** Bearer token from the RIDER app."
+      }
+    },
+    "/v1/rider/tasks/{taskId}/prep-delay": {
+      "post": {
+        "operationId": "RiderWorkController_prepDelay",
+        "parameters": [
+          {
+            "name": "taskId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Waiting at the shop and the food is past its ready time (+5 min): tells the shop and the hub.",
+        "tags": [
+          "rider · work"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "note": {
+                    "type": "string",
+                    "maxLength": 300
+                  }
+                }
+              }
+            }
+          }
+        },
+        "description": "**Access:** Bearer token from the RIDER app."
+      }
+    },
+    "/v1/rider/tasks/{taskId}/proof/presign": {
+      "post": {
+        "operationId": "RiderWorkController_proofPresign",
+        "parameters": [
+          {
+            "name": "taskId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Upload link for the delivery photo or the food packaging photo. PUT the bytes to uploadUrl, then send fileKey.",
+        "tags": [
+          "rider · work"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "contentType": {
+                    "type": "string",
+                    "enum": [
+                      "image/jpeg",
+                      "image/png",
+                      "image/webp"
+                    ]
+                  },
+                  "size": {
+                    "type": "integer",
+                    "exclusiveMinimum": true,
+                    "maximum": 10485760,
+                    "minimum": 0
+                  }
+                },
+                "required": [
+                  "contentType",
+                  "size"
+                ]
+              }
+            }
+          }
+        },
         "description": "**Access:** Bearer token from the RIDER app."
       }
     },
@@ -7360,7 +8120,7 @@
             }
           }
         },
-        "description": "**Access:** Bearer token from the ADMIN app · admin roles: FOUNDER, HEAD_OF_OPS, REGIONAL_HEAD, CITY_OPS."
+        "description": "**Access:** Bearer token from the ADMIN app · admin roles: FOUNDER, HEAD_OF_OPS, REGIONAL_HEAD, CITY_OPS, ZONE_HEAD, STATE_HEAD, DISTRICT_MANAGER, AREA_MANAGER, PINCODE_EXECUTIVE."
       }
     },
     "/v1/dev/dispatch/tick": {
@@ -7388,7 +8148,7 @@
         "tags": [
           "admin · driver assignment"
         ],
-        "description": "**Access:** Bearer token from the ADMIN app · admin roles: FOUNDER, HEAD_OF_OPS, REGIONAL_HEAD, CITY_OPS."
+        "description": "**Access:** Bearer token from the ADMIN app · admin roles: FOUNDER, HEAD_OF_OPS, REGIONAL_HEAD, CITY_OPS, ZONE_HEAD, STATE_HEAD, DISTRICT_MANAGER, AREA_MANAGER, PINCODE_EXECUTIVE."
       }
     },
     "/v1/admin/coupons": {
@@ -7424,7 +8184,7 @@
           "admin"
         ],
         "summary": "List",
-        "description": "**Access:** Bearer token from the ADMIN app · admin roles: FOUNDER, HEAD_OF_OPS, REGIONAL_HEAD, CITY_OPS, COMPLIANCE, FINANCE, LEGAL, SUPPORT, AUDITOR."
+        "description": "**Access:** Bearer token from the ADMIN app · admin roles: FOUNDER, HEAD_OF_OPS, REGIONAL_HEAD, CITY_OPS, COMPLIANCE, FINANCE, LEGAL, SUPPORT, AUDITOR, ZONE_HEAD, STATE_HEAD, DISTRICT_MANAGER, AREA_MANAGER, PINCODE_EXECUTIVE."
       },
       "post": {
         "operationId": "AdminCouponsController_create",
@@ -7708,7 +8468,7 @@
           "admin"
         ],
         "summary": "Redemptions",
-        "description": "**Access:** Bearer token from the ADMIN app · admin roles: FOUNDER, HEAD_OF_OPS, REGIONAL_HEAD, CITY_OPS, COMPLIANCE, FINANCE, LEGAL, SUPPORT, AUDITOR."
+        "description": "**Access:** Bearer token from the ADMIN app · admin roles: FOUNDER, HEAD_OF_OPS, REGIONAL_HEAD, CITY_OPS, COMPLIANCE, FINANCE, LEGAL, SUPPORT, AUDITOR, ZONE_HEAD, STATE_HEAD, DISTRICT_MANAGER, AREA_MANAGER, PINCODE_EXECUTIVE."
       }
     },
     "/v1/local/offers": {
@@ -9113,7 +9873,7 @@
           }
         },
         "summary": "Cancel",
-        "description": "**Access:** Bearer token from the ADMIN app · admin roles: FOUNDER, HEAD_OF_OPS, REGIONAL_HEAD, CITY_OPS, SUPPORT."
+        "description": "**Access:** Bearer token from the ADMIN app · admin roles: FOUNDER, HEAD_OF_OPS, REGIONAL_HEAD, CITY_OPS, ZONE_HEAD, STATE_HEAD, DISTRICT_MANAGER, AREA_MANAGER, PINCODE_EXECUTIVE, SUPPORT."
       }
     },
     "/v1/admin/lab-bookings/{id}/reports/{reportId}/file": {
@@ -11843,7 +12603,7 @@
           "admin"
         ],
         "summary": "List",
-        "description": "**Access:** Bearer token from the ADMIN app · admin roles: FOUNDER, HEAD_OF_OPS, REGIONAL_HEAD, CITY_OPS, COMPLIANCE, FINANCE, LEGAL, SUPPORT, AUDITOR."
+        "description": "**Access:** Bearer token from the ADMIN app · admin roles: FOUNDER, HEAD_OF_OPS, REGIONAL_HEAD, CITY_OPS, COMPLIANCE, FINANCE, LEGAL, SUPPORT, AUDITOR, ZONE_HEAD, STATE_HEAD, DISTRICT_MANAGER, AREA_MANAGER, PINCODE_EXECUTIVE."
       }
     },
     "/v1/admin/support/tickets/{id}": {
@@ -11873,7 +12633,7 @@
           "admin"
         ],
         "summary": "Get",
-        "description": "**Access:** Bearer token from the ADMIN app · admin roles: FOUNDER, HEAD_OF_OPS, REGIONAL_HEAD, CITY_OPS, COMPLIANCE, FINANCE, LEGAL, SUPPORT, AUDITOR."
+        "description": "**Access:** Bearer token from the ADMIN app · admin roles: FOUNDER, HEAD_OF_OPS, REGIONAL_HEAD, CITY_OPS, COMPLIANCE, FINANCE, LEGAL, SUPPORT, AUDITOR, ZONE_HEAD, STATE_HEAD, DISTRICT_MANAGER, AREA_MANAGER, PINCODE_EXECUTIVE."
       }
     },
     "/v1/admin/support/tickets/{id}/messages": {
@@ -11932,7 +12692,7 @@
           }
         },
         "summary": "Reply",
-        "description": "**Access:** Bearer token from the ADMIN app · admin roles: FOUNDER, HEAD_OF_OPS, REGIONAL_HEAD, CITY_OPS, SUPPORT."
+        "description": "**Access:** Bearer token from the ADMIN app · admin roles: FOUNDER, HEAD_OF_OPS, REGIONAL_HEAD, CITY_OPS, SUPPORT, ZONE_HEAD, STATE_HEAD, DISTRICT_MANAGER, AREA_MANAGER, PINCODE_EXECUTIVE."
       }
     },
     "/v1/admin/support/tickets/{id}/status": {
@@ -11987,7 +12747,7 @@
           }
         },
         "summary": "Status",
-        "description": "**Access:** Bearer token from the ADMIN app · admin roles: FOUNDER, HEAD_OF_OPS, REGIONAL_HEAD, CITY_OPS, SUPPORT."
+        "description": "**Access:** Bearer token from the ADMIN app · admin roles: FOUNDER, HEAD_OF_OPS, REGIONAL_HEAD, CITY_OPS, SUPPORT, ZONE_HEAD, STATE_HEAD, DISTRICT_MANAGER, AREA_MANAGER, PINCODE_EXECUTIVE."
       }
     },
     "/v1/admin/support/tickets/{id}/assign": {
@@ -12017,7 +12777,7 @@
           "admin"
         ],
         "summary": "Assign",
-        "description": "**Access:** Bearer token from the ADMIN app · admin roles: FOUNDER, HEAD_OF_OPS, REGIONAL_HEAD, CITY_OPS, SUPPORT."
+        "description": "**Access:** Bearer token from the ADMIN app · admin roles: FOUNDER, HEAD_OF_OPS, REGIONAL_HEAD, CITY_OPS, SUPPORT, ZONE_HEAD, STATE_HEAD, DISTRICT_MANAGER, AREA_MANAGER, PINCODE_EXECUTIVE."
       }
     },
     "/v1/admin/reports/cities": {
@@ -12048,7 +12808,7 @@
           "admin"
         ],
         "summary": "Cities",
-        "description": "**Access:** Bearer token from the ADMIN app · admin roles: FOUNDER, HEAD_OF_OPS, REGIONAL_HEAD, CITY_OPS, COMPLIANCE, FINANCE, LEGAL, SUPPORT, AUDITOR."
+        "description": "**Access:** Bearer token from the ADMIN app · admin roles: FOUNDER, HEAD_OF_OPS, REGIONAL_HEAD, CITY_OPS, COMPLIANCE, FINANCE, LEGAL, SUPPORT, AUDITOR, ZONE_HEAD, STATE_HEAD, DISTRICT_MANAGER, AREA_MANAGER, PINCODE_EXECUTIVE."
       }
     },
     "/v1/admin/reports/cities.csv": {
@@ -12079,7 +12839,7 @@
           "admin"
         ],
         "summary": "Cities csv",
-        "description": "**Access:** Bearer token from the ADMIN app · admin roles: FOUNDER, HEAD_OF_OPS, REGIONAL_HEAD, CITY_OPS, COMPLIANCE, FINANCE, LEGAL, SUPPORT, AUDITOR."
+        "description": "**Access:** Bearer token from the ADMIN app · admin roles: FOUNDER, HEAD_OF_OPS, REGIONAL_HEAD, CITY_OPS, COMPLIANCE, FINANCE, LEGAL, SUPPORT, AUDITOR, ZONE_HEAD, STATE_HEAD, DISTRICT_MANAGER, AREA_MANAGER, PINCODE_EXECUTIVE."
       }
     },
     "/v1/admin/reports/store-health": {
@@ -12110,7 +12870,7 @@
           "admin"
         ],
         "summary": "Health",
-        "description": "**Access:** Bearer token from the ADMIN app · admin roles: FOUNDER, HEAD_OF_OPS, REGIONAL_HEAD, CITY_OPS, COMPLIANCE, FINANCE, LEGAL, SUPPORT, AUDITOR."
+        "description": "**Access:** Bearer token from the ADMIN app · admin roles: FOUNDER, HEAD_OF_OPS, REGIONAL_HEAD, CITY_OPS, COMPLIANCE, FINANCE, LEGAL, SUPPORT, AUDITOR, ZONE_HEAD, STATE_HEAD, DISTRICT_MANAGER, AREA_MANAGER, PINCODE_EXECUTIVE."
       }
     },
     "/v1/local/overview": {
@@ -14962,7 +15722,7 @@
           "admin"
         ],
         "summary": "Status",
-        "description": "**Access:** Bearer token from the ADMIN app · admin roles: FOUNDER, HEAD_OF_OPS."
+        "description": "**Access:** Bearer token from the ADMIN app · admin roles: FOUNDER, HEAD_OF_OPS, ZONE_HEAD, STATE_HEAD, DISTRICT_MANAGER, AREA_MANAGER."
       }
     },
     "/v1/admin/system/push-check": {
@@ -14983,7 +15743,7 @@
         "tags": [
           "admin"
         ],
-        "description": "**Access:** Bearer token from the ADMIN app · admin roles: FOUNDER, HEAD_OF_OPS."
+        "description": "**Access:** Bearer token from the ADMIN app · admin roles: FOUNDER, HEAD_OF_OPS, ZONE_HEAD, STATE_HEAD, DISTRICT_MANAGER, AREA_MANAGER."
       }
     },
     "/v1/rider/me": {
@@ -15198,7 +15958,6 @@
                             "PHARMACY",
                             "FOOD_DELIVERY",
                             "GROCERY_DELIVERY",
-                            "RUSH_DELIVERY",
                             "CONFIDENTIAL_DELIVERY",
                             "COURIER_DELIVERY",
                             "LUGGAGE_DELIVERY",
@@ -15640,11 +16399,11 @@
             "in": "path",
             "schema": {
               "enum": [
+                "PHOTO",
                 "PAN",
                 "ADDRESS_PROOF",
                 "BANK_PROOF",
                 "GOV_ID",
-                "PHOTO",
                 "DRIVING_LICENCE",
                 "VEHICLE_RC",
                 "VEHICLE_INSURANCE"
@@ -15833,7 +16592,7 @@
           "admin · riders"
         ],
         "summary": "Start review",
-        "description": "**Access:** Bearer token from the ADMIN app · admin roles: FOUNDER, HEAD_OF_OPS, REGIONAL_HEAD, CITY_OPS, COMPLIANCE."
+        "description": "**Access:** Bearer token from the ADMIN app · admin roles: FOUNDER, HEAD_OF_OPS, REGIONAL_HEAD, CITY_OPS, COMPLIANCE, ZONE_HEAD, STATE_HEAD, DISTRICT_MANAGER."
       }
     },
     "/v1/admin/riders/applications/{id}/documents/{docId}/verify": {
@@ -15871,7 +16630,7 @@
           "admin · riders"
         ],
         "summary": "Verify doc",
-        "description": "**Access:** Bearer token from the ADMIN app · admin roles: FOUNDER, HEAD_OF_OPS, REGIONAL_HEAD, CITY_OPS, COMPLIANCE."
+        "description": "**Access:** Bearer token from the ADMIN app · admin roles: FOUNDER, HEAD_OF_OPS, REGIONAL_HEAD, CITY_OPS, COMPLIANCE, ZONE_HEAD, STATE_HEAD, DISTRICT_MANAGER."
       }
     },
     "/v1/admin/riders/applications/{id}/documents/{docId}/reject": {
@@ -15929,7 +16688,7 @@
           }
         },
         "summary": "Reject doc",
-        "description": "**Access:** Bearer token from the ADMIN app · admin roles: FOUNDER, HEAD_OF_OPS, REGIONAL_HEAD, CITY_OPS, COMPLIANCE."
+        "description": "**Access:** Bearer token from the ADMIN app · admin roles: FOUNDER, HEAD_OF_OPS, REGIONAL_HEAD, CITY_OPS, COMPLIANCE, ZONE_HEAD, STATE_HEAD, DISTRICT_MANAGER."
       }
     },
     "/v1/admin/riders/applications/{id}/approve": {
@@ -16012,7 +16771,7 @@
           }
         },
         "summary": "Approve",
-        "description": "**Access:** Bearer token from the ADMIN app · admin roles: FOUNDER, HEAD_OF_OPS, REGIONAL_HEAD, CITY_OPS, COMPLIANCE."
+        "description": "**Access:** Bearer token from the ADMIN app · admin roles: FOUNDER, HEAD_OF_OPS, REGIONAL_HEAD, CITY_OPS, COMPLIANCE, ZONE_HEAD, STATE_HEAD, DISTRICT_MANAGER."
       }
     },
     "/v1/admin/riders/applications/{id}/request-changes": {
@@ -16062,7 +16821,7 @@
           }
         },
         "summary": "Request changes",
-        "description": "**Access:** Bearer token from the ADMIN app · admin roles: FOUNDER, HEAD_OF_OPS, REGIONAL_HEAD, CITY_OPS, COMPLIANCE."
+        "description": "**Access:** Bearer token from the ADMIN app · admin roles: FOUNDER, HEAD_OF_OPS, REGIONAL_HEAD, CITY_OPS, COMPLIANCE, ZONE_HEAD, STATE_HEAD, DISTRICT_MANAGER."
       }
     },
     "/v1/admin/riders/applications/{id}/reject": {
@@ -16112,7 +16871,7 @@
           }
         },
         "summary": "Reject",
-        "description": "**Access:** Bearer token from the ADMIN app · admin roles: FOUNDER, HEAD_OF_OPS, REGIONAL_HEAD, CITY_OPS, COMPLIANCE."
+        "description": "**Access:** Bearer token from the ADMIN app · admin roles: FOUNDER, HEAD_OF_OPS, REGIONAL_HEAD, CITY_OPS, COMPLIANCE, ZONE_HEAD, STATE_HEAD, DISTRICT_MANAGER."
       }
     },
     "/v1/admin/riders/{riderId}/suspend": {
@@ -16162,7 +16921,7 @@
           }
         },
         "summary": "Suspend",
-        "description": "**Access:** Bearer token from the ADMIN app · admin roles: FOUNDER, HEAD_OF_OPS, REGIONAL_HEAD, CITY_OPS, COMPLIANCE."
+        "description": "**Access:** Bearer token from the ADMIN app · admin roles: FOUNDER, HEAD_OF_OPS, REGIONAL_HEAD, CITY_OPS, COMPLIANCE, ZONE_HEAD, STATE_HEAD, DISTRICT_MANAGER."
       }
     },
     "/v1/admin/riders/{riderId}/reinstate": {
@@ -16192,7 +16951,897 @@
           "admin · riders"
         ],
         "summary": "Reinstate",
-        "description": "**Access:** Bearer token from the ADMIN app · admin roles: FOUNDER, HEAD_OF_OPS, REGIONAL_HEAD, CITY_OPS, COMPLIANCE."
+        "description": "**Access:** Bearer token from the ADMIN app · admin roles: FOUNDER, HEAD_OF_OPS, REGIONAL_HEAD, CITY_OPS, COMPLIANCE, ZONE_HEAD, STATE_HEAD, DISTRICT_MANAGER."
+      }
+    },
+    "/v1/rider/attendance": {
+      "get": {
+        "operationId": "RiderAttendanceController_status",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Status (NOT_PUNCHED_IN · SHIFT_ACTIVE · ON_BREAK · SHIFT_COMPLETED), the open or last shift, today's minutes, the company vehicle and the rules.",
+        "tags": [
+          "rider · attendance"
+        ],
+        "description": "**Access:** Bearer token from the RIDER app."
+      }
+    },
+    "/v1/rider/attendance/shifts": {
+      "get": {
+        "operationId": "RiderAttendanceController_history",
+        "parameters": [
+          {
+            "name": "from",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "to",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "example": 30,
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Your past shifts, newest first.",
+        "tags": [
+          "rider · attendance"
+        ],
+        "description": "**Access:** Bearer token from the RIDER app."
+      }
+    },
+    "/v1/rider/attendance/photos/presign": {
+      "post": {
+        "operationId": "RiderAttendanceController_presign",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Upload link for a selfie or vehicle photo (JPG / PNG / WEBP, 10 MB). PUT the bytes to uploadUrl, then send fileKey.",
+        "tags": [
+          "rider · attendance"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "contentType": {
+                    "type": "string",
+                    "enum": [
+                      "image/jpeg",
+                      "image/png",
+                      "image/webp"
+                    ]
+                  },
+                  "size": {
+                    "type": "integer",
+                    "exclusiveMinimum": true,
+                    "maximum": 10485760,
+                    "minimum": 0
+                  }
+                },
+                "required": [
+                  "contentType",
+                  "size"
+                ]
+              }
+            }
+          }
+        },
+        "description": "**Access:** Bearer token from the RIDER app."
+      }
+    },
+    "/v1/rider/attendance/punch-in": {
+      "post": {
+        "operationId": "RiderAttendanceController_punchIn",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "rider · attendance"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "clientRef": {
+                    "type": "string",
+                    "minLength": 6,
+                    "maxLength": 64,
+                    "description": "The app's own shift id. Sending the same punch-in again returns the same shift."
+                  },
+                  "selfie": {
+                    "type": "object",
+                    "properties": {
+                      "fileKey": {
+                        "type": "string",
+                        "minLength": 10,
+                        "maxLength": 200,
+                        "description": "From POST /rider/attendance/photos/presign, after the PUT upload"
+                      },
+                      "capturedAt": {
+                        "type": "string",
+                        "format": "date-time",
+                        "description": "When the camera took it (ISO 8601). Must be within 10 minutes."
+                      }
+                    },
+                    "required": [
+                      "fileKey",
+                      "capturedAt"
+                    ]
+                  },
+                  "location": {
+                    "type": "object",
+                    "properties": {
+                      "lat": {
+                        "type": "number",
+                        "minimum": -90,
+                        "maximum": 90
+                      },
+                      "lng": {
+                        "type": "number",
+                        "minimum": -180,
+                        "maximum": 180
+                      },
+                      "accuracyM": {
+                        "type": "number",
+                        "minimum": 0,
+                        "maximum": 100000,
+                        "description": "GPS error radius; above 100 m is refused"
+                      },
+                      "address": {
+                        "type": "string",
+                        "maxLength": 300,
+                        "description": "Reverse-geocoded address, if the phone has one"
+                      }
+                    },
+                    "required": [
+                      "lat",
+                      "lng"
+                    ]
+                  },
+                  "vehicle": {
+                    "type": "object",
+                    "properties": {
+                      "vehicleId": {
+                        "type": "string",
+                        "format": "uuid"
+                      },
+                      "confirmedCheckIds": {
+                        "type": "array",
+                        "items": {
+                          "type": "string",
+                          "minLength": 1,
+                          "maxLength": 40
+                        },
+                        "maxItems": 20
+                      },
+                      "photo": {
+                        "type": "object",
+                        "properties": {
+                          "fileKey": {
+                            "type": "string",
+                            "minLength": 10,
+                            "maxLength": 200,
+                            "description": "From POST /rider/attendance/photos/presign, after the PUT upload"
+                          },
+                          "capturedAt": {
+                            "type": "string",
+                            "format": "date-time",
+                            "description": "When the camera took it (ISO 8601). Must be within 10 minutes."
+                          }
+                        },
+                        "required": [
+                          "fileKey",
+                          "capturedAt"
+                        ]
+                      }
+                    },
+                    "required": [
+                      "vehicleId",
+                      "confirmedCheckIds",
+                      "photo"
+                    ],
+                    "description": "Required when the rider has a company vehicle (GET /rider/vehicle → required: true)"
+                  },
+                  "goOnline": {
+                    "type": "boolean",
+                    "default": true,
+                    "description": "Go online for jobs straight away (default true)"
+                  }
+                },
+                "required": [
+                  "selfie",
+                  "location"
+                ]
+              }
+            }
+          }
+        },
+        "summary": "Punch in",
+        "description": "**Access:** Bearer token from the RIDER app."
+      }
+    },
+    "/v1/rider/attendance/breaks/start": {
+      "post": {
+        "operationId": "RiderAttendanceController_startBreak",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Takes you offline for jobs. Not while you carry an order.",
+        "tags": [
+          "rider · attendance"
+        ],
+        "description": "**Access:** Bearer token from the RIDER app."
+      }
+    },
+    "/v1/rider/attendance/breaks/end": {
+      "post": {
+        "operationId": "RiderAttendanceController_endBreak",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Back online for jobs.",
+        "tags": [
+          "rider · attendance"
+        ],
+        "description": "**Access:** Bearer token from the RIDER app."
+      }
+    },
+    "/v1/rider/attendance/punch-out": {
+      "post": {
+        "operationId": "RiderAttendanceController_punchOut",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Ends the shift and takes you offline. Not while you carry an order.",
+        "tags": [
+          "rider · attendance"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "selfie": {
+                    "type": "object",
+                    "properties": {
+                      "fileKey": {
+                        "type": "string",
+                        "minLength": 10,
+                        "maxLength": 200,
+                        "description": "From POST /rider/attendance/photos/presign, after the PUT upload"
+                      },
+                      "capturedAt": {
+                        "type": "string",
+                        "format": "date-time",
+                        "description": "When the camera took it (ISO 8601). Must be within 10 minutes."
+                      }
+                    },
+                    "required": [
+                      "fileKey",
+                      "capturedAt"
+                    ]
+                  },
+                  "location": {
+                    "type": "object",
+                    "properties": {
+                      "lat": {
+                        "type": "number",
+                        "minimum": -90,
+                        "maximum": 90
+                      },
+                      "lng": {
+                        "type": "number",
+                        "minimum": -180,
+                        "maximum": 180
+                      },
+                      "accuracyM": {
+                        "type": "number",
+                        "minimum": 0,
+                        "maximum": 100000,
+                        "description": "GPS error radius; above 100 m is refused"
+                      },
+                      "address": {
+                        "type": "string",
+                        "maxLength": 300,
+                        "description": "Reverse-geocoded address, if the phone has one"
+                      }
+                    },
+                    "required": [
+                      "lat",
+                      "lng"
+                    ]
+                  },
+                  "vehicleReturn": {
+                    "type": "object",
+                    "properties": {
+                      "vehicleId": {
+                        "type": "string",
+                        "format": "uuid"
+                      },
+                      "confirmedCheckIds": {
+                        "type": "array",
+                        "items": {
+                          "type": "string",
+                          "minLength": 1,
+                          "maxLength": 40
+                        },
+                        "maxItems": 20
+                      },
+                      "photo": {
+                        "type": "object",
+                        "properties": {
+                          "fileKey": {
+                            "type": "string",
+                            "minLength": 10,
+                            "maxLength": 200,
+                            "description": "From POST /rider/attendance/photos/presign, after the PUT upload"
+                          },
+                          "capturedAt": {
+                            "type": "string",
+                            "format": "date-time",
+                            "description": "When the camera took it (ISO 8601). Must be within 10 minutes."
+                          }
+                        },
+                        "required": [
+                          "fileKey",
+                          "capturedAt"
+                        ]
+                      },
+                      "newDamage": {
+                        "type": "boolean",
+                        "description": "Any new damage or issue on the vehicle?"
+                      },
+                      "issueNote": {
+                        "type": "string",
+                        "maxLength": 1000,
+                        "description": "Required (10+ characters) when newDamage is true"
+                      },
+                      "closingOdometerKm": {
+                        "type": "integer",
+                        "minimum": 0,
+                        "maximum": 9999999
+                      }
+                    },
+                    "required": [
+                      "vehicleId",
+                      "confirmedCheckIds",
+                      "photo",
+                      "newDamage"
+                    ],
+                    "description": "Required when the shift started with a company vehicle"
+                  }
+                },
+                "required": [
+                  "selfie",
+                  "location"
+                ]
+              }
+            }
+          }
+        },
+        "description": "**Access:** Bearer token from the RIDER app."
+      }
+    },
+    "/v1/rider/vehicle": {
+      "get": {
+        "operationId": "RiderAttendanceController_vehicle",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "The company vehicle ops assigned to you, with the punch-in and return checklists. `vehicle: null` = none yet.",
+        "tags": [
+          "rider · attendance"
+        ],
+        "description": "**Access:** Bearer token from the RIDER app."
+      }
+    },
+    "/v1/admin/fleet/vehicles": {
+      "get": {
+        "operationId": "AdminFleetController_list",
+        "parameters": [
+          {
+            "name": "cityId",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "status",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "enum": [
+                "ACTIVE",
+                "IN_REPAIR",
+                "RETIRED"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "name": "category",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "enum": [
+                "BIKE",
+                "THREE_WHEELER",
+                "FOUR_WHEELER",
+                "TRUCK"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "name": "search",
+            "required": false,
+            "in": "query",
+            "description": "Registration, note, rider code or name",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "admin · fleet & attendance"
+        ],
+        "summary": "List",
+        "description": "**Access:** Bearer token from the ADMIN app · any admin role."
+      },
+      "post": {
+        "operationId": "AdminFleetController_create",
+        "parameters": [],
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "admin · fleet & attendance"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "registration": {
+                    "type": "string",
+                    "minLength": 6,
+                    "maxLength": 20,
+                    "description": "As on the RC, e.g. KA 51 AB 1234"
+                  },
+                  "category": {
+                    "type": "string",
+                    "enum": [
+                      "BIKE",
+                      "THREE_WHEELER",
+                      "FOUR_WHEELER",
+                      "TRUCK"
+                    ]
+                  },
+                  "description": {
+                    "type": "string",
+                    "maxLength": 120,
+                    "description": "Make / model or a fleet note"
+                  },
+                  "cityId": {
+                    "type": "string",
+                    "format": "uuid"
+                  },
+                  "hubName": {
+                    "type": "string",
+                    "maxLength": 80
+                  }
+                },
+                "required": [
+                  "registration",
+                  "category"
+                ]
+              }
+            }
+          }
+        },
+        "summary": "Create",
+        "description": "**Access:** Bearer token from the ADMIN app · admin roles: FOUNDER, HEAD_OF_OPS, REGIONAL_HEAD, CITY_OPS, COMPLIANCE, ZONE_HEAD, STATE_HEAD, DISTRICT_MANAGER."
+      }
+    },
+    "/v1/admin/fleet/vehicles/{id}": {
+      "patch": {
+        "operationId": "AdminFleetController_update",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "admin · fleet & attendance"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "description": {
+                    "type": "string",
+                    "maxLength": 120
+                  },
+                  "hubName": {
+                    "type": "string",
+                    "maxLength": 80,
+                    "nullable": true
+                  },
+                  "cityId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "nullable": true
+                  },
+                  "status": {
+                    "type": "string",
+                    "enum": [
+                      "ACTIVE",
+                      "IN_REPAIR",
+                      "RETIRED"
+                    ],
+                    "description": "IN_REPAIR / RETIRED stop punch-ins with it; RETIRED also takes it off the rider"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "summary": "Update",
+        "description": "**Access:** Bearer token from the ADMIN app · admin roles: FOUNDER, HEAD_OF_OPS, REGIONAL_HEAD, CITY_OPS, COMPLIANCE, ZONE_HEAD, STATE_HEAD, DISTRICT_MANAGER."
+      }
+    },
+    "/v1/admin/fleet/vehicles/{id}/assign": {
+      "post": {
+        "operationId": "AdminFleetController_assign",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Gives the vehicle to a rider; any vehicle they had before is taken off them.",
+        "tags": [
+          "admin · fleet & attendance"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "riderId": {
+                    "type": "string",
+                    "format": "uuid"
+                  }
+                },
+                "required": [
+                  "riderId"
+                ]
+              }
+            }
+          }
+        },
+        "description": "**Access:** Bearer token from the ADMIN app · admin roles: FOUNDER, HEAD_OF_OPS, REGIONAL_HEAD, CITY_OPS, COMPLIANCE, ZONE_HEAD, STATE_HEAD, DISTRICT_MANAGER."
+      }
+    },
+    "/v1/admin/fleet/vehicles/{id}/unassign": {
+      "post": {
+        "operationId": "AdminFleetController_unassign",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "admin · fleet & attendance"
+        ],
+        "summary": "Unassign",
+        "description": "**Access:** Bearer token from the ADMIN app · admin roles: FOUNDER, HEAD_OF_OPS, REGIONAL_HEAD, CITY_OPS, COMPLIANCE, ZONE_HEAD, STATE_HEAD, DISTRICT_MANAGER."
+      }
+    },
+    "/v1/admin/attendance": {
+      "get": {
+        "operationId": "AdminFleetController_attendance",
+        "parameters": [
+          {
+            "name": "date",
+            "required": false,
+            "in": "query",
+            "description": "YYYY-MM-DD (India time); default today",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "cityId",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "riderId",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "open",
+            "required": false,
+            "in": "query",
+            "description": "true = only shifts not punched out yet",
+            "schema": {
+              "enum": [
+                "true",
+                "false"
+              ],
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Shifts that started that day plus every shift still open, with hours, breaks, vehicle and damage reports.",
+        "tags": [
+          "admin · fleet & attendance"
+        ],
+        "description": "**Access:** Bearer token from the ADMIN app · any admin role."
+      }
+    },
+    "/v1/admin/attendance/{shiftId}": {
+      "get": {
+        "operationId": "AdminFleetController_shift",
+        "parameters": [
+          {
+            "name": "shiftId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "One shift with its selfies, GPS, breaks and vehicle check / return photos (links valid 10 minutes).",
+        "tags": [
+          "admin · fleet & attendance"
+        ],
+        "description": "**Access:** Bearer token from the ADMIN app · any admin role."
+      }
+    },
+    "/v1/admin/attendance/{shiftId}/end": {
+      "post": {
+        "operationId": "AdminFleetController_end",
+        "parameters": [
+          {
+            "name": "shiftId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Closes a shift the rider forgot to punch out of.",
+        "tags": [
+          "admin · fleet & attendance"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "note": {
+                    "type": "string",
+                    "minLength": 5,
+                    "maxLength": 300
+                  }
+                },
+                "required": [
+                  "note"
+                ]
+              }
+            }
+          }
+        },
+        "description": "**Access:** Bearer token from the ADMIN app · admin roles: FOUNDER, HEAD_OF_OPS, REGIONAL_HEAD, CITY_OPS, COMPLIANCE, ZONE_HEAD, STATE_HEAD, DISTRICT_MANAGER."
       }
     }
   },

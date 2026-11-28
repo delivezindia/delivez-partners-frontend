@@ -29,6 +29,10 @@ import AmProfile from './screens/am/AmProfile';
 import RiderApplications from './screens/RiderApplications';
 import DriverAssignment from './screens/DriverAssignment';
 import RiderReview from './screens/RiderReview';
+import Attendance from './screens/Attendance';
+import Fleet from './screens/Fleet';
+import GeoMap from './screens/GeoMap';
+import Permissions from './screens/Permissions';
 
 const queryClient = new QueryClient({ defaultOptions: { queries: { staleTime: 15_000, retry: 1 } } });
 
@@ -61,6 +65,10 @@ export default function App() {
               <Route path="/dispatch" element={<DriverAssignment />} />
               <Route path="/riders" element={<RiderApplications />} />
               <Route path="/riders/:id" element={<RiderReview />} />
+              <Route path="/attendance" element={<Attendance />} />
+              <Route path="/vehicles" element={<Fleet />} />
+              <Route path="/map" element={<GeoMap />} />
+              <Route path="/permissions" element={<Permissions />} />
             </Route>
             {/* Account manager mobile view */}
             <Route element={<RequireAuth><AmShell /></RequireAuth>}>

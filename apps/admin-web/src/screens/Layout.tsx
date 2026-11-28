@@ -1,6 +1,6 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Navigate, NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom';
-import { Activity, BadgePercent, Bike, BarChart3, ClipboardList, FileCheck2, LayoutDashboard, LifeBuoy, Map, MessageSquareText, ScrollText, ShieldCheck, Store, Truck, Users, type LucideIcon } from 'lucide-react';
+import { Activity, BadgePercent, Bike, BarChart3, Car, ClipboardList, Clock, FileCheck2, KeyRound, LayoutDashboard, LifeBuoy, Map, MapPinned, MessageSquareText, ScrollText, ShieldCheck, Store, Truck, Users, type LucideIcon } from 'lucide-react';
 import { api, useAuth } from '../lib/api';
 import { CAN, can, DISPATCH_ONLY, type AdminMe, type AdminRole } from '../lib/types';
 import { Brand } from '../components/ui';
@@ -15,15 +15,19 @@ const NAV: { to: string; label: string; icon: LucideIcon; end?: boolean; roles?:
   { to: '/orders', label: 'Orders', icon: ClipboardList },
   { to: '/dispatch', label: 'Driver assignment', icon: Truck },
   { to: '/riders', label: 'Riders', icon: Bike },
+  { to: '/attendance', label: 'Attendance', icon: Clock },
+  { to: '/vehicles', label: 'Vehicles', icon: Car },
   { to: '/support', label: 'Support', icon: LifeBuoy },
   { to: '/reports', label: 'Reports', icon: BarChart3 },
   { to: '/coupons', label: 'Coupons', icon: BadgePercent, roles: CAN.couponsView },
   { to: '/documents', label: 'Documents', icon: FileCheck2 },
   { to: '/team', label: 'Team', icon: Users, roles: CAN.team },
+  { to: '/map', label: 'Map & areas', icon: MapPinned },
+  { to: '/permissions', label: 'Roles', icon: KeyRound },
   { to: '/cities', label: 'Cities', icon: Map },
   { to: '/legal', label: 'Legal', icon: ScrollText },
   { to: '/audit', label: 'Audit log', icon: ShieldCheck, roles: CAN.audit },
-  { to: '/system', label: 'System', icon: Activity, roles: CAN.team },
+  { to: '/system', label: 'System', icon: Activity, roles: CAN.system },
   // Local dev phone for SMS / WhatsApp; never shown in a production build.
   ...(import.meta.env.DEV ? [{ to: '/dev/messages', label: 'Messages (dev)', icon: MessageSquareText }] : []),
 ];
@@ -81,7 +85,7 @@ export default function Layout() {
               <span className="hidden text-right leading-tight sm:block">
                 <b className="block">{me.user.fullName ?? me.user.phone}</b>
                 <span className="text-xs">
-                  {me.role === 'DISPATCHER' ? 'City dispatcher' : me.role.replace(/_/g, ' ')} · {me.allCities ? 'All cities' : me.cities.map((c) => c.name).join(', ')}
+                  {me.role === 'DISPATCHER' ? 'Driver assignment' : me.role.replace(/_/g, ' ')} · <span data-my-area>{me.scope?.label ?? (me.allCities ? 'All cities' : me.cities.map((c) => c.name).join(', '))}</span>
                 </span>
               </span>
             )}

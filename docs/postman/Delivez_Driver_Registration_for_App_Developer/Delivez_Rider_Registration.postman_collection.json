@@ -1,0 +1,1707 @@
+{
+  "info": {
+    "name": "Delivez — Driver (Rider) Registration",
+    "_postman_id": "b6f1d6a0-5a7e-4c5f-9a63-1d2e8f3a7c10",
+    "description": "Partner (driver) registration for the **Delivez Agent** app, and the ops review — in the order they happen.\n\n**Run it top to bottom.** Every request saves what the next one needs (requestId, tokens, applicationId, fileKey…).\n\n1. Choose the **Production** environment and set `riderPhone` (the driver's mobile, 10 digits).\n2. *1. Driver sign-in* → **Send OTP**, put the SMS code in `otpCode`, **Verify OTP**. `GET /rider/me` says where the app goes: `REGISTER` = new driver.\n3. *2. Registration* → start, then the steps in order (use **Legal & vehicle — company vehicle** instead of the own-vehicle one if Delivez provides the vehicle; **Hyperlocal** only when the Hyperlocal service is chosen).\n4. *3. Documents* → for each `docType` (GOV_ID, PHOTO, PAN, BANK_PROOF, DRIVING_LICENCE, + VEHICLE_RC and VEHICLE_INSURANCE for an own vehicle; ADDRESS_PROOF optional): **Presign** → **Upload file** (pick the file in Body → binary) → **Attach**.\n5. **Submit**, then **Status** (the app's ApplicationRecord).\n6. *4. Ops review* needs an ops login (`adminPhone`): queue → open → start review → verify each file → approve (`module`, `hub`).\n\nErrors: `{ \"error\": { \"code\", \"message\", \"details\" } }`; `400 VALIDATION_FAILED` puts each field's message in `details.fieldErrors`. Full guide: docs/RIDER_APP_API.md.\n\n⚠ This is production: every request creates or changes real data, and every OTP sends a real SMS.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{riderToken}}",
+        "type": "string"
+      }
+    ]
+  },
+  "variable": [
+    {
+      "key": "requestId",
+      "value": ""
+    },
+    {
+      "key": "otpCode",
+      "value": ""
+    },
+    {
+      "key": "riderToken",
+      "value": ""
+    },
+    {
+      "key": "riderRefreshToken",
+      "value": ""
+    },
+    {
+      "key": "adminToken",
+      "value": ""
+    },
+    {
+      "key": "adminRefreshToken",
+      "value": ""
+    },
+    {
+      "key": "applicationId",
+      "value": ""
+    },
+    {
+      "key": "riderId",
+      "value": ""
+    },
+    {
+      "key": "documentId",
+      "value": ""
+    },
+    {
+      "key": "uploadUrl",
+      "value": ""
+    },
+    {
+      "key": "fileKey",
+      "value": ""
+    }
+  ],
+  "item": [
+    {
+      "name": "0. Server",
+      "description": "Is the API up?",
+      "item": [
+        {
+          "name": "Health",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('database up', () => pm.expect(pm.response.json().db).to.eql('up'));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Idempotency-Key",
+                "value": "{{$guid}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/v1/health",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "v1",
+                "health"
+              ]
+            },
+            "auth": {
+              "type": "noauth"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "1. Driver sign-in",
+      "description": "OTP login for the Delivez Agent app (app = RIDER).",
+      "item": [
+        {
+          "name": "Send OTP",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status 200', () => pm.response.to.have.status(200));",
+                  "const j = pm.response.json();",
+                  "pm.collectionVariables.set('requestId', j.requestId);",
+                  "// Development / test servers only: the code is in the reply. On production it comes by SMS: put it in otpCode.",
+                  "if (j.devCode) pm.collectionVariables.set('otpCode', j.devCode);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Idempotency-Key",
+                "value": "{{$guid}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"phone\": \"{{riderPhone}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/v1/auth/otp/request",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "v1",
+                "auth",
+                "otp",
+                "request"
+              ]
+            },
+            "auth": {
+              "type": "noauth"
+            },
+            "description": "Sends a 6-digit code by SMS to {{riderPhone}}. Saves requestId. Resend after retryAfter seconds; max 5 codes an hour."
+          }
+        },
+        {
+          "name": "Verify OTP (RIDER)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status 200', () => pm.response.to.have.status(200));",
+                  "const j = pm.response.json();",
+                  "pm.collectionVariables.set('riderToken', j.accessToken);",
+                  "pm.collectionVariables.set('riderRefreshToken', j.refreshToken);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Idempotency-Key",
+                "value": "{{$guid}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"requestId\": \"{{requestId}}\",\n  \"code\": \"{{otpCode}}\",\n  \"app\": \"RIDER\",\n  \"device\": {\n    \"platform\": \"android\",\n    \"app\": \"delivez-agent\",\n    \"deviceId\": \"{{deviceId}}\"\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/v1/auth/otp/verify",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "v1",
+                "auth",
+                "otp",
+                "verify"
+              ]
+            },
+            "auth": {
+              "type": "noauth"
+            },
+            "description": "Put the SMS code in the otpCode variable first. Saves the access and refresh tokens."
+          }
+        },
+        {
+          "name": "Where does the app go? (GET /rider/me)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status 200', () => pm.response.to.have.status(200));",
+                  "const j = pm.response.json(); console.log('next:', j.next); if (j.rider) pm.collectionVariables.set('riderId', j.rider.id); if (j.application) pm.collectionVariables.set('applicationId', j.application.id);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Idempotency-Key",
+                "value": "{{$guid}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/v1/rider/me",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "v1",
+                "rider",
+                "me"
+              ]
+            },
+            "description": "next = REGISTER (registration) · STATUS (sent, waiting) · HOME (approved: account.module + profile) · RESTRICTED (on hold). Also applicationRecord and workProfile."
+          }
+        },
+        {
+          "name": "Refresh token",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status 200', () => pm.response.to.have.status(200));",
+                  "const j = pm.response.json(); pm.collectionVariables.set('riderToken', j.accessToken); pm.collectionVariables.set('riderRefreshToken', j.refreshToken);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Idempotency-Key",
+                "value": "{{$guid}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"refreshToken\": \"{{riderRefreshToken}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/v1/auth/refresh",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "v1",
+                "auth",
+                "refresh"
+              ]
+            },
+            "auth": {
+              "type": "noauth"
+            },
+            "description": "Access tokens last 15 min. Returns a NEW pair; the old refresh token stops working."
+          }
+        }
+      ]
+    },
+    {
+      "name": "2. Registration",
+      "description": "The registration screens, in the app's order. Dates can be DD/MM/YYYY (as the app sends them) or YYYY-MM-DD.",
+      "item": [
+        {
+          "name": "Options (every dropdown)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('6 steps', () => pm.expect(pm.response.json().steps.length).to.eql(6));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Idempotency-Key",
+                "value": "{{$guid}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/v1/rider/registration/options",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "v1",
+                "rider",
+                "registration",
+                "options"
+              ]
+            },
+            "auth": {
+              "type": "noauth"
+            },
+            "description": "Tiers and services, vehicle types, licence types, job types, declarations, training modules, documents. Send `value`, show `label`."
+          }
+        },
+        {
+          "name": "Start registration",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status 200', () => pm.response.to.have.status(200));",
+                  "const j = pm.response.json(); if (j.id) pm.collectionVariables.set('applicationId', j.id);",
+                  "if (j.missing) console.log('still missing:', JSON.stringify(j.missing.problems));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Idempotency-Key",
+                "value": "{{$guid}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/v1/rider/registration",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "v1",
+                "rider",
+                "registration"
+              ]
+            },
+            "description": "Opens (or returns) the application. Safe to call twice."
+          }
+        },
+        {
+          "name": "Step 1 — Personal information",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status 200', () => pm.response.to.have.status(200));",
+                  "const j = pm.response.json(); pm.test('step saved', () => pm.expect(j.steps['personal-info']).to.be.an('object'));",
+                  "console.log('still missing:', JSON.stringify(j.missing.problems));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Idempotency-Key",
+                "value": "{{$guid}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"fullName\": \"Ravi Kumar\",\n  \"dob\": \"12/04/1996\",\n  \"pincode\": \"560038\",\n  \"email\": \"\",\n  \"idType\": \"AADHAAR\",\n  \"idLast4\": \"4321\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/v1/rider/registration/steps/personal-info",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "v1",
+                "rider",
+                "registration",
+                "steps",
+                "personal-info"
+              ]
+            },
+            "description": "Full legal name, date of birth (18+), service pincode, email (optional), ID type and its last 4 characters."
+          }
+        },
+        {
+          "name": "Step 2 — Services, work & technology",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status 200', () => pm.response.to.have.status(200));",
+                  "const j = pm.response.json(); pm.test('step saved', () => pm.expect(j.steps['work-tech']).to.be.an('object'));",
+                  "console.log('still missing:', JSON.stringify(j.missing.problems));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Idempotency-Key",
+                "value": "{{$guid}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"tier\": \"DELIVEZ_BIZ\",\n  \"services\": [\n    \"QUICK_COMMERCE\",\n    \"HYPERLOCAL\"\n  ],\n  \"workingDays\": [\n    \"MON\",\n    \"TUE\",\n    \"WED\",\n    \"SAT\"\n  ],\n  \"shift\": \"EVENING\",\n  \"workPreference\": \"PER_ORDER\",\n  \"experienceLevel\": \"Y1_3\",\n  \"previousPlatforms\": \"\",\n  \"sectors\": [\n    \"FOOD\",\n    \"GROCERY\"\n  ],\n  \"trainingNeeds\": \"NONE\",\n  \"phoneType\": \"ANDROID_11_PLUS\",\n  \"navigationApp\": \"GOOGLE_MAPS\",\n  \"mobileData\": \"UNLIMITED\",\n  \"permissionConsent\": true\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/v1/rider/registration/steps/work-tech",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "v1",
+                "rider",
+                "registration",
+                "steps",
+                "work-tech"
+              ]
+            },
+            "description": "Tier and its services, working days, shift, work preference (FULL_TIME · PART_TIME · PER_ORDER), experience, phone, navigation app, data plan, permissions consent."
+          }
+        },
+        {
+          "name": "Step 3 — Legal & vehicle (own vehicle)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status 200', () => pm.response.to.have.status(200));",
+                  "const j = pm.response.json(); pm.test('step saved', () => pm.expect(j.steps['legal-vehicle']).to.be.an('object'));",
+                  "console.log('still missing:', JSON.stringify(j.missing.problems));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Idempotency-Key",
+                "value": "{{$guid}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"declarations\": {\n    \"VALID_LICENCE\": true,\n    \"VEHICLE_PAPERS\": true,\n    \"NO_CRIMINAL_RECORD\": true,\n    \"TRANSPORT_NORMS\": true\n  },\n  \"licenceType\": \"MCWG\",\n  \"licenceNumber\": \"KA03 2019 0012345\",\n  \"licenceExpiry\": \"30/06/2034\",\n  \"vehicleProvider\": \"OWN_VEHICLE\",\n  \"vehicleCategory\": \"BIKE\",\n  \"vehicleType\": \"MOTORCYCLE_SCOOTER\",\n  \"vehicleMakeModel\": \"Honda Activa 6G\",\n  \"vehicleRegNumber\": \"KA 03 TT 1234\",\n  \"vehicleOwnership\": \"OWNED\",\n  \"operationalCondition\": \"GOOD\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/v1/rider/registration/steps/legal-vehicle",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "v1",
+                "rider",
+                "registration",
+                "steps",
+                "legal-vehicle"
+              ]
+            },
+            "description": "Own vehicle: type (in the category), make & model, registration, ownership, condition; 4 declarations; licence must cover the vehicle."
+          }
+        },
+        {
+          "name": "Step 3 — Legal & vehicle (company vehicle)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status 200', () => pm.response.to.have.status(200));",
+                  "const j = pm.response.json(); pm.test('step saved', () => pm.expect(j.steps['legal-vehicle']).to.be.an('object'));",
+                  "console.log('still missing:', JSON.stringify(j.missing.problems));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Idempotency-Key",
+                "value": "{{$guid}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"declarations\": {\n    \"VALID_LICENCE\": true,\n    \"NO_CRIMINAL_RECORD\": true,\n    \"TRANSPORT_NORMS\": true\n  },\n  \"licenceType\": \"MCWG\",\n  \"licenceNumber\": \"KA03 2019 0012345\",\n  \"licenceExpiry\": \"30/06/2034\",\n  \"vehicleProvider\": \"COMPANY_PROVIDED\",\n  \"vehicleCategory\": \"BIKE\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/v1/rider/registration/steps/legal-vehicle",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "v1",
+                "rider",
+                "registration",
+                "steps",
+                "legal-vehicle"
+              ]
+            },
+            "description": "Use INSTEAD of the own-vehicle request when Delivez provides the vehicle: category only, 3 declarations, no RC / insurance."
+          }
+        },
+        {
+          "name": "Step 3b — Hyperlocal job types",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status 200', () => pm.response.to.have.status(200));",
+                  "const j = pm.response.json(); pm.test('step saved', () => pm.expect(j.steps['hyperlocal']).to.be.an('object'));",
+                  "console.log('still missing:', JSON.stringify(j.missing.problems));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Idempotency-Key",
+                "value": "{{$guid}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"jobTypes\": [\n    \"GROCERY\",\n    \"PHARMACY\",\n    \"DOCUMENTS\"\n  ]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/v1/rider/registration/steps/hyperlocal",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "v1",
+                "rider",
+                "registration",
+                "steps",
+                "hyperlocal"
+              ]
+            },
+            "description": "Only when services include HYPERLOCAL. A company vehicle can only take job types that fit it."
+          }
+        },
+        {
+          "name": "Step 4 — Safety & compliance",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status 200', () => pm.response.to.have.status(200));",
+                  "const j = pm.response.json(); pm.test('step saved', () => pm.expect(j.steps['safety-compliance']).to.be.an('object'));",
+                  "console.log('still missing:', JSON.stringify(j.missing.problems));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Idempotency-Key",
+                "value": "{{$guid}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"declarations\": {\n    \"PACKAGE_RULES\": true,\n    \"COD_RESPONSIBILITY\": true,\n    \"CHAIN_OF_CUSTODY\": true,\n    \"FRAGILE_GOODS\": true,\n    \"CONDUCT_POLICY\": true\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/v1/rider/registration/steps/safety-compliance",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "v1",
+                "rider",
+                "registration",
+                "steps",
+                "safety-compliance"
+              ]
+            },
+            "description": "All 5 declarations."
+          }
+        },
+        {
+          "name": "Step 6 — Training & role",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status 200', () => pm.response.to.have.status(200));",
+                  "const j = pm.response.json(); pm.test('step saved', () => pm.expect(j.steps['training-role']).to.be.an('object'));",
+                  "console.log('still missing:', JSON.stringify(j.missing.problems));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Idempotency-Key",
+                "value": "{{$guid}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"operationalRole\": \"LAST_MILE\",\n  \"completedModules\": [\n    \"DELIVERY_SOP\",\n    \"PICKUP_SOP\",\n    \"PACKAGE_HANDLING\",\n    \"COD_RULES\",\n    \"SAFETY_SOS\"\n  ]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/v1/rider/registration/steps/training-role",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "v1",
+                "rider",
+                "registration",
+                "steps",
+                "training-role"
+              ]
+            },
+            "description": "Operational role (LAST_MILE · HUB_ASSOCIATE) and all 5 training modules."
+          }
+        },
+        {
+          "name": "Get registration (what is missing)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status 200', () => pm.response.to.have.status(200));",
+                  "const j = pm.response.json(); if (j.id) pm.collectionVariables.set('applicationId', j.id);",
+                  "if (j.missing) console.log('still missing:', JSON.stringify(j.missing.problems));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Idempotency-Key",
+                "value": "{{$guid}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/v1/rider/registration",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "v1",
+                "rider",
+                "registration"
+              ]
+            },
+            "description": "missing.problems lists what is left, in plain words; canSubmit = true when ready."
+          }
+        }
+      ]
+    },
+    {
+      "name": "3. Documents (step 5)",
+      "description": "For each docType: Presign → Upload file → Attach. Set the docType environment variable first.",
+      "item": [
+        {
+          "name": "Presign upload ({{docType}})",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "// size must be a number in the JSON body",
+                  "pm.request.body.raw = pm.request.body.raw.replace('\"{{docSize}}\"', pm.environment.get('docSize') || pm.collectionVariables.get('docSize') || '100000');"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status 200', () => pm.response.to.have.status(200));",
+                  "const j = pm.response.json();",
+                  "const base = pm.environment.get('baseUrl') || pm.collectionVariables.get('baseUrl');",
+                  "pm.collectionVariables.set('uploadUrl', j.uploadUrl.startsWith('http') ? j.uploadUrl : base + j.uploadUrl);",
+                  "pm.collectionVariables.set('fileKey', j.fileKey);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Idempotency-Key",
+                "value": "{{$guid}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"type\": \"{{docType}}\",\n  \"contentType\": \"{{docContentType}}\",\n  \"size\": \"{{docSize}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/v1/rider/registration/documents/presign",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "v1",
+                "rider",
+                "registration",
+                "documents",
+                "presign"
+              ]
+            },
+            "description": "contentType: image/jpeg · image/png · image/webp · application/pdf. size in bytes (≤ 10 MB). Saves uploadUrl and fileKey."
+          }
+        },
+        {
+          "name": "Upload file (pick it in Body → binary)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('uploaded', () => pm.expect(pm.response.code).to.be.oneOf([200, 201, 204]));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "auth": {
+              "type": "noauth"
+            },
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "{{docContentType}}"
+              }
+            ],
+            "body": {
+              "mode": "file",
+              "file": {
+                "src": "TEST-DOCUMENT.png"
+              }
+            },
+            "url": {
+              "raw": "{{uploadUrl}}",
+              "host": [
+                "{{uploadUrl}}"
+              ]
+            },
+            "description": "Sends the file bytes to the link from Presign (valid a few minutes). Select the file under Body → binary; its type must match docContentType."
+          }
+        },
+        {
+          "name": "Attach document ({{docType}})",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status 200', () => pm.response.to.have.status(200));",
+                  "pm.collectionVariables.set('documentId', pm.response.json().id);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Idempotency-Key",
+                "value": "{{$guid}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"type\": \"{{docType}}\",\n  \"fileKey\": \"{{fileKey}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/v1/rider/registration/documents",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "v1",
+                "rider",
+                "registration",
+                "documents"
+              ]
+            },
+            "description": "Links the uploaded file. The same type again replaces it."
+          }
+        }
+      ]
+    },
+    {
+      "name": "3b. Fix a document (optional)",
+      "description": "Only when a file must be taken off before submitting.",
+      "item": [
+        {
+          "name": "Remove document ({{docType}})",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status 200', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Idempotency-Key",
+                "value": "{{$guid}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/v1/rider/registration/documents/{{docType}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "v1",
+                "rider",
+                "registration",
+                "documents",
+                "{{docType}}"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Submit & status",
+      "description": "Send the application to ops, then follow it.",
+      "item": [
+        {
+          "name": "Submit application",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status 200', () => pm.response.to.have.status(200));",
+                  "console.log('applicationRecord:', JSON.stringify(pm.response.json().applicationRecord));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Idempotency-Key",
+                "value": "{{$guid}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"consent\": true\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/v1/rider/registration/submit",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "v1",
+                "rider",
+                "registration",
+                "submit"
+              ]
+            },
+            "description": "422 APPLICATION_INCOMPLETE: message = first missing item, details = all of them. Locked afterwards until ops send it back."
+          }
+        },
+        {
+          "name": "Application status (ApplicationRecord)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status 200', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Idempotency-Key",
+                "value": "{{$guid}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/v1/rider/registration/status",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "v1",
+                "rider",
+                "registration",
+                "status"
+              ]
+            },
+            "description": "status: underReview · actionRequired · approved · rejected; message; documentStatuses per document id; assignedHub after approval."
+          }
+        }
+      ]
+    },
+    {
+      "name": "4. Ops review (admin)",
+      "description": "Needs an ops login (app = ADMIN) with a role that manages riders: FOUNDER, HEAD_OF_OPS, REGIONAL_HEAD, CITY_OPS or COMPLIANCE.",
+      "item": [
+        {
+          "name": "Send OTP",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status 200', () => pm.response.to.have.status(200));",
+                  "const j = pm.response.json();",
+                  "pm.collectionVariables.set('requestId', j.requestId);",
+                  "// Development / test servers only: the code is in the reply. On production it comes by SMS: put it in otpCode.",
+                  "if (j.devCode) pm.collectionVariables.set('otpCode', j.devCode);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Idempotency-Key",
+                "value": "{{$guid}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"phone\": \"{{adminPhone}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/v1/auth/otp/request",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "v1",
+                "auth",
+                "otp",
+                "request"
+              ]
+            },
+            "auth": {
+              "type": "noauth"
+            },
+            "description": "Sends a 6-digit code by SMS to {{adminPhone}}. Saves requestId. Resend after retryAfter seconds; max 5 codes an hour."
+          }
+        },
+        {
+          "name": "Verify OTP (ADMIN)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status 200', () => pm.response.to.have.status(200));",
+                  "const j = pm.response.json();",
+                  "pm.collectionVariables.set('adminToken', j.accessToken);",
+                  "pm.collectionVariables.set('adminRefreshToken', j.refreshToken);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Idempotency-Key",
+                "value": "{{$guid}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"requestId\": \"{{requestId}}\",\n  \"code\": \"{{otpCode}}\",\n  \"app\": \"ADMIN\",\n  \"device\": {\n    \"platform\": \"android\",\n    \"app\": \"postman\",\n    \"deviceId\": \"{{deviceId}}\"\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/v1/auth/otp/verify",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "v1",
+                "auth",
+                "otp",
+                "verify"
+              ]
+            },
+            "auth": {
+              "type": "noauth"
+            },
+            "description": "Put the SMS code in the otpCode variable first. Saves the access and refresh tokens."
+          }
+        },
+        {
+          "name": "Queue — find the driver",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status 200', () => pm.response.to.have.status(200));",
+                  "const it = pm.response.json().items; if (it.length) { pm.collectionVariables.set('applicationId', it[0].id); pm.collectionVariables.set('riderId', it[0].riderId); }"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Idempotency-Key",
+                "value": "{{$guid}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/v1/admin/riders/applications?search={{riderPhone}}&page=1&pageSize=25",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "v1",
+                "admin",
+                "riders",
+                "applications"
+              ],
+              "query": [
+                {
+                  "key": "search",
+                  "value": "{{riderPhone}}"
+                },
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "pageSize",
+                  "value": "25"
+                }
+              ]
+            },
+            "description": "Finds this driver by phone (search = name, phone or rider code; leave it empty for everyone). Add status=SUBMITTED · UNDER_REVIEW · CHANGES_REQUESTED · APPROVED · REJECTED to filter. Saves the first result as applicationId."
+          }
+        },
+        {
+          "name": "Open application",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status 200', () => pm.response.to.have.status(200));",
+                  "const j = pm.response.json(); if (j.documents.length) pm.collectionVariables.set('documentId', j.documents[0].id); console.log('suggested module:', j.summary.suggestedModule);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Idempotency-Key",
+                "value": "{{$guid}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/v1/admin/riders/applications/{{applicationId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "v1",
+                "admin",
+                "riders",
+                "applications",
+                "{{applicationId}}"
+              ]
+            },
+            "description": "All answers, summary (tier, services, vehicle, suggestedModule), documents with 15-minute view links, what is missing. Saves the first document as documentId."
+          }
+        },
+        {
+          "name": "Start review",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status 200', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Idempotency-Key",
+                "value": "{{$guid}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/v1/admin/riders/applications/{{applicationId}}/start-review",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "v1",
+                "admin",
+                "riders",
+                "applications",
+                "{{applicationId}}",
+                "start-review"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Verify document",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status 200', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Idempotency-Key",
+                "value": "{{$guid}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/v1/admin/riders/applications/{{applicationId}}/documents/{{documentId}}/verify",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "v1",
+                "admin",
+                "riders",
+                "applications",
+                "{{applicationId}}",
+                "documents",
+                "{{documentId}}",
+                "verify"
+              ]
+            },
+            "description": "Repeat for every required document (set documentId)."
+          }
+        },
+        {
+          "name": "Reject document",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Idempotency-Key",
+                "value": "{{$guid}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"reason\": \"Photo is blurred, upload a clear one\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/v1/admin/riders/applications/{{applicationId}}/documents/{{documentId}}/reject",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "v1",
+                "admin",
+                "riders",
+                "applications",
+                "{{applicationId}}",
+                "documents",
+                "{{documentId}}",
+                "reject"
+              ]
+            },
+            "description": "The driver sees \"Rejected: <reason>\"."
+          }
+        },
+        {
+          "name": "Approve rider",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "// No cityId set: leave it out, and the city comes from the driver's pincode.",
+                  "const cityId = pm.environment.get('cityId') || pm.collectionVariables.get('cityId');",
+                  "if (!cityId) { const b = JSON.parse(pm.request.body.raw); delete b.cityId; pm.request.body.raw = JSON.stringify(b, null, 2); }"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status 200', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Idempotency-Key",
+                "value": "{{$guid}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"cityId\": \"{{cityId}}\",\n  \"module\": \"quickCommerce\",\n  \"hub\": \"Indiranagar hub\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/v1/admin/riders/applications/{{applicationId}}/approve",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "v1",
+                "admin",
+                "riders",
+                "applications",
+                "{{applicationId}}",
+                "approve"
+              ]
+            },
+            "description": "Every required document must be verified first. module = the app module (default: from the first service); hub is shown in the app; cityId optional when the pincode is in a Delivez city."
+          }
+        },
+        {
+          "name": "Send back for changes",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Idempotency-Key",
+                "value": "{{$guid}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"reason\": \"Upload a clear PAN card photo\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/v1/admin/riders/applications/{{applicationId}}/request-changes",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "v1",
+                "admin",
+                "riders",
+                "applications",
+                "{{applicationId}}",
+                "request-changes"
+              ]
+            },
+            "description": "The app shows actionRequired with this message."
+          }
+        },
+        {
+          "name": "Reject application",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Idempotency-Key",
+                "value": "{{$guid}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"reason\": \"Licence does not match the ID\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/v1/admin/riders/applications/{{applicationId}}/reject",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "v1",
+                "admin",
+                "riders",
+                "applications",
+                "{{applicationId}}",
+                "reject"
+              ]
+            },
+            "description": "Final."
+          }
+        },
+        {
+          "name": "Suspend rider",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Idempotency-Key",
+                "value": "{{$guid}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"reason\": \"Repeated customer complaints\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/v1/admin/riders/{{riderId}}/suspend",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "v1",
+                "admin",
+                "riders",
+                "{{riderId}}",
+                "suspend"
+              ]
+            },
+            "description": "Logs the driver out everywhere; refused while they carry an order."
+          }
+        },
+        {
+          "name": "Reinstate rider",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Idempotency-Key",
+                "value": "{{$guid}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/v1/admin/riders/{{riderId}}/reinstate",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "v1",
+                "admin",
+                "riders",
+                "{{riderId}}",
+                "reinstate"
+              ]
+            }
+          }
+        }
+      ],
+      "auth": {
+        "type": "bearer",
+        "bearer": [
+          {
+            "key": "token",
+            "value": "{{adminToken}}",
+            "type": "string"
+          }
+        ]
+      }
+    }
+  ]
+}
